@@ -5,6 +5,7 @@ Marcadores con etiquetas, anotaciones y páginas que se pueden compartir o dejar
 | Archivo | Para qué |
 |---|---|
 | `index.html` | La página (va al repo de GitHub) |
+| `config.js` | La URL de Apps Script y el nombre (va al repo, junto a `index.html`) |
 | `Codigo.gs` | El servidor (va en Apps Script, dentro de una planilla de Google) |
 
 Sin conectar la planilla, el cuaderno funciona igual, pero todo queda guardado **solo en ese navegador** y no se pueden compartir páginas.
@@ -25,14 +26,16 @@ Sin conectar la planilla, el cuaderno funciona igual, pero todo queda guardado *
 
 ## 2. Conectar la página
 
-En `index.html`, cerca del comienzo del `<script>`:
+La configuración está en un archivo aparte, `config.js`, para no tener que volver a pegarla cada vez que se actualiza `index.html`:
 
 ```js
-const API_URL = 'https://script.google.com/macros/s/XXXX/exec';
-const AUTORA = '';   // opcional: nombre que se muestra en las páginas compartidas
+window.CUADERNO_CONFIG = {
+  API_URL: 'https://script.google.com/macros/s/XXXX/exec',
+  AUTORA: ''
+};
 ```
 
-Subir `index.html` al repo y activar GitHub Pages.
+Subir `index.html` y `config.js` al repo y activar GitHub Pages.
 
 ## 3. Primer uso
 
@@ -42,7 +45,8 @@ Subir `index.html` al repo y activar GitHub Pages.
 ## Cómo se usa
 
 - **Páginas del cuaderno**: «+ página» crea un separador nuevo. 🔒 = privada, 🌐 = compartida. Se cambia tocando el botón de la página.
-- **Compartir**: en una página 🌐 aparece «Copiar link» (`…/?p=nombre-de-la-pagina`). Quien abre el link solo ve esa página, sin poder editar.
+- **Compartir**: en una página 🌐 aparece «Copiar link» (`…/?p=nombre-xxxxx`, con un final al azar para que no se pueda adivinar). Quien abre el link solo ve esa página, sin poder editar. La dirección principal no muestra ninguna lista de páginas.
+- **Cortar un link**: en «editar página», marcar «Generar un link nuevo». El link viejo deja de funcionar.
 - **Una nota en varias páginas**: al editarla, marcar todas las páginas donde tiene que aparecer.
 - **Etiquetas**: separadas por comas. La nube de etiquetas filtra; si se eligen varias, muestra las notas que tienen todas.
 - **Anotaciones**: texto largo de cada nota (📝). Si se marca «Anotación privada», no aparece en las páginas compartidas.
