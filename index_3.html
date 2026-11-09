@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Cuaderno de Recursos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --desk: #e9e4d8;
+    --paper: #ffffff;
+    --rule: #cfe0f1;
+    --margin: #f0a3a3;
+    --ink: #1f2a44;
+    --ink-blue: #1d4ea0;
+    --ink-soft: #5b6478;
+    --line: #d8dde6;
+    --ok: #2f6f4f;
+    --err: #a3222c;
+    --n-yellow: #fff1a8;
+    --n-pink: #ffd3e2;
+    --n-blue: #cfeaff;
+    --n-green: #d6f0bf;
+    --n-orange: #ffdcb0;
+    --n-lilac: #e3d8ff;
+    --hand: 'Patrick Hand', 'Comic Sans MS', cursive;
+    --script: 'Caveat', 'Patrick Hand', cursive;
+    --ui: 'Nunito', system-ui, sans-serif;
+    --lh: 32px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { min-height: 100vh; font-family: var(--ui); color: var(--ink); background: var(--desk); padding: 22px 14px; }
+  .board {
+    max-width: 1240px; margin: 0 auto; min-height: calc(100vh - 44px);
+    position: relative; border-radius: 3px; background-color: var(--paper);
+    background-image:
+      linear-gradient(90deg, transparent 78px, var(--margin) 78px, var(--margin) 80px, transparent 80px),
+      repeating-linear-gradient(180deg, transparent 0 calc(var(--lh) - 1px), var(--rule) calc(var(--lh) - 1px) var(--lh));
+    background-position: 0 0, 0 96px; background-repeat: repeat-y, repeat;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 10px 30px rgba(60,50,30,.15);
+    padding: 22px clamp(16px, 4vw, 44px) 60px 112px;
+  }
+  .board::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 26px; width: 22px;
+    background: radial-gradient(circle at 11px 50%, var(--desk) 0 9px, rgba(0,0,0,.08) 9.5px, transparent 10.5px) 0 40px / 22px 180px repeat-y;
+  }
+
+  header.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 24px; justify-content: space-between; min-height: 74px; }
+  h1 { font-family: var(--script); font-weight: 700; color: var(--ink-blue); font-size: clamp(2.4rem, 6vw, 3.4rem); line-height: 1; margin: 0; }
+  h1 small { display: block; font-family: var(--hand); font-size: .36em; color: var(--ink-soft); font-weight: 400; margin-top: 6px; }
+  .head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .date { font-family: var(--script); font-size: 1.6rem; color: var(--ink-soft); }
+  .status { font-family: var(--hand); font-size: 1rem; color: var(--ink-soft); display: flex; gap: 10px; align-items: center; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-soft); display: inline-block; margin-right: 4px; }
+  .status[data-k="ok"] .dot { background: var(--ok); }
+  .status[data-k="wait"] .dot { background: #d9a520; }
+  .status[data-k="err"] { color: var(--err); }
+  .status[data-k="err"] .dot { background: var(--err); }
+  .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--ink-blue); text-decoration: underline; cursor: pointer; }
+
+  /* separadores (páginas) */
+  .tabs-pages { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; border-bottom: 2px solid var(--ink-blue); padding-left: 4px; }
+  .sep {
+    font-family: var(--hand); font-size: 1.1rem; cursor: pointer; color: var(--ink);
+    border: 1.5px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0;
+    background: var(--c, #f4f6fa); padding: 5px 14px 3px; margin-bottom: -2px; opacity: .85;
+    display: inline-flex; gap: 6px; align-items: center;
+  }
+  .sep:hover { opacity: 1; }
+  .sep[aria-selected="true"] { opacity: 1; border-color: var(--ink-blue); border-bottom: 2px solid var(--c, #fff); background: var(--c, #fff); font-weight: 700; }
+  .sep.add { background: transparent; border-style: dashed; color: var(--ink-soft); }
+  .sep .vis { font-size: .85em; }
+
+  .page-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 14px 0 4px; }
+  .page-head h2 { font-family: var(--script); font-size: 2.3rem; margin: 0; color: var(--ink); }
+  .page-head p { margin: 0; flex-basis: 100%; font-family: var(--hand); font-size: 1.15rem; color: var(--ink-soft); }
+  .pill {
+    font-family: var(--hand); font-size: 1.05rem; border-radius: 999px; padding: 3px 12px; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--paper); color: var(--ink);
+  }
+  .pill.pub { background: #e3f3ea; border-color: #9cc9ae; color: var(--ok); }
+  .pill.priv { background: #f4f1ea; }
+  .notice { font-family: var(--hand); font-size: 1.05rem; background: #fff8d6; border: 1.5px dashed #e3c96a; padding: 8px 12px; border-radius: 4px; margin: 10px 0; }
+  .notice .btn { margin-left: 8px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 6px; }
+  .search { flex: 1 1 220px; min-width: 0; background: transparent; border: 0; border-bottom: 2px solid var(--ink-blue); color: var(--ink); font-family: var(--hand); font-size: 1.25rem; padding: 4px; outline: none; }
+  .search::placeholder { color: var(--ink-soft); opacity: .7; }
+  .chip { font-family: var(--hand); font-size: 1.05rem; background: var(--paper); color: var(--ink-soft); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 13px; cursor: pointer; transition: .15s; }
+  .chip:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .chip[aria-pressed="true"] { color: #fff; background: var(--ink-blue); border-color: var(--ink-blue); }
+  .sorts, .actions, .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn { font-family: var(--hand); font-size: 1.1rem; cursor: pointer; border: 0; border-radius: 4px; padding: 6px 14px; background: var(--ink-blue); color: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.15); transition: transform .12s; text-decoration: none; display: inline-block; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.ghost { background: var(--paper); color: var(--ink-soft); box-shadow: none; border: 1.5px dashed var(--line); }
+  .btn.ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .btn.small { font-size: 1rem; padding: 3px 10px; }
+
+  /* nube de etiquetas */
+  .tagcloud { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin: 4px 0 6px; font-family: var(--hand); }
+  .tagcloud .lbl { color: var(--ink-soft); font-size: 1rem; margin-right: 2px; }
+  .tc { background: none; border: 0; padding: 1px 4px; cursor: pointer; color: var(--ink-blue); font-family: var(--hand); border-radius: 4px; }
+  .tc:hover { background: #eaf1fb; }
+  .tc[aria-pressed="true"] { background: var(--ink-blue); color: #fff; }
+  .tc small { color: var(--ink-soft); font-size: .75em; }
+  .tc[aria-pressed="true"] small { color: #dbe6f7; }
+
+  section.group { margin-top: 26px; }
+  section.group h2 { font-family: var(--script); font-weight: 700; font-size: 2.1rem; margin: 0 0 16px; display: inline-block; position: relative; color: var(--ink); z-index: 0; }
+  section.group h2::after { content: ""; position: absolute; left: -6px; right: -10px; bottom: 4px; height: 12px; z-index: -1; background: var(--hl, #fff1a8); opacity: .9; border-radius: 3px; transform: rotate(-1deg); }
+  section.group h2 .count { font-size: .55em; color: var(--ink-soft); margin-left: 6px; }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 26px 22px; }
+  .note {
+    position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 150px; padding: 22px 16px 14px;
+    color: var(--ink); background: var(--c, var(--n-yellow));
+    background-image: linear-gradient(180deg, rgba(255,255,255,.4), rgba(255,255,255,0) 30%, rgba(0,0,0,.03));
+    box-shadow: 0 1px 1px rgba(0,0,0,.08), 2px 6px 12px rgba(60,50,30,.18);
+    transform: rotate(var(--r, 0deg)); transition: transform .18s, box-shadow .18s; border-radius: 2px 2px 14px 2px;
+  }
+  .note::before { content: ""; position: absolute; top: -10px; left: 50%; width: 70px; height: 20px; transform: translateX(-50%) rotate(-3deg); background: rgba(235,230,215,.75); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+  .note:hover, .note:focus-within { transform: rotate(0) scale(1.03); box-shadow: 4px 12px 20px rgba(60,50,30,.25); z-index: 2; }
+  .note a.cover { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+  .note a.cover:focus-visible { outline: 3px solid var(--ink-blue); outline-offset: 2px; }
+  .note .top { display: flex; align-items: center; gap: 10px; }
+  .icon { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 1.3rem; font-weight: 700; background: rgba(255,255,255,.65); border: 2px solid rgba(0,0,0,.08); font-family: var(--ui); color: var(--ink); }
+  .note h3 { margin: 0; font-family: var(--hand); font-size: 1.35rem; line-height: 1.1; font-weight: 400; overflow-wrap: anywhere; }
+  .note p { margin: 0; font-family: var(--hand); font-size: 1.02rem; color: var(--ink-soft); line-height: 1.25; }
+  .note .ntags { display: flex; flex-wrap: wrap; gap: 0 6px; }
+  .note .ntags button { position: relative; z-index: 2; background: none; border: 0; padding: 0; cursor: pointer; font-family: var(--hand); font-size: 1rem; color: var(--ink-blue); }
+  .note .ntags button:hover { text-decoration: underline; }
+  .note .foot { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 6px; padding-right: 64px; }
+  .tag { font-family: var(--ui); font-size: .7rem; font-weight: 700; letter-spacing: .3px; padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,.07); color: var(--ink-soft); text-transform: uppercase; }
+  .tag.host { text-transform: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag.gh { background: #24292f; color: #fff; }
+  .tag.pages { background: #2f6f4f; color: #fff; }
+  .tag.vercel { background: #000; color: #fff; }
+  .fav-star { position: absolute; top: 6px; right: 8px; font-size: 1.1rem; }
+  .tools { position: absolute; bottom: 8px; right: 8px; display: flex; gap: 4px; z-index: 2; }
+  .tools button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(0,0,0,.07); color: var(--ink); cursor: pointer; font-size: .95rem; }
+  .tools button:hover { background: rgba(0,0,0,.16); }
+  .tools .edit { opacity: 0; transition: opacity .15s; }
+  .note:hover .edit, .note:focus-within .edit { opacity: 1; }
+  @media (hover: none) { .tools .edit { opacity: .8; } }
+
+  .empty { font-family: var(--script); font-size: 1.9rem; color: var(--ink-soft); text-align: center; margin: 60px 0; }
+  .loading { font-family: var(--script); font-size: 2rem; color: var(--ink-soft); text-align: center; margin: 80px 0; }
+
+  /* índice público */
+  .index-list { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 4px; }
+  .index-list a { display: flex; gap: 12px; align-items: baseline; text-decoration: none; color: var(--ink); font-family: var(--hand); font-size: 1.4rem; padding: 2px 6px; border-radius: 4px; line-height: var(--lh); }
+  .index-list a:hover { background: #f2f6fc; }
+  .index-list .sw { width: 14px; height: 14px; border-radius: 3px; background: var(--c); flex: none; align-self: center; border: 1px solid rgba(0,0,0,.1); }
+  .index-list small { color: var(--ink-soft); font-size: .8em; }
+  footer.foot { margin-top: 48px; font-family: var(--hand); color: var(--ink-soft); font-size: 1rem; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+
+  /* diálogos */
+  dialog { border: 0; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: #fffdf3; color: var(--ink); border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,.5); background-image: repeating-linear-gradient(transparent 0 31px, #d9e6f2 31px 32px); }
+  dialog::backdrop { background: rgba(30,35,50,.55); }
+  .sheet { padding: 22px 24px 20px; border-left: 3px solid #f2a7a7; margin-left: 28px; }
+  .sheet h2 { font-family: var(--script); font-size: 2rem; margin: 0 0 8px; }
+  .modes { display: flex; gap: 6px; margin-bottom: 12px; }
+  .modes button { font-family: var(--hand); font-size: 1.05rem; border: 1.5px solid #c9c3b0; background: #fff; border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+  .modes button[aria-selected="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  label { display: block; font-family: var(--hand); font-size: 1.1rem; margin: 10px 0 2px; }
+  input[type=text], input[type=url], input[type=password], textarea { width: 100%; font-family: var(--ui); font-size: .95rem; padding: 8px 10px; border: 1.5px solid #c9c3b0; border-radius: 4px; background: #fff; color: var(--ink); }
+  textarea { min-height: 90px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-family: var(--hand); font-size: 1.1rem; }
+  .check input { margin: 0; }
+  .hint { font-size: .82rem; color: var(--ink-soft); margin: 4px 0 0; }
+  .colors { display: flex; gap: 8px; margin-top: 4px; }
+  .colors button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(0,0,0,.15); cursor: pointer; }
+  .colors button[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 1px; }
+  .suggest { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .suggest button { font-family: var(--hand); font-size: .95rem; border: 1px dashed #b9c6da; background: #fff; color: var(--ink-blue); border-radius: 999px; padding: 0 8px; cursor: pointer; }
+  .pagechecks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .pagechecks .check { margin-top: 2px; }
+  .dlg-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .dlg-actions .right { display: flex; gap: 8px; margin-left: auto; }
+  .btn.danger { background: #ffd0d0; color: #8a1c1c; }
+  .btn.plain { background: #eef1f6; color: var(--ink); }
+  .err-msg { color: var(--err); font-family: var(--hand); font-size: 1.05rem; min-height: 1.3em; margin-top: 6px; }
+  .note-view { font-family: var(--hand); font-size: 1.2rem; line-height: 32px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 0; }
+  .note-view a { color: var(--ink-blue); }
+  .bm { display: inline-block; margin: 10px 0; padding: 8px 16px; background: var(--n-yellow); color: var(--ink); border: 2px dashed #d9b84a; border-radius: 4px; font-family: var(--hand); font-size: 1.2rem; text-decoration: none; cursor: grab; }
+  ol.steps { font-family: var(--hand); font-size: 1.1rem; padding-left: 22px; line-height: 32px; margin: 4px 0; }
+  [hidden] { display: none !important; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 600px) {
+    body { padding: 8px 6px; }
+    .board { padding: 16px 16px 60px 52px; background-image:
+      linear-gradient(90deg, transparent 40px, var(--margin) 40px, var(--margin) 42px, transparent 42px),
+      repeating-linear-gradient(180deg, transparent 0 calc(var(--lh) - 1px), var(--rule) calc(var(--lh) - 1px) var(--lh)); }
+    .board::before { left: 9px; }
+    .head-right { align-items: flex-start; }
+    .notes { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 14px; }
+    .row { grid-template-columns: 1fr; }
+    .sheet { margin-left: 14px; padding: 18px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .note, .btn { transition: none; } }
+</style>
+</head>
+<body>
+<main class="board">
+  <header class="top">
+    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">proyectos en GitHub, Pages y Vercel</small></h1>
+    <div class="head-right">
+      <div class="date" id="today"></div>
+      <div class="status" id="status" hidden><span><span class="dot"></span><span id="statusTxt"></span></span></div>
+    </div>
+  </header>
+  <div id="app"><p class="loading">Abriendo el cuaderno…</p></div>
+</main>
+
+<!-- Nota / marcador -->
+<dialog id="dlg">
+  <form class="sheet" id="form">
+    <h2 id="dlgTitle">Nueva nota</h2>
+    <div class="modes" id="modes" role="tablist">
+      <button type="button" role="tab" data-mode="one" aria-selected="true">Una</button>
+      <button type="button" role="tab" data-mode="many" aria-selected="false">Varias a la vez</button>
+    </div>
+    <div id="oneFields">
+      <label for="fUrl">Dirección</label>
+      <input type="url" id="fUrl" placeholder="https://usuario.github.io/proyecto/">
+      <div class="row">
+        <div><label for="fIcon">Ícono</label><input type="text" id="fIcon" maxlength="4" placeholder="📘 o JW"></div>
+        <div><label for="fName">Nombre</label><input type="text" id="fName" placeholder="Nombre del recurso"></div>
+      </div>
+      <label for="fDesc">Descripción corta</label>
+      <input type="text" id="fDesc" placeholder="Para qué sirve (se ve en la nota)">
+      <label for="fNote">Anotaciones</label>
+      <textarea id="fNote" placeholder="Ideas, con qué grupo lo uso, qué mejorar, citas de la página…"></textarea>
+      <label class="check"><input type="checkbox" id="fNotePriv"> Anotación privada (no se ve en páginas compartidas)</label>
+    </div>
+    <div id="manyFields" hidden>
+      <label for="fMany">Una por línea</label>
+      <textarea id="fMany" placeholder="https://reservas-sand.vercel.app/&#10;Guía SPIKE | https://material-robotica.github.io/OpenRoberta-SPIKE-Prime/"></textarea>
+      <p class="hint">Formato: solo la URL, o «Nombre | URL». Todas llevan la misma categoría, etiquetas y páginas.</p>
+    </div>
+    <label for="fTags">Etiquetas</label>
+    <input type="text" id="fTags" placeholder="java, 2do BT, evaluación" autocomplete="off">
+    <div class="suggest" id="tagSuggest"></div>
+    <label for="fCat">Categoría</label>
+    <input type="text" id="fCat" list="cats" placeholder="Programación, Evaluación, Robótica…">
+    <datalist id="cats"></datalist>
+    <div id="pagesWrap">
+      <label>Páginas del cuaderno</label>
+      <div class="pagechecks" id="pageChecks"></div>
+    </div>
+    <label>Color de la nota</label>
+    <div class="colors" id="colors"></div>
+    <label class="check" id="favWrap"><input type="checkbox" id="fFav"> Marcar como favorita ⭐</label>
+    <div class="dlg-actions">
+      <button type="button" class="btn danger" id="delBtn" hidden>Despegar</button>
+      <div class="right">
+        <button type="button" class="btn plain" data-close>Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Página del cuaderno -->
+<dialog id="dlgPage">
+  <form class="sheet" id="formPage">
+    <h2 id="pageDlgTitle">Nueva página</h2>
+    <label for="pTitle">Título</label>
+    <input type="text" id="pTitle" placeholder="Recursos para 2do BT, Robótica en el liceo…" required>
+    <label for="pDesc">Descripción (opcional)</label>
+    <input type="text" id="pDesc" placeholder="Se muestra arriba de la página">
+    <label>Quién la puede ver</label>
+    <label class="check"><input type="radio" name="pVis" value="privada" checked> 🔒 Privada: solo yo, con la clave</label>
+    <label class="check"><input type="radio" name="pVis" value="publica"> 🌐 Compartida: cualquiera con el link</label>
+    <label>Color del separador</label>
+    <div class="colors" id="pColors"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn danger" id="pDel" hidden>Borrar página</button>
+      <div class="right">
+        <button type="button" class="btn plain" data-close>Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Ver anotación -->
+<dialog id="dlgNote">
+  <div class="sheet">
+    <h2 id="nvTitle"></h2>
+    <div class="note-view" id="nvBody"></div>
+    <div class="dlg-actions"><div class="right">
+      <a class="btn plain" id="nvOpen" target="_blank" rel="noopener">Abrir enlace</a>
+      <button type="button" class="btn" data-close>Cerrar</button>
+    </div></div>
+  </div>
+</dialog>
+
+<!-- Entrar -->
+<dialog id="dlgLogin">
+  <form class="sheet" id="formLogin">
+    <h2>Entrar al cuaderno</h2>
+    <label for="lClave">Clave</label>
+    <input type="password" id="lClave" autocomplete="current-password" required>
+    <label class="check"><input type="checkbox" id="lRemember" checked> Recordar en este dispositivo</label>
+    <div class="err-msg" id="lErr"></div>
+    <div class="dlg-actions"><div class="right">
+      <button type="button" class="btn plain" data-close>Cancelar</button>
+      <button type="submit" class="btn">Entrar</button>
+    </div></div>
+  </form>
+</dialog>
+
+<!-- Guardar desde otras webs -->
+<dialog id="dlgBm">
+  <div class="sheet">
+    <h2>Guardar desde cualquier web</h2>
+    <ol class="steps">
+      <li>Mostrar la barra de marcadores (Ctrl + Shift + B).</li>
+      <li>Arrastrar este botón amarillo hasta esa barra:</li>
+    </ol>
+    <a class="bm" id="bmLink" href="#">📌 Al cuaderno</a>
+    <ol class="steps" start="3">
+      <li>En cualquier página, tocar «📌 Al cuaderno»: se abre una ventanita con la dirección y el título ya cargados.</li>
+      <li>Si antes se selecciona un texto de la página, queda copiado en las anotaciones.</li>
+    </ol>
+    <p class="hint" id="bmHint"></p>
+    <div class="dlg-actions"><div class="right"><button type="button" class="btn" data-close>Listo</button></div></div>
+  </div>
+</dialog>
+
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  /* ================= CONFIGURACIÓN =================
+     API_URL: la URL de la app web de Apps Script (termina en /exec).
+              Vacía = el cuaderno funciona solo en este navegador.
+     AUTORA:  nombre opcional que aparece en las páginas compartidas. */
+  const API_URL = 'https://script.google.com/macros/s/AKfycbz6HxO6cKiawRUUjTI512kVpiDNFMbYBzm8wxz2qVDirUpJtcsNSHtJiGmTPC2ekRml/exec';
+  const AUTORA = 'Elizabeth Izquierdo';
+  /* ================================================= */
+
+  const KEY = 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
+  const KEY_PAGES = 'cuaderno-paginas-v1';
+  const KEY_CLAVE = 'cuaderno-clave';
+  const KEY_OPEN = 'cuaderno-abiertas';
+  const KEY_SORT = KEY + '-sort';
+  const COLORS = ['yellow', 'pink', 'blue', 'green', 'orange', 'lilac'];
+  const SEED_VERSION = 2;
+  const SEED = [];
+
+  const $ = s => document.querySelector(s);
+  const app = $('#app');
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function now() { return Date.now(); }
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ls = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} },
+    json(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+  };
+
+  /* ---------------- estado ---------------- */
+  let mode = 'loading';      // 'local' | 'owner' | 'public' | 'index'
+  let items = [], pages = [], rev = 0, clave = '';
+  let view = 'all';          // 'all' o id de página
+  let sort = ls.get(KEY_SORT) || 'cat';
+  let platform = 'all';
+  const tagSel = new Set();
+  let opened = ls.json(KEY_OPEN, {});
+  let pubPage = null, pubIndex = [];
+  const params = new URLSearchParams(location.search);
+  const addReq = params.get('add') ? { url: params.get('add'), title: params.get('t') || '', sel: params.get('s') || '' } : null;
+  const isPopup = !!addReq && !!window.opener;
+
+  function normItem(i) {
+    return {
+      id: i.id || uid(), url: i.url || '', name: i.name || '', icon: i.icon || '', cat: i.cat || '',
+      desc: i.desc || '', note: i.note || '', notePrivate: !!i.notePrivate,
+      tags: Array.isArray(i.tags) ? i.tags.filter(Boolean) : String(i.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+      color: i.color || 'yellow', fav: !!i.fav, pages: Array.isArray(i.pages) ? i.pages : [], added: Number(i.added) || now()
+    };
+  }
+  function normPage(p) {
+    return { id: p.id || uid(), title: p.title || 'Sin título', slug: p.slug || slugify(p.title || 'pagina'),
+      visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow' };
+  }
+  function fromSeed(r, t) { const [url, name, icon, cat, desc, color, fav] = r; return normItem({ url, name, icon, cat, desc, color, fav, added: t }); }
+  function urlKey(u) { return String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, ''); }
+
+  function loadLocal() {
+    const t = now();
+    let list = ls.json(KEY, null);
+    const sv = +(ls.get(KEY + '-seed') || 0);
+    if (!Array.isArray(list)) list = SEED.map((r, i) => fromSeed(r, t - i * 1000));
+    else if (sv < SEED_VERSION) {
+      const have = new Set(list.map(i => urlKey(i.url)));
+      SEED.forEach((r, i) => { if (!have.has(urlKey(r[0]))) list.push(fromSeed(r, t - i)); });
+    }
+    ls.set(KEY + '-seed', String(SEED_VERSION));
+    list.forEach(i => { if (i.opened && !opened[i.id]) opened[i.id] = i.opened; });
+    return { items: list.map(normItem), pages: ls.json(KEY_PAGES, []).map(normPage) };
+  }
+
+  /* ---------------- servidor ---------------- */
+  async function api(body) {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  function setStatus(txt, kind) {
+    $('#status').hidden = false; $('#status').dataset.k = kind || '';
+    $('#statusTxt').textContent = txt;
+  }
+
+  let saveTimer = null, saving = false, again = false;
+  function persist() {
+    if (mode === 'local') {
+      ls.set(KEY, JSON.stringify(items)); ls.set(KEY_PAGES, JSON.stringify(pages));
+      setStatus('Guardado en este navegador', 'ok');
+      return Promise.resolve(true);
+    }
+    if (mode === 'owner') {
+      setStatus('Cambios sin guardar…', 'wait');
+      clearTimeout(saveTimer);
+      return new Promise(res => { saveTimer = setTimeout(() => pushNow().then(res), 600); });
+    }
+    return Promise.resolve(false);
+  }
+  async function pushNow(force) {
+    if (saving) { again = true; return false; }
+    saving = true; setStatus('Guardando…', 'wait');
+    let ok = false;
+    try {
+      const r = await api({ accion: 'guardar', clave, rev, forzar: !!force, paginas: pages, marcadores: items });
+      if (r.ok) { rev = r.rev; ok = true; setStatus('Guardado en la planilla ✓', 'ok'); }
+      else if (r.conflicto) {
+        setStatus('Hubo cambios desde otro dispositivo', 'err');
+        if (confirm('El cuaderno se modificó desde otro dispositivo.\n\nAceptar: guardar igual lo que se ve en esta pantalla.\nCancelar: descartar el último cambio y traer la versión de la planilla.')) {
+          saving = false; return pushNow(true);
+        } else { await loadOwner(); }
+      } else {
+        setStatus(r.error || 'No se pudo guardar', 'err');
+        if (/clave/i.test(r.error || '')) logout();
+      }
+    } catch (e) { setStatus('Sin conexión: no se guardó', 'err'); }
+    saving = false;
+    if (again) { again = false; return pushNow(); }
+    return ok;
+  }
+
+  async function loadOwner() {
+    const r = await api({ accion: 'cargar', clave });
+    if (!r.ok) throw new Error(r.error || 'Error');
+    rev = r.rev; items = (r.marcadores || []).map(normItem); pages = (r.paginas || []).map(normPage);
+    mode = 'owner'; setStatus('Conectado a la planilla', 'ok');
+    if (view !== 'all' && !pages.some(p => p.id === view)) view = 'all';
+    render();
+  }
+
+  function rememberedClave() {
+    try { return localStorage.getItem(KEY_CLAVE) || sessionStorage.getItem(KEY_CLAVE) || ''; } catch (e) { return ''; }
+  }
+  function logout() {
+    ls.del(KEY_CLAVE); clave = ''; items = []; pages = [];
+    location.href = location.pathname;
+  }
+
+  /* ---------------- utilidades ---------------- */
+  function platformOf(url) {
+    try {
+      const h = new URL(url).hostname;
+      if (h.endsWith('github.io')) return 'pages';
+      if (h === 'github.com' || h.endsWith('.github.com')) return 'gh';
+      if (h.endsWith('vercel.app')) return 'vercel';
+      return 'web';
+    } catch (e) { return 'web'; }
+  }
+  const PLAT = { pages: 'Pages', gh: 'GitHub', vercel: 'Vercel', web: 'Web' };
+  function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; } }
+  function guessName(url) {
+    try {
+      const u = new URL(url); const parts = u.pathname.split('/').filter(Boolean);
+      let n = parts.length ? parts[parts.length - 1] : u.hostname.split('.')[0];
+      if (u.hostname === 'github.com' && parts[1]) n = parts[1];
+      return decodeURIComponent(n).replace(/[-_]+/g, ' ').replace(/\.html?$/, '').replace(/^\w/, c => c.toUpperCase());
+    } catch (e) { return url; }
+  }
+  function normUrl(u) { u = u.trim(); return /^https?:\/\//i.test(u) ? u : 'https://' + u; }
+  function iconFor(it) { return (it.icon && it.icon.trim()) || (it.name || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+  function tilt(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return ((Math.abs(h) % 7) - 3) * 0.7; }
+  function slugify(t) {
+    let base = String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'pagina';
+    let s = base, n = 2;
+    while (pages.some(p => p.slug === s)) s = base + '-' + n++;
+    return s;
+  }
+  function parseTags(s) { return [...new Set(String(s).split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean))]; }
+  function linkify(text) {
+    return esc(text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+  const baseUrl = () => location.origin + location.pathname;
+  const editable = () => mode === 'local' || mode === 'owner';
+
+  let tt;
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); toast('Link copiado'); }
+    catch (e) { prompt('Copiar este link:', text); }
+  }
+
+  /* ---------------- render ---------------- */
+  function noteHTML(it) {
+    const p = platformOf(it.url);
+    const tags = (it.tags || []).map(t => `<button type="button" data-tag="${esc(t)}">#${esc(t)}</button>`).join('');
+    return `<div class="note" data-id="${esc(it.id)}" style="--c:var(--n-${esc(it.color || 'yellow')});--r:${tilt(it.id)}deg">
+      <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" title="${esc(it.url)}" aria-label="${esc(it.name)}"></a>
+      ${it.fav ? '<span class="fav-star" aria-label="Favorita">⭐</span>' : ''}
+      <div class="top"><span class="icon">${esc(iconFor(it))}</span><h3>${esc(it.name)}</h3></div>
+      ${it.desc ? `<p>${esc(it.desc)}</p>` : ''}
+      ${tags ? `<div class="ntags">${tags}</div>` : ''}
+      <div class="foot"><span class="tag ${p}">${PLAT[p]}</span><span class="tag host">${esc(hostOf(it.url))}</span></div>
+      <div class="tools">
+        ${it.note ? `<button type="button" data-note="${esc(it.id)}" aria-label="Ver anotaciones" title="Anotaciones${it.notePrivate && editable() ? ' (privadas)' : ''}">📝</button>` : ''}
+        ${editable() ? `<button type="button" class="edit" data-edit="${esc(it.id)}" aria-label="Editar ${esc(it.name)}">✎</button>` : ''}
+      </div>
+    </div>`;
+  }
+  function group(title, list) {
+    const hl = `var(--n-${list[0] ? list[0].color || 'yellow' : 'yellow'})`;
+    return `<section class="group" style="--hl:${hl}"><h2>${esc(title)}<span class="count">(${list.length})</span></h2>
+      <div class="notes">${list.map(noteHTML).join('')}</div></section>`;
+  }
+
+  function currentList() {
+    const q = ($('#q')?.value || '').trim().toLowerCase();
+    let list = items;
+    if (editable() && view !== 'all') list = list.filter(i => i.pages.includes(view));
+    if (platform !== 'all') list = list.filter(i => platformOf(i.url) === platform);
+    if (tagSel.size) list = list.filter(i => [...tagSel].every(t => i.tags.includes(t)));
+    if (q) list = list.filter(i => [i.name, i.desc, i.note, i.cat, i.url, i.tags.join(' ')].join(' ').toLowerCase().includes(q));
+    return list;
+  }
+  function baseList() { return editable() && view !== 'all' ? items.filter(i => i.pages.includes(view)) : items; }
+
+  function renderNotes() {
+    const list = currentList();
+    const byName = (a, b) => a.name.localeCompare(b.name, 'es');
+    const q = ($('#q')?.value || '').trim();
+    let html = '';
+    if (!list.length) {
+      html = `<p class="empty">${baseList().length ? 'Nada por acá… probá otra búsqueda o etiqueta' : (editable() ? (view === 'all' ? 'El cuaderno está vacío. ¡Pegá la primera nota!' : 'Esta página está vacía. Agregale notas desde «+ Pegar nota» o editando una nota existente.') : 'Esta página todavía no tiene recursos.')}</p>`;
+    } else if (sort === 'cat') {
+      const favs = list.filter(i => i.fav).sort(byName);
+      if (favs.length && !q && !tagSel.size && view === 'all' && editable()) html += group('⭐ Favoritas', favs);
+      const cats = [...new Set(list.map(i => i.cat || 'Sin categoría'))].sort((a, b) => a.localeCompare(b, 'es'));
+      for (const c of cats) html += group(c, list.filter(i => (i.cat || 'Sin categoría') === c).sort(byName));
+    } else {
+      const sorted = [...list].sort(
+        sort === 'az' ? byName :
+        sort === 'opened' ? (a, b) => (opened[b.id] || 0) - (opened[a.id] || 0) || byName(a, b) :
+        (a, b) => (b.added || 0) - (a.added || 0));
+      html = group({ az: 'De la A a la Z', opened: 'Abiertas hace poco', added: 'Agregadas hace poco' }[sort], sorted);
+    }
+    $('#board').innerHTML = html;
+  }
+
+  function renderTagCloud() {
+    const counts = {};
+    baseList().forEach(i => i.tags.forEach(t => counts[t] = (counts[t] || 0) + 1));
+    const tags = Object.keys(counts).sort((a, b) => a.localeCompare(b, 'es'));
+    for (const t of [...tagSel]) if (!counts[t]) tagSel.delete(t);
+    const max = Math.max(1, ...Object.values(counts));
+    $('#tagcloud').innerHTML = tags.length ? `<span class="lbl">Etiquetas:</span>` + tags.map(t =>
+      `<button class="tc" data-tc="${esc(t)}" aria-pressed="${tagSel.has(t)}" style="font-size:${(1 + (counts[t] / max) * .45).toFixed(2)}rem">#${esc(t)} <small>${counts[t]}</small></button>`).join('')
+      + (tagSel.size ? ` <button class="linkbtn" id="clearTags">quitar filtro</button>` : '') : '';
+  }
+  function renderFilters() {
+    const counts = { all: baseList().length };
+    baseList().forEach(i => { const p = platformOf(i.url); counts[p] = (counts[p] || 0) + 1; });
+    if (!counts[platform]) platform = 'all';
+    $('#filters').innerHTML = ['all', 'pages', 'gh', 'vercel', 'web'].filter(k => counts[k]).map(k =>
+      `<button class="chip" data-plat="${k}" aria-pressed="${platform === k}">${k === 'all' ? 'Todas' : PLAT[k]} · ${counts[k]}</button>`).join('');
+  }
+  function refresh() { renderTagCloud(); renderFilters(); renderNotes(); }
+
+  function toolbarHTML(withActions) {
+    return `
+      <div class="toolbar">
+        <input class="search" id="q" type="search" placeholder="Buscar en nombres, notas y etiquetas…  ( / )" aria-label="Buscar">
+        <div class="sorts" role="group" aria-label="Ordenar">
+          ${[['cat', 'Por categoría'], ['az', 'A–Z'], ['opened', 'Abiertas hace poco'], ['added', 'Agregadas hace poco']].map(([k, l]) =>
+            `<button class="chip" data-sort="${k}" aria-pressed="${sort === k}">${l}</button>`).join('')}
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:0">
+        <div class="filters" id="filters" role="group" aria-label="Filtrar por plataforma"></div>
+        ${withActions ? `<div class="actions" style="margin-left:auto">
+          <button class="btn" id="addBtn">+ Pegar nota</button>
+          <button class="btn ghost" id="bmBtn" title="Botón para guardar desde otras webs">📌 Guardar desde webs</button>
+          <button class="btn ghost" id="exportBtn">Exportar</button>
+          <button class="btn ghost" id="importBtn">Restaurar</button>
+        </div>` : ''}
+      </div>
+      <div class="tagcloud" id="tagcloud"></div>
+      <div id="board"></div>`;
+  }
+
+  function render() {
+    if (mode === 'index') return renderIndex();
+    if (mode === 'public') return renderPublic();
+    // dueña (local u owner)
+    $('#title').firstChild.textContent = 'Mi cuaderno de recursos';
+    $('#subtitle').textContent = 'proyectos en GitHub, Pages y Vercel';
+    document.title = 'Mi Cuaderno de Recursos';
+    const pg = pages.find(p => p.id === view);
+    const tabs = `<div class="tabs-pages" role="tablist" aria-label="Páginas del cuaderno">
+      <button class="sep" role="tab" data-view="all" aria-selected="${view === 'all'}">📚 Todo <small>(${items.length})</small></button>
+      ${pages.map(p => `<button class="sep" role="tab" data-view="${esc(p.id)}" aria-selected="${view === p.id}" style="--c:var(--n-${esc(p.color)})">
+        <span class="vis" title="${p.visibility === 'publica' ? 'Compartida' : 'Privada'}">${p.visibility === 'publica' ? '🌐' : '🔒'}</span>${esc(p.title)}</button>`).join('')}
+      <button class="sep add" id="newPage">+ página</button>
+    </div>`;
+    let head = '';
+    if (pg) {
+      const pub = pg.visibility === 'publica';
+      head = `<div class="page-head">
+        <h2>${esc(pg.title)}</h2>
+        <button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>
+        ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}" target="_blank" rel="noopener">ver como visitante</a>` : ''}
+        <button class="linkbtn" id="editPage">editar página</button>
+        ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
+      </div>
+      ${pub && mode === 'local' ? `<div class="notice">Para compartir esta página hay que conectar la planilla de Google (ver LEEME.md). Mientras tanto, todo queda solo en este navegador.</div>` : ''}`;
+    }
+    const localCount = mode === 'owner' && !items.length && !pages.length ? loadLocal().items.length : 0;
+    const migrate = mode === 'owner' && !items.length && !pages.length
+      ? (localCount
+        ? `<div class="notice">La planilla está vacía. <button class="btn small" id="migrateBtn">Subir las ${localCount} notas de este navegador</button></div>`
+        : `<div class="notice">La planilla está vacía. Para cargar tus notas, tocá «Restaurar» y elegí el archivo <b>notas-iniciales.json</b>.</div>`) : '';
+    app.innerHTML = tabs + migrate + head + toolbarHTML(true) +
+      `<footer class="foot"><span>${mode === 'owner' ? 'Conectado a Google Sheets' : 'Guardado solo en este navegador'}</span>
+       ${mode === 'owner' ? '<button class="linkbtn" id="logoutBtn">Salir</button>' : ''}</footer>`;
+    refresh();
+  }
+
+  function renderIndex() {
+    $('#title').firstChild.textContent = 'Cuaderno de recursos';
+    $('#subtitle').textContent = AUTORA ? `de ${AUTORA}` : 'páginas compartidas';
+    app.innerHTML = `
+      <ul class="index-list">${pubIndex.length ? pubIndex.map(p =>
+        `<li><a href="?p=${encodeURIComponent(p.slug)}"><span class="sw" style="--c:var(--n-${esc(p.color)})"></span>${esc(p.title)}${p.desc ? ` <small>— ${esc(p.desc)}</small>` : ''}</a></li>`).join('')
+        : '<li class="empty">Todavía no hay páginas compartidas.</li>'}</ul>
+      <footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
+  }
+
+  function renderPublic() {
+    $('#title').firstChild.textContent = pubPage.title;
+    $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
+    document.title = pubPage.title + ' · Cuaderno de recursos';
+    app.innerHTML = toolbarHTML(false) +
+      `<footer class="foot"><a class="linkbtn" href="${esc(baseUrl())}">Otras páginas compartidas</a><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
+    refresh();
+  }
+
+  /* ---------------- eventos ---------------- */
+  app.addEventListener('click', e => {
+    const t = e.target;
+    const tagBtn = t.closest('[data-tag]');
+    if (tagBtn) { e.preventDefault(); tagSel.clear(); tagSel.add(tagBtn.dataset.tag); refresh(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    const tc = t.closest('[data-tc]');
+    if (tc) { const k = tc.dataset.tc; tagSel.has(k) ? tagSel.delete(k) : tagSel.add(k); refresh(); return; }
+    if (t.closest('#clearTags')) { tagSel.clear(); refresh(); return; }
+    const ed = t.closest('[data-edit]');
+    if (ed) { openNoteDialog(items.find(i => i.id === ed.dataset.edit)); return; }
+    const nv = t.closest('[data-note]');
+    if (nv) { showNote(items.find(i => i.id === nv.dataset.note)); return; }
+    const cover = t.closest('a.cover');
+    if (cover) { const id = cover.parentElement.dataset.id; opened[id] = now(); ls.set(KEY_OPEN, JSON.stringify(opened)); return; }
+    const sv = t.closest('[data-view]');
+    if (sv) { view = sv.dataset.view; tagSel.clear(); platform = 'all'; render(); return; }
+    const pl = t.closest('[data-plat]');
+    if (pl) { platform = pl.dataset.plat; refresh(); return; }
+    const so = t.closest('[data-sort]');
+    if (so) { sort = so.dataset.sort; ls.set(KEY_SORT, sort); app.querySelectorAll('[data-sort]').forEach(x => x.setAttribute('aria-pressed', x === so)); renderNotes(); return; }
+    if (t.closest('#addBtn')) return openNoteDialog(null);
+    if (t.closest('#bmBtn')) return openBookmarklet();
+    if (t.closest('#exportBtn')) return exportData();
+    if (t.closest('#importBtn')) return $('#importFile').click();
+    if (t.closest('#newPage')) return openPageDialog(null);
+    if (t.closest('#editPage')) return openPageDialog(pages.find(p => p.id === view));
+    if (t.closest('#toggleVis')) {
+      const pg = pages.find(p => p.id === view); if (!pg) return;
+      pg.visibility = pg.visibility === 'publica' ? 'privada' : 'publica';
+      persist(); render(); toast(pg.visibility === 'publica' ? 'Página compartida' : 'Página privada'); return;
+    }
+    if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}?p=${encodeURIComponent(pg.slug)}`); return; }
+    if (t.closest('#loginBtn')) return openLogin();
+    if (t.closest('#logoutBtn')) { if (confirm('¿Salir del cuaderno en este dispositivo?')) logout(); return; }
+    if (t.closest('#migrateBtn')) {
+      const local = loadLocal(); items = local.items; pages = local.pages;
+      pushNow(true).then(ok => { if (ok) { toast(`${items.length} notas subidas a la planilla`); render(); } }); return;
+    }
+  });
+  app.addEventListener('input', e => { if (e.target.id === 'q') renderNotes(); });
+  document.addEventListener('keydown', e => {
+    const q = $('#q');
+    if (e.key === '/' && q && document.activeElement !== q && !document.querySelector('dialog[open]') && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); q.focus(); }
+    if (e.key === 'Escape' && q && document.activeElement === q) { q.value = ''; renderNotes(); }
+  });
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
+    b.closest('dialog').close();
+    if (isPopup && b.closest('#dlg')) window.close();
+  }));
+
+  /* ---------------- diálogo de nota ---------------- */
+  let editing = null, dlgMode = 'one', chosenColor = 'yellow';
+  function colorPicker(el, current, onPick) {
+    el.innerHTML = COLORS.map(c => `<button type="button" data-color="${c}" style="background:var(--n-${c})" aria-label="${c}" aria-pressed="${c === current}"></button>`).join('');
+    el.onclick = e => { const b = e.target.closest('[data-color]'); if (!b) return; onPick(b.dataset.color); colorPicker(el, b.dataset.color, onPick); };
+  }
+  function setMode(m) {
+    dlgMode = m;
+    document.querySelectorAll('#modes [data-mode]').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === m));
+    $('#oneFields').hidden = m !== 'one'; $('#manyFields').hidden = m !== 'many'; $('#favWrap').hidden = m !== 'one';
+  }
+  $('#modes').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
+
+  function renderTagSuggest() {
+    const cur = new Set(parseTags($('#fTags').value));
+    const all = {}; items.forEach(i => i.tags.forEach(t => all[t] = (all[t] || 0) + 1));
+    const sug = Object.keys(all).filter(t => !cur.has(t)).sort((a, b) => all[b] - all[a]).slice(0, 14);
+    $('#tagSuggest').innerHTML = sug.map(t => `<button type="button" data-sug="${esc(t)}">+ ${esc(t)}</button>`).join('');
+  }
+  $('#tagSuggest').addEventListener('click', e => {
+    const b = e.target.closest('[data-sug]'); if (!b) return;
+    const cur = parseTags($('#fTags').value); cur.push(b.dataset.sug);
+    $('#fTags').value = cur.join(', ') + ', '; renderTagSuggest(); $('#fTags').focus();
+  });
+  $('#fTags').addEventListener('input', renderTagSuggest);
+
+  function openNoteDialog(it, prefill) {
+    editing = it || null;
+    $('#dlgTitle').textContent = it ? 'Editar nota' : (prefill ? 'Guardar en el cuaderno' : 'Nueva nota');
+    $('#modes').hidden = !!it || !!prefill;
+    setMode('one');
+    const src = it || prefill || {};
+    $('#fUrl').value = src.url || ''; $('#fName').value = src.name || ''; $('#fIcon').value = src.icon || '';
+    $('#fDesc').value = src.desc || ''; $('#fNote').value = src.note || ''; $('#fNotePriv').checked = !!src.notePrivate;
+    $('#fCat').value = src.cat || ''; $('#fFav').checked = !!src.fav; $('#fMany').value = '';
+    $('#fTags').value = (src.tags || []).join(', ');
+    const inPages = new Set(it ? it.pages : (view !== 'all' ? [view] : []));
+    $('#pagesWrap').hidden = !pages.length;
+    $('#pageChecks').innerHTML = pages.map(p => `<label class="check"><input type="checkbox" value="${esc(p.id)}" ${inPages.has(p.id) ? 'checked' : ''}> ${p.visibility === 'publica' ? '🌐' : '🔒'} ${esc(p.title)}</label>`).join('');
+    $('#cats').innerHTML = [...new Set(items.map(i => i.cat).filter(Boolean))].map(c => `<option value="${esc(c)}">`).join('');
+    chosenColor = src.color || COLORS[Math.floor(Math.random() * COLORS.length)];
+    colorPicker($('#colors'), chosenColor, c => chosenColor = c);
+    renderTagSuggest();
+    $('#delBtn').hidden = !it;
+    $('#dlg').showModal();
+    (prefill ? $('#fName') : $('#fUrl')).focus();
+  }
+  $('#fUrl').addEventListener('blur', () => { if (!$('#fName').value.trim() && $('#fUrl').value.trim()) $('#fName').value = guessName(normUrl($('#fUrl').value)); });
+  $('#delBtn').addEventListener('click', () => {
+    if (!editing || !confirm(`¿Despegar «${editing.name}» del cuaderno?`)) return;
+    items = items.filter(i => i !== editing); persist(); $('#dlg').close(); render(); toast('Nota despegada');
+  });
+  $('#form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const cat = $('#fCat').value.trim(), tags = parseTags($('#fTags').value);
+    const pgs = [...document.querySelectorAll('#pageChecks input:checked')].map(i => i.value);
+    if (dlgMode === 'many' && !editing) {
+      const lines = $('#fMany').value.split('\n').map(l => l.trim()).filter(Boolean);
+      let n = 0;
+      lines.forEach((l, i) => {
+        let name = '', url = l;
+        if (l.includes('|')) [name, url] = l.split('|').map(s => s.trim());
+        if (!url) return; url = normUrl(url);
+        items.push(normItem({ url, name: name || guessName(url), cat, tags, pages: pgs, color: chosenColor, added: now() + i })); n++;
+      });
+      if (!n) { toast('Pegá al menos una dirección'); return; }
+      toast(`${n} nota${n > 1 ? 's' : ''} pegada${n > 1 ? 's' : ''}`);
+    } else {
+      const raw = $('#fUrl').value.trim();
+      if (!raw) { toast('Falta la dirección'); $('#fUrl').focus(); return; }
+      const url = normUrl(raw);
+      const data = { url, name: $('#fName').value.trim() || guessName(url), icon: $('#fIcon').value.trim(),
+        desc: $('#fDesc').value.trim(), note: $('#fNote').value.trim(), notePrivate: $('#fNotePriv').checked,
+        tags, cat, pages: pgs, color: chosenColor, fav: $('#fFav').checked };
+      if (editing) { Object.assign(editing, data); toast('Nota actualizada'); }
+      else { items.push(normItem({ ...data, added: now() })); toast('Nota pegada'); }
+    }
+    $('#dlg').close(); render();
+    if (isPopup) {
+      if (mode === 'owner') { clearTimeout(saveTimer); setStatus('Guardando…', 'wait'); const ok = await pushNow(); if (ok) setTimeout(() => window.close(), 700); }
+      else { await persist(); setTimeout(() => window.close(), 700); }
+    } else persist();
+  });
+
+  function showNote(it) {
+    if (!it) return;
+    $('#nvTitle').textContent = it.name; $('#nvBody').innerHTML = linkify(it.note);
+    $('#nvOpen').href = it.url; $('#dlgNote').showModal();
+  }
+
+  /* ---------------- diálogo de página ---------------- */
+  let editingPage = null, pageColor = 'yellow';
+  function openPageDialog(pg) {
+    editingPage = pg || null;
+    $('#pageDlgTitle').textContent = pg ? 'Editar página' : 'Nueva página';
+    $('#pTitle').value = pg?.title || ''; $('#pDesc').value = pg?.desc || '';
+    document.querySelector(`input[name=pVis][value=${pg?.visibility || 'privada'}]`).checked = true;
+    pageColor = pg?.color || COLORS[pages.length % COLORS.length];
+    colorPicker($('#pColors'), pageColor, c => pageColor = c);
+    $('#pDel').hidden = !pg;
+    $('#dlgPage').showModal(); $('#pTitle').focus();
+  }
+  $('#formPage').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = $('#pTitle').value.trim(); if (!title) return;
+    const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, visibility: document.querySelector('input[name=pVis]:checked').value };
+    if (editingPage) Object.assign(editingPage, data);
+    else { const p = normPage({ ...data, id: uid(), slug: slugify(title) }); pages.push(p); view = p.id; }
+    $('#dlgPage').close(); persist(); render(); toast(editingPage ? 'Página actualizada' : 'Página creada');
+  });
+  $('#pDel').addEventListener('click', () => {
+    if (!editingPage) return;
+    const n = items.filter(i => i.pages.includes(editingPage.id)).length;
+    if (!confirm(`¿Borrar la página «${editingPage.title}»?\nLas ${n} notas que tiene NO se borran: siguen en «Todo».`)) return;
+    const id = editingPage.id;
+    pages = pages.filter(p => p.id !== id); items.forEach(i => i.pages = i.pages.filter(x => x !== id));
+    view = 'all'; $('#dlgPage').close(); persist(); render(); toast('Página borrada');
+  });
+
+  /* ---------------- entrar ---------------- */
+  let afterLogin = null;
+  function openLogin(then) { afterLogin = then || null; $('#lErr').textContent = ''; $('#lClave').value = ''; $('#dlgLogin').showModal(); $('#lClave').focus(); }
+  $('#formLogin').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('#lErr').textContent = 'Verificando…';
+    clave = $('#lClave').value;
+    try {
+      await loadOwner();
+      try { ($('#lRemember').checked ? localStorage : sessionStorage).setItem(KEY_CLAVE, clave); } catch (err) {}
+      $('#dlgLogin').close();
+      if (params.get('p')) history.replaceState(null, '', location.pathname + (addReq ? location.search : ''));
+      afterLogin && afterLogin();
+    } catch (err) { $('#lErr').textContent = err.message === 'Clave incorrecta' ? 'Clave incorrecta' : 'No se pudo conectar: ' + err.message; }
+  });
+
+  /* ---------------- bookmarklet ---------------- */
+  function openBookmarklet() {
+    const code = `javascript:(function(){var w=window,d=document,s='';try{s=String(w.getSelection()).trim().slice(0,1500)}catch(e){}w.open('${baseUrl()}?add='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(d.title)+'&s='+encodeURIComponent(s),'cuaderno','width=620,height=780,scrollbars=yes')})();`;
+    $('#bmLink').setAttribute('href', code);
+    $('#bmHint').textContent = mode === 'local'
+      ? 'Ojo: sin la planilla conectada, lo que se guarde así queda en este navegador.'
+      : 'Si la ventanita pide la clave, marcar «Recordar en este dispositivo» para que no la vuelva a pedir.';
+    $('#dlgBm').showModal();
+  }
+  $('#bmLink').addEventListener('click', e => { e.preventDefault(); toast('Arrastralo a la barra de marcadores'); });
+
+  /* ---------------- exportar / restaurar ---------------- */
+  function exportData() {
+    const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), pages, items }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `cuaderno-recursos-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); toast('Copia descargada');
+  }
+  $('#importFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const list = Array.isArray(data) ? data : data.items;
+      if (!Array.isArray(list)) throw new Error();
+      if (!confirm(`Se van a cargar ${list.length} notas${data.pages ? ` y ${data.pages.length} páginas` : ''} y reemplazar las actuales. ¿Seguir?`)) return;
+      items = list.filter(i => i && i.url).map(normItem);
+      if (Array.isArray(data.pages)) pages = data.pages.map(normPage);
+      view = 'all'; persist(); render(); toast('Cuaderno restaurado');
+    } catch (err) { toast('Ese archivo no es una copia válida'); }
+    e.target.value = '';
+  });
+
+  /* ---------------- inicio ---------------- */
+  function handleAdd() {
+    if (!addReq) return;
+    const existing = items.find(i => urlKey(i.url) === urlKey(addReq.url));
+    if (existing) { openNoteDialog(existing); toast('Ya estaba en el cuaderno'); }
+    else openNoteDialog(null, { url: addReq.url, name: addReq.title.slice(0, 90), note: addReq.sel ? `«${addReq.sel}»` : '' });
+    if (!isPopup) history.replaceState(null, '', location.pathname);
+  }
+
+  async function start() {
+    $('#today').textContent = new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (!API_URL) {
+      const l = loadLocal(); items = l.items; pages = l.pages; mode = 'local';
+      render(); handleAdd(); return;
+    }
+    const slug = params.get('p');
+    clave = rememberedClave();
+    if (clave && !slug) {
+      try { await loadOwner(); handleAdd(); return; }
+      catch (e) { if (/clave/i.test(e.message)) ls.del(KEY_CLAVE); clave = ''; }
+    }
+    try {
+      const r = await api({ accion: 'publico', p: slug || '' });
+      pubIndex = r.paginas || [];
+      if (slug) {
+        if (!r.ok) { mode = 'index'; render(); app.insertAdjacentHTML('afterbegin', `<div class="notice">${esc(r.error)}</div>`); return; }
+        pubPage = r.pagina; items = (r.marcadores || []).map(normItem); mode = 'public';
+      } else mode = 'index';
+      render();
+      if (addReq) openLogin(handleAdd);
+    } catch (e) {
+      app.innerHTML = `<p class="empty">No se pudo conectar con el cuaderno. Revisá la conexión y recargá la página.</p>`;
+    }
+  }
+  start();
+})();
+</script>
+</body>
+</html>
