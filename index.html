@@ -47,7 +47,7 @@
     content: ""; position: absolute; top: 0; bottom: 0; left: 26px; width: 22px;
     background: radial-gradient(circle at 11px 50%, var(--desk) 0 9px, rgba(0,0,0,.08) 9.5px, transparent 10.5px) 0 40px / 22px 180px repeat-y;
   }
-
+ 
   header.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 24px; justify-content: space-between; min-height: 74px; }
   h1 { font-family: var(--script); font-weight: 700; color: var(--ink-blue); font-size: clamp(2.4rem, 6vw, 3.4rem); line-height: 1; margin: 0; }
   h1 small { display: block; font-family: var(--hand); font-size: .36em; color: var(--ink-soft); font-weight: 400; margin-top: 6px; }
@@ -60,7 +60,7 @@
   .status[data-k="err"] { color: var(--err); }
   .status[data-k="err"] .dot { background: var(--err); }
   .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--ink-blue); text-decoration: underline; cursor: pointer; }
-
+ 
   /* separadores (páginas) */
   .tabs-pages { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; border-bottom: 2px solid var(--ink-blue); padding-left: 4px; }
   .sep {
@@ -73,7 +73,7 @@
   .sep[aria-selected="true"] { opacity: 1; border-color: var(--ink-blue); border-bottom: 2px solid var(--c, #fff); background: var(--c, #fff); font-weight: 700; }
   .sep.add { background: transparent; border-style: dashed; color: var(--ink-soft); }
   .sep .vis { font-size: .85em; }
-
+ 
   .page-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 14px 0 4px; }
   .page-head h2 { font-family: var(--script); font-size: 2.3rem; margin: 0; color: var(--ink); }
   .page-head p { margin: 0; flex-basis: 100%; font-family: var(--hand); font-size: 1.15rem; color: var(--ink-soft); }
@@ -85,7 +85,7 @@
   .pill.priv { background: #f4f1ea; }
   .notice { font-family: var(--hand); font-size: 1.05rem; background: #fff8d6; border: 1.5px dashed #e3c96a; padding: 8px 12px; border-radius: 4px; margin: 10px 0; }
   .notice .btn { margin-left: 8px; }
-
+ 
   .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 6px; }
   .search { flex: 1 1 220px; min-width: 0; background: transparent; border: 0; border-bottom: 2px solid var(--ink-blue); color: var(--ink); font-family: var(--hand); font-size: 1.25rem; padding: 4px; outline: none; }
   .search::placeholder { color: var(--ink-soft); opacity: .7; }
@@ -98,7 +98,7 @@
   .btn.ghost { background: var(--paper); color: var(--ink-soft); box-shadow: none; border: 1.5px dashed var(--line); }
   .btn.ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
   .btn.small { font-size: 1rem; padding: 3px 10px; }
-
+ 
   /* nube de etiquetas */
   .tagcloud { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin: 4px 0 6px; font-family: var(--hand); }
   .tagcloud .lbl { color: var(--ink-soft); font-size: 1rem; margin-right: 2px; }
@@ -107,12 +107,12 @@
   .tc[aria-pressed="true"] { background: var(--ink-blue); color: #fff; }
   .tc small { color: var(--ink-soft); font-size: .75em; }
   .tc[aria-pressed="true"] small { color: #dbe6f7; }
-
+ 
   section.group { margin-top: 26px; }
   section.group h2 { font-family: var(--script); font-weight: 700; font-size: 2.1rem; margin: 0 0 16px; display: inline-block; position: relative; color: var(--ink); z-index: 0; }
   section.group h2::after { content: ""; position: absolute; left: -6px; right: -10px; bottom: 4px; height: 12px; z-index: -1; background: var(--hl, #fff1a8); opacity: .9; border-radius: 3px; transform: rotate(-1deg); }
   section.group h2 .count { font-size: .55em; color: var(--ink-soft); margin-left: 6px; }
-
+ 
   .notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 26px 22px; }
   .note {
     position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 150px; padding: 22px 16px 14px;
@@ -145,10 +145,10 @@
   .tools .edit { opacity: 0; transition: opacity .15s; }
   .note:hover .edit, .note:focus-within .edit { opacity: 1; }
   @media (hover: none) { .tools .edit { opacity: .8; } }
-
+ 
   .empty { font-family: var(--script); font-size: 1.9rem; color: var(--ink-soft); text-align: center; margin: 60px 0; }
   .loading { font-family: var(--script); font-size: 2rem; color: var(--ink-soft); text-align: center; margin: 80px 0; }
-
+ 
   /* índice público */
   .index-list { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 4px; }
   .index-list a { display: flex; gap: 12px; align-items: baseline; text-decoration: none; color: var(--ink); font-family: var(--hand); font-size: 1.4rem; padding: 2px 6px; border-radius: 4px; line-height: var(--lh); }
@@ -156,7 +156,7 @@
   .index-list .sw { width: 14px; height: 14px; border-radius: 3px; background: var(--c); flex: none; align-self: center; border: 1px solid rgba(0,0,0,.1); }
   .index-list small { color: var(--ink-soft); font-size: .8em; }
   footer.foot { margin-top: 48px; font-family: var(--hand); color: var(--ink-soft); font-size: 1rem; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
-
+ 
   /* diálogos */
   dialog { border: 0; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: #fffdf3; color: var(--ink); border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,.5); background-image: repeating-linear-gradient(transparent 0 31px, #d9e6f2 31px 32px); }
   dialog::backdrop { background: rgba(30,35,50,.55); }
@@ -188,11 +188,46 @@
   .note-view a { color: var(--ink-blue); }
   .bm { display: inline-block; margin: 10px 0; padding: 8px 16px; background: var(--n-yellow); color: var(--ink); border: 2px dashed #d9b84a; border-radius: 4px; font-family: var(--hand); font-size: 1.2rem; text-decoration: none; cursor: grab; }
   ol.steps { font-family: var(--hand); font-size: 1.1rem; padding-left: 22px; line-height: 32px; margin: 4px 0; }
+  /* incrustados */
+  dialog.wide { width: min(1100px, calc(100vw - 24px)); }
+  .embed-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; flex-wrap: wrap; }
+  .embed-head h2 { font-family: var(--script); font-size: 1.8rem; margin: 0; }
+  .embed-body { padding: 0 16px 16px; }
+  .embed-frame { width: 100%; height: min(72vh, 680px); border: 1px solid var(--line); border-radius: 4px; background: #fff; display: block; }
+  /* pizarrón */
+  .pz { margin: 18px 0 8px; }
+  .pz-consigna { background: #fff; border: 2px solid var(--ink-blue); border-radius: 6px; padding: 12px 16px; font-family: var(--hand); font-size: 1.25rem; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 3px 4px 0 rgba(29,78,160,.12); }
+  .pz-consigna b { font-family: var(--script); font-size: 1.6rem; color: var(--ink-blue); display: block; white-space: normal; }
+  .pz-consigna a { color: var(--ink-blue); }
+  .pz-ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 4px; }
+  .pill.on { background: #e3f3ea; border-color: #9cc9ae; color: var(--ok); }
+  .pz-count { font-family: var(--hand); font-size: 1.1rem; color: var(--ink-soft); margin: 8px 0; }
+  .pz-count b { color: var(--ink); }
+  .missing { color: var(--err); }
+  .pz-wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 12px; }
+  .pz-card { background: var(--c, var(--n-yellow)); padding: 14px 14px 12px; box-shadow: 0 1px 1px rgba(0,0,0,.08), 2px 6px 12px rgba(60,50,30,.18); border-radius: 2px 2px 12px 2px; transform: rotate(var(--r, 0deg)); display: flex; flex-direction: column; gap: 6px; }
+  .pz-card .who { font-family: var(--hand); font-weight: 700; font-size: 1.2rem; }
+  .pz-card .when { font-size: .75rem; color: var(--ink-soft); }
+  .pz-card .txt { font-family: var(--hand); font-size: 1.12rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; }
+  .pz-card.mine { outline: 3px solid var(--ink-blue); outline-offset: 2px; }
+  .grade { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .grade input[type=text] { max-width: 120px; font-size: .9rem; padding: 5px 8px; }
+  .grade textarea { min-height: 54px; font-size: .9rem; padding: 5px 8px; }
+  .pz-card .del { align-self: flex-end; font-size: .9rem; }
+  .pz-form { background: #fff; border: 1.5px solid var(--line); border-radius: 6px; padding: 12px 16px; margin-top: 14px; }
+  .pz-form select { font-family: var(--hand); font-size: 1.15rem; padding: 6px 8px; border: 1.5px solid #c9c3b0; border-radius: 4px; background: #fff; width: 100%; max-width: 380px; }
+  .pz-form textarea { min-height: 120px; font-family: var(--hand); font-size: 1.15rem; }
+  .pz-msg { font-family: var(--hand); font-size: 1.1rem; margin-top: 8px; min-height: 1.2em; }
+  .pz-msg.ok { color: var(--ok); }
+  .pz-msg.err { color: var(--err); }
+  .feedback { background: #e9f4ff; border-left: 4px solid var(--ink-blue); padding: 8px 12px; margin-top: 12px; font-family: var(--hand); font-size: 1.15rem; white-space: pre-wrap; }
+  .pagetype { display: flex; gap: 4px 16px; flex-wrap: wrap; }
+  h2.mat { font-family: var(--script); font-size: 1.9rem; margin: 26px 0 0; }
   [hidden] { display: none !important; }
-
+ 
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
   .toast.show { opacity: 1; }
-
+ 
   @media (max-width: 600px) {
     body { padding: 8px 6px; }
     .board { padding: 16px 16px 60px 52px; background-image:
@@ -218,7 +253,7 @@
   </header>
   <div id="app"><p class="loading">Abriendo el cuaderno…</p></div>
 </main>
-
+ 
 <!-- Nota / marcador -->
 <dialog id="dlg">
   <form class="sheet" id="form">
@@ -236,6 +271,9 @@
       </div>
       <label for="fDesc">Descripción corta</label>
       <input type="text" id="fDesc" placeholder="Para qué sirve (se ve en la nota)">
+      <label for="fEmbed">Contenido para incrustar (opcional)</label>
+      <input type="text" id="fEmbed" placeholder="Video de YouTube, Google Forms/Docs/Slides, Genially, Wordwall… o un código &lt;iframe&gt;">
+      <p class="hint">Se abre dentro del cuaderno con el botón ▶. Algunos sitios no permiten mostrarse dentro de otra página; en ese caso, usar «Abrir en pestaña nueva».</p>
       <label for="fNote">Anotaciones</label>
       <textarea id="fNote" placeholder="Ideas, con qué grupo lo uso, qué mejorar, citas de la página…"></textarea>
       <label class="check"><input type="checkbox" id="fNotePriv"> Anotación privada (no se ve en páginas compartidas)</label>
@@ -267,7 +305,7 @@
     </div>
   </form>
 </dialog>
-
+ 
 <!-- Página del cuaderno -->
 <dialog id="dlgPage">
   <form class="sheet" id="formPage">
@@ -276,9 +314,24 @@
     <input type="text" id="pTitle" placeholder="Recursos para 2do BT, Robótica en el liceo…" required>
     <label for="pDesc">Descripción (opcional)</label>
     <input type="text" id="pDesc" placeholder="Se muestra arriba de la página">
+    <label>Tipo de página</label>
+    <div class="pagetype">
+      <label class="check"><input type="radio" name="pType" value="recursos" checked> 📚 Recursos</label>
+      <label class="check"><input type="radio" name="pType" value="pizarron"> 🧑‍🏫 Pizarrón (los estudiantes responden)</label>
+    </div>
+    <div id="pzFields" hidden>
+      <label for="pPrompt">Consigna</label>
+      <textarea id="pPrompt" placeholder="Por ejemplo: ¿Qué diferencia hay entre un array y un ArrayList? Dar un ejemplo."></textarea>
+      <label for="pRoster">Lista del grupo (un nombre por línea)</label>
+      <textarea id="pRoster" placeholder="Ana Pérez&#10;Bruno Silva&#10;Carla Gómez"></textarea>
+      <label class="check"><input type="checkbox" id="pAnon"> Al mostrar las respuestas, que los compañeros las vean sin nombre</label>
+      <p class="hint">Un pizarrón siempre es una página compartida. Las respuestas empiezan ocultas: cada estudiante ve solo la suya hasta que se muestren a todos.</p>
+    </div>
+    <div id="visWrap">
     <label>Quién la puede ver</label>
     <label class="check"><input type="radio" name="pVis" value="privada" checked> 🔒 Privada: solo yo, con la clave</label>
     <label class="check"><input type="radio" name="pVis" value="publica"> 🌐 Compartida: cualquiera con el link</label>
+    </div>
     <label class="check" id="pNewLinkWrap" hidden><input type="checkbox" id="pNewLink"> Generar un link nuevo (el anterior deja de funcionar)</label>
     <label>Color del separador</label>
     <div class="colors" id="pColors"></div>
@@ -291,7 +344,7 @@
     </div>
   </form>
 </dialog>
-
+ 
 <!-- Ver anotación -->
 <dialog id="dlgNote">
   <div class="sheet">
@@ -303,7 +356,19 @@
     </div></div>
   </div>
 </dialog>
-
+ 
+<!-- Ver contenido incrustado -->
+<dialog id="dlgEmbed" class="wide">
+  <div class="embed-head">
+    <h2 id="emTitle"></h2>
+    <div style="display:flex;gap:8px">
+      <a class="btn plain small" id="emOpen" target="_blank" rel="noopener">Abrir en pestaña nueva</a>
+      <button type="button" class="btn small" data-close>Cerrar</button>
+    </div>
+  </div>
+  <div class="embed-body"><iframe id="emFrame" class="embed-frame" title="Contenido incrustado" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+</dialog>
+ 
 <!-- Entrar -->
 <dialog id="dlgLogin">
   <form class="sheet" id="formLogin">
@@ -318,7 +383,7 @@
     </div></div>
   </form>
 </dialog>
-
+ 
 <!-- Guardar desde otras webs -->
 <dialog id="dlgBm">
   <div class="sheet">
@@ -336,10 +401,10 @@
     <div class="dlg-actions"><div class="right"><button type="button" class="btn" data-close>Listo</button></div></div>
   </div>
 </dialog>
-
+ 
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <div class="toast" id="toast" role="status"></div>
-
+ 
 <!-- La configuración (URL de Apps Script y nombre) está en config.js -->
 <script src="config.js"></script>
 <script>
@@ -347,7 +412,7 @@
   const CFG = window.CUADERNO_CONFIG || {};
   const API_URL = String(CFG.API_URL || '').trim();
   const AUTORA = String(CFG.AUTORA || '').trim();
-
+ 
   const KEY = 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
   const KEY_PAGES = 'cuaderno-paginas-v1';
   const KEY_CLAVE = 'cuaderno-clave';
@@ -356,7 +421,7 @@
   const COLORS = ['yellow', 'pink', 'blue', 'green', 'orange', 'lilac'];
   const SEED_VERSION = 2;
   const SEED = [];
-
+ 
   const $ = s => document.querySelector(s);
   const app = $('#app');
   function uid() { return Math.random().toString(36).slice(2, 10); }
@@ -368,7 +433,7 @@
     del(k) { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} },
     json(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
   };
-
+ 
   /* ---------------- estado ---------------- */
   let mode = 'loading';      // 'local' | 'owner' | 'public' | 'index'
   let items = [], pages = [], rev = 0, clave = '';
@@ -381,22 +446,25 @@
   const params = new URLSearchParams(location.search);
   const addReq = params.get('add') ? { url: params.get('add'), title: params.get('t') || '', sel: params.get('s') || '' } : null;
   const isPopup = !!addReq && !!window.opener;
-
+ 
   function normItem(i) {
     return {
       id: i.id || uid(), url: i.url || '', name: i.name || '', icon: i.icon || '', cat: i.cat || '',
       desc: i.desc || '', note: i.note || '', notePrivate: !!i.notePrivate,
       tags: Array.isArray(i.tags) ? i.tags.filter(Boolean) : String(i.tags || '').split(',').map(t => t.trim()).filter(Boolean),
-      color: i.color || 'yellow', fav: !!i.fav, pages: Array.isArray(i.pages) ? i.pages : [], added: Number(i.added) || now()
+      color: i.color || 'yellow', fav: !!i.fav, pages: Array.isArray(i.pages) ? i.pages : [], added: Number(i.added) || now(),
+      embed: i.embed || ''
     };
   }
   function normPage(p) {
     return { id: p.id || uid(), title: p.title || 'Sin título', slug: p.slug || slugify(p.title || 'pagina'),
-      visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow' };
+      visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow',
+      type: p.type === 'pizarron' ? 'pizarron' : 'recursos', prompt: p.prompt || '', roster: p.roster || '',
+      open: p.open !== false, revealed: !!p.revealed, anonymous: !!p.anonymous, feedback: !!p.feedback };
   }
   function fromSeed(r, t) { const [url, name, icon, cat, desc, color, fav] = r; return normItem({ url, name, icon, cat, desc, color, fav, added: t }); }
   function urlKey(u) { return String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, ''); }
-
+ 
   function loadLocal() {
     const t = now();
     let list = ls.json(KEY, null);
@@ -410,7 +478,7 @@
     list.forEach(i => { if (i.opened && !opened[i.id]) opened[i.id] = i.opened; });
     return { items: list.map(normItem), pages: ls.json(KEY_PAGES, []).map(normPage) };
   }
-
+ 
   /* ---------------- servidor ---------------- */
   async function api(body) {
     const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
@@ -421,7 +489,7 @@
     $('#status').hidden = false; $('#status').dataset.k = kind || '';
     $('#statusTxt').textContent = txt;
   }
-
+ 
   let saveTimer = null, saving = false, again = false;
   function persist() {
     if (mode === 'local') {
@@ -457,7 +525,7 @@
     if (again) { again = false; return pushNow(); }
     return ok;
   }
-
+ 
   async function loadOwner() {
     const r = await api({ accion: 'cargar', clave });
     if (!r.ok) throw new Error(r.error || 'Error');
@@ -466,7 +534,7 @@
     if (view !== 'all' && !pages.some(p => p.id === view)) view = 'all';
     render();
   }
-
+ 
   function rememberedClave() {
     try { return localStorage.getItem(KEY_CLAVE) || sessionStorage.getItem(KEY_CLAVE) || ''; } catch (e) { return ''; }
   }
@@ -474,7 +542,7 @@
     ls.del(KEY_CLAVE); clave = ''; items = []; pages = [];
     location.href = location.pathname;
   }
-
+ 
   /* ---------------- utilidades ---------------- */
   function platformOf(url) {
     try {
@@ -510,15 +578,51 @@
     return esc(text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   }
   const baseUrl = () => location.origin + location.pathname;
+  function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
+  function rosterOf(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean); }
+ 
+  /* Convierte un link (o un código <iframe>) en una dirección que se pueda incrustar */
+  function embedUrl(raw) {
+    let u = String(raw || '').trim(); if (!u) return '';
+    const m = u.match(/<iframe[^>]+src=["']([^"']+)["']/i); if (m) u = m[1];
+    u = u.replace(/&amp;/g, '&');
+    let x; try { x = new URL(normUrl(u)); } catch (e) { return ''; }
+    if (!/^https?:$/.test(x.protocol)) return '';
+    const h = x.hostname.replace(/^(www|m)\./, '');
+    if (h === 'youtu.be') return 'https://www.youtube-nocookie.com/embed/' + x.pathname.slice(1);
+    if (h.endsWith('youtube.com')) {
+      const id = x.searchParams.get('v') || (x.pathname.match(/\/(shorts|embed|live)\/([\w-]+)/) || [])[2];
+      const t = parseInt(x.searchParams.get('t') || x.searchParams.get('start') || '', 10);
+      if (id) return 'https://www.youtube-nocookie.com/embed/' + id + (t ? '?start=' + t : '');
+    }
+    if (h === 'vimeo.com') { const id = x.pathname.split('/').filter(Boolean)[0]; if (/^\d+$/.test(id)) return 'https://player.vimeo.com/video/' + id; }
+    if (h === 'docs.google.com') {
+      let mm = x.pathname.match(/^(\/forms\/d\/e\/[^/]+)/);
+      if (mm) return 'https://docs.google.com' + mm[1] + '/viewform?embedded=true';
+      mm = x.pathname.match(/^(\/(document|spreadsheets|presentation)\/d\/[^/]+)/);
+      if (mm) return 'https://docs.google.com' + mm[1] + '/preview';
+    }
+    if (h === 'drive.google.com') { const id = (x.pathname.match(/\/file\/d\/([^/]+)/) || [])[1]; if (id) return 'https://drive.google.com/file/d/' + id + '/preview'; }
+    return x.href;
+  }
+  function openEmbed(it) {
+    const src = embedUrl(it.embed); if (!src) return;
+    $('#emTitle').textContent = it.name;
+    $('#emFrame').src = src;
+    const raw = String(it.embed).trim();
+    $('#emOpen').href = /^https?:/i.test(raw) ? raw : src;
+    $('#dlgEmbed').showModal();
+  }
+  $('#dlgEmbed').addEventListener('close', () => { $('#emFrame').src = 'about:blank'; });
   const editable = () => mode === 'local' || mode === 'owner';
-
+ 
   let tt;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
   async function copy(text) {
     try { await navigator.clipboard.writeText(text); toast('Link copiado'); }
     catch (e) { prompt('Copiar este link:', text); }
   }
-
+ 
   /* ---------------- render ---------------- */
   function noteHTML(it) {
     const p = platformOf(it.url);
@@ -531,6 +635,7 @@
       ${tags ? `<div class="ntags">${tags}</div>` : ''}
       <div class="foot"><span class="tag ${p}">${PLAT[p]}</span><span class="tag host">${esc(hostOf(it.url))}</span></div>
       <div class="tools">
+        ${it.embed ? `<button type="button" data-embed="${esc(it.id)}" aria-label="Ver ${esc(it.name)} aquí" title="Ver aquí">▶</button>` : ''}
         ${it.note ? `<button type="button" data-note="${esc(it.id)}" aria-label="Ver anotaciones" title="Anotaciones${it.notePrivate && editable() ? ' (privadas)' : ''}">📝</button>` : ''}
         ${editable() ? `<button type="button" class="edit" data-edit="${esc(it.id)}" aria-label="Editar ${esc(it.name)}">✎</button>` : ''}
       </div>
@@ -541,7 +646,7 @@
     return `<section class="group" style="--hl:${hl}"><h2>${esc(title)}<span class="count">(${list.length})</span></h2>
       <div class="notes">${list.map(noteHTML).join('')}</div></section>`;
   }
-
+ 
   function currentList() {
     const q = ($('#q')?.value || '').trim().toLowerCase();
     let list = items;
@@ -552,7 +657,7 @@
     return list;
   }
   function baseList() { return editable() && view !== 'all' ? items.filter(i => i.pages.includes(view)) : items; }
-
+ 
   function renderNotes() {
     const list = currentList();
     const byName = (a, b) => a.name.localeCompare(b.name, 'es');
@@ -574,7 +679,7 @@
     }
     $('#board').innerHTML = html;
   }
-
+ 
   function renderTagCloud() {
     const counts = {};
     baseList().forEach(i => i.tags.forEach(t => counts[t] = (counts[t] || 0) + 1));
@@ -592,8 +697,8 @@
     $('#filters').innerHTML = ['all', 'pages', 'gh', 'vercel', 'web'].filter(k => counts[k]).map(k =>
       `<button class="chip" data-plat="${k}" aria-pressed="${platform === k}">${k === 'all' ? 'Todas' : PLAT[k]} · ${counts[k]}</button>`).join('');
   }
-  function refresh() { renderTagCloud(); renderFilters(); renderNotes(); }
-
+  function refresh() { if (!$('#board')) return; renderTagCloud(); renderFilters(); renderNotes(); }
+ 
   function toolbarHTML(withActions) {
     return `
       <div class="toolbar">
@@ -615,8 +720,9 @@
       <div class="tagcloud" id="tagcloud"></div>
       <div id="board"></div>`;
   }
-
+ 
   function render() {
+    stopPz();
     if (mode === 'index') return renderIndex();
     if (mode === 'public') return renderPublic();
     // dueña (local u owner)
@@ -634,8 +740,8 @@
     if (pg) {
       const pub = pg.visibility === 'publica';
       head = `<div class="page-head">
-        <h2>${esc(pg.title)}</h2>
-        <button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>
+        <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : ''}${esc(pg.title)}</h2>
+        ${pg.type === 'pizarron' ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
         ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}" target="_blank" rel="noopener">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
         ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
@@ -647,12 +753,18 @@
       ? (localCount
         ? `<div class="notice">La planilla está vacía. <button class="btn small" id="migrateBtn">Subir las ${localCount} notas de este navegador</button></div>`
         : `<div class="notice">La planilla está vacía. Para cargar tus notas, tocá «Restaurar» y elegí el archivo <b>notas-iniciales.json</b>.</div>`) : '';
-    app.innerHTML = tabs + migrate + head + toolbarHTML(true) +
+    const isPz = pg && pg.type === 'pizarron';
+    app.innerHTML = tabs + migrate + head + (isPz ? '<div id="pzWrap"></div><h2 class="mat">Materiales</h2>' : '') + toolbarHTML(true) +
       `<footer class="foot"><span>${mode === 'owner' ? 'Conectado a Google Sheets' : 'Guardado solo en este navegador'}</span>
        ${mode === 'owner' ? '<button class="linkbtn" id="logoutBtn">Salir</button>' : ''}</footer>`;
     refresh();
+    if (isPz) {
+      renderPzOwner(pg);
+      loadResponses(pg.id);
+      if (mode === 'owner') pzTimer = setInterval(() => loadResponses(pg.id, true), 15000);
+    }
   }
-
+ 
   function renderIndex() {
     $('#title').firstChild.textContent = 'Cuaderno de recursos';
     $('#subtitle').textContent = AUTORA ? `de ${AUTORA}` : 'páginas compartidas';
@@ -660,16 +772,20 @@
       <p class="empty">Para ver una página compartida hace falta su link.</p>
       <footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
   }
-
+ 
   function renderPublic() {
     $('#title').firstChild.textContent = pubPage.title;
     $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
     document.title = pubPage.title + ' · Cuaderno de recursos';
-    app.innerHTML = toolbarHTML(false) +
+    const isPz = pubPage.type === 'pizarron';
+    app.innerHTML = (isPz ? '<div id="pzWrap"></div>' : '') +
+      (isPz && items.length ? '<h2 class="mat">Materiales</h2>' : '') +
+      (!isPz || items.length ? toolbarHTML(false) : '') +
       `<footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
     refresh();
+    if (isPz) { renderPzPublic(); pzTimer = setInterval(pollPublic, 20000); }
   }
-
+ 
   /* ---------------- eventos ---------------- */
   app.addEventListener('click', e => {
     const t = e.target;
@@ -680,6 +796,8 @@
     if (t.closest('#clearTags')) { tagSel.clear(); refresh(); return; }
     const ed = t.closest('[data-edit]');
     if (ed) { openNoteDialog(items.find(i => i.id === ed.dataset.edit)); return; }
+    const em = t.closest('[data-embed]');
+    if (em) { openEmbed(items.find(i => i.id === em.dataset.embed)); return; }
     const nv = t.closest('[data-note]');
     if (nv) { showNote(items.find(i => i.id === nv.dataset.note)); return; }
     const cover = t.closest('a.cover');
@@ -703,6 +821,35 @@
     }
     if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}?p=${encodeURIComponent(pg.slug)}`); return; }
     if (t.closest('#loginBtn')) return openLogin();
+    // pizarrón
+    if (t.closest('#pzSend')) return pzSend();
+    if (t.closest('#pzNotMe')) { if (confirm('¿Cambiar de nombre en este dispositivo?')) { ls.del(pzKey()); mine = null; myFeedback = null; renderPzPublic(); } return; }
+    const pgz = pages.find(p => p.id === view);
+    if (pgz && pgz.type === 'pizarron') {
+      const flip = (k, msgOn, msgOff) => { pgz[k] = !pgz[k]; persist(); renderPzOwner(pgz); toast(pgz[k] ? msgOn : msgOff); };
+      if (t.closest('#pzOpen')) return flip('open', 'Recibiendo respuestas', 'Ya no recibe respuestas');
+      if (t.closest('#pzReveal')) {
+        if (!pgz.revealed) {
+          const falta = rosterOf(pgz).length - (pzFor === pgz.id ? pzList.length : 0);
+          if (falta > 0 && !confirm(`Faltan ${falta} estudiantes por responder. Al mostrar las respuestas ya no se pueden enviar ni cambiar. ¿Mostrar igual?`)) return;
+        }
+        return flip('revealed', 'Respuestas visibles para todos', 'Respuestas ocultas otra vez');
+      }
+      if (t.closest('#pzAnon')) return flip('anonymous', 'Los compañeros las ven sin nombre', 'Los compañeros ven los nombres');
+      if (t.closest('#pzFeed')) return flip('feedback', 'Cada estudiante ve su nota y devolución', 'Devoluciones ocultas');
+      if (t.closest('#pzCsv')) return downloadCsv(pgz);
+      if (t.closest('#pzRefresh')) { loadResponses(pgz.id); return; }
+      if (t.closest('#copyLink2')) return copy(`${baseUrl()}?p=${encodeURIComponent(pgz.slug)}`);
+      const dr = t.closest('[data-delresp]');
+      if (dr) {
+        const r = pzList.find(x => x.id === dr.dataset.delresp);
+        if (!r || !confirm(`¿Borrar la respuesta de ${r.estudiante}? Va a poder responder de nuevo.`)) return;
+        api({ accion: 'borrarRespuesta', clave, id: r.id }).then(res => {
+          if (res.ok) { pzList = pzList.filter(x => x !== r); renderPzOwner(pgz); toast('Respuesta borrada'); } else toast(res.error || 'No se pudo borrar');
+        }).catch(() => toast('Sin conexión'));
+        return;
+      }
+    }
     if (t.closest('#logoutBtn')) { if (confirm('¿Salir del cuaderno en este dispositivo?')) logout(); return; }
     if (t.closest('#migrateBtn')) {
       const local = loadLocal(); items = local.items; pages = local.pages;
@@ -719,7 +866,146 @@
     b.closest('dialog').close();
     if (isPopup && b.closest('#dlg')) window.close();
   }));
-
+ 
+  /* ---------------- pizarrón: vista docente ---------------- */
+  let pzTimer = null, pzList = [], pzFor = null;
+  function stopPz() { clearInterval(pzTimer); pzTimer = null; }
+  async function loadResponses(pageId, quiet) {
+    if (mode !== 'owner') return;
+    try {
+      const r = await api({ accion: 'respuestas', clave, pagina: pageId });
+      if (r.ok) { pzList = r.respuestas || []; pzFor = pageId; const pg = pages.find(p => p.id === pageId); if (pg && view === pageId) renderPzOwner(pg); }
+      else if (!quiet) toast(r.error || 'No se pudieron traer las respuestas');
+    } catch (e) { if (!quiet) toast('No se pudieron traer las respuestas'); }
+  }
+  function renderPzOwner(pg) {
+    const wrap = $('#pzWrap'); if (!wrap) return;
+    const ae = document.activeElement;
+    if (ae && wrap.contains(ae) && ae.matches('[data-grade]')) return; // no pisar lo que se está escribiendo
+    const list = pzFor === pg.id ? pzList : [];
+    const roster = rosterOf(pg);
+    const answered = new Set(list.map(r => r.estudiante));
+    const missing = roster.filter(n => !answered.has(n));
+    wrap.innerHTML = `<section class="pz">
+      <div class="pz-consigna"><b>Consigna</b>${pg.prompt ? linkify(pg.prompt) : '<i>Sin consigna: agregarla en «editar página».</i>'}</div>
+      ${mode === 'local' ? '<div class="notice">El pizarrón necesita la planilla conectada para recibir respuestas.</div>' : ''}
+      <div class="pz-ctrl">
+        <button class="pill ${pg.open ? 'on' : ''}" id="pzOpen" title="Abrir o cerrar la recepción de respuestas">${pg.open ? '✅ Recibiendo respuestas' : '⛔ No recibe respuestas'}</button>
+        <button class="pill ${pg.revealed ? 'on' : ''}" id="pzReveal" title="Mostrar u ocultar las respuestas a los estudiantes">${pg.revealed ? '👀 Respuestas visibles para todos' : '🙈 Respuestas ocultas'}</button>
+        <button class="pill" id="pzAnon" title="Cómo ven los compañeros las respuestas">${pg.anonymous ? '👤 Compañeros: sin nombre' : '👤 Compañeros: con nombre'}</button>
+        <button class="pill ${pg.feedback ? 'on' : ''}" id="pzFeed" title="Cada estudiante ve su nota y devolución">${pg.feedback ? '📝 Devoluciones visibles' : '📝 Devoluciones ocultas'}</button>
+        <button class="btn small" id="pzCsv">Descargar CSV</button>
+        <button class="linkbtn" id="pzRefresh">actualizar</button>
+      </div>
+      <p class="pz-count"><b>${list.length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} respondieron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
+      <div class="pz-wall">${list.map(r => `<div class="pz-card" style="--c:var(--n-${esc(pg.color)});--r:${tilt(r.id) / 2}deg">
+          <div class="who">${esc(r.estudiante)}</div>
+          <div class="when">${fmtDate(r.editado || r.creado)}${r.editado ? ' · editada' : ''}</div>
+          <div class="txt">${esc(r.texto)}</div>
+          <div class="grade">
+            <input type="text" data-grade="nota" data-id="${esc(r.id)}" value="${esc(r.nota)}" placeholder="Nota" aria-label="Nota de ${esc(r.estudiante)}">
+            <textarea data-grade="comentario" data-id="${esc(r.id)}" placeholder="Devolución" aria-label="Devolución para ${esc(r.estudiante)}">${esc(r.comentario)}</textarea>
+          </div>
+          <button class="linkbtn del" data-delresp="${esc(r.id)}">borrar respuesta</button>
+        </div>`).join('') || '<p class="empty" style="grid-column:1/-1">Todavía no hay respuestas.</p>'}</div>
+    </section>`;
+  }
+  function downloadCsv(pg) {
+    const roster = rosterOf(pg), by = {};
+    pzList.forEach(r => by[r.estudiante] = r);
+    const names = [...roster, ...pzList.map(r => r.estudiante).filter(n => !roster.includes(n))];
+    const rows = [['Estudiante', 'Respuesta', 'Enviada', 'Editada', 'Nota', 'Devolución']].concat(names.map(n => {
+      const r = by[n] || {};
+      return [n, r.texto || '', fmtDate(r.creado), fmtDate(r.editado), r.nota || '', r.comentario || ''];
+    }));
+    const txt = '﻿' + rows.map(r => r.map(v => { v = String(v ?? ''); return /[";\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));
+    a.download = `${pg.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-')}-respuestas-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  app.addEventListener('change', async e => {
+    const g = e.target.closest('[data-grade]'); if (!g || mode !== 'owner') return;
+    const r = pzList.find(x => x.id === g.dataset.id); if (r) r[g.dataset.grade] = g.value;
+    setStatus('Guardando nota…', 'wait');
+    try {
+      const res = await api({ accion: 'calificar', clave, id: g.dataset.id, [g.dataset.grade]: g.value });
+      setStatus(res.ok ? 'Nota guardada ✓' : (res.error || 'No se pudo guardar'), res.ok ? 'ok' : 'err');
+    } catch (err) { setStatus('Sin conexión: la nota no se guardó', 'err'); }
+  });
+ 
+  /* ---------------- pizarrón: vista estudiante ---------------- */
+  let mine = null, myFeedback = null, pubResp = [];
+  const pzKey = () => 'cuaderno-pz-' + pubPage.slug;
+  function renderPzPublic(msg) {
+    const wrap = $('#pzWrap'); if (!wrap) return;
+    const ae = document.activeElement;
+    if (!msg && ae && wrap.contains(ae) && /TEXTAREA|SELECT/.test(ae.tagName)) return; // no pisar lo que se está escribiendo
+    const draft = $('#pzText') ? $('#pzText').value : null;
+    const pg = pubPage, roster = pg.roster || [];
+    let form = '';
+    if (pg.open && !pg.revealed) {
+      form = `<div class="pz-form">
+        ${mine ? `<p class="pz-msg">Respondiendo como <b>${esc(mine.estudiante)}</b> · <button class="linkbtn" id="pzNotMe">no soy yo</button></p>`
+               : `<label for="pzName">Elegir tu nombre</label><select id="pzName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>`}
+        <label for="pzText">${mine ? 'Tu respuesta (se puede corregir hasta que se muestren todas)' : 'Tu respuesta'}</label>
+        <textarea id="pzText" maxlength="3000">${esc(draft ?? (mine && mine.texto) ?? '')}</textarea>
+        <div class="dlg-actions"><div class="right"><button class="btn" id="pzSend">${mine ? 'Guardar cambios' : 'Enviar'}</button></div></div>
+        <div class="pz-msg" id="pzMsg"></div>
+      </div>`;
+    } else if (!pg.revealed) {
+      form = `<div class="notice">El pizarrón no está recibiendo respuestas en este momento.</div>`;
+    }
+    const wall = pg.revealed ? `<div class="pz-wall">${pubResp.map(r => `<div class="pz-card ${mine && mine.id === r.id ? 'mine' : ''}" style="--c:var(--n-${esc(pg.color)});--r:${tilt(r.id) / 2}deg">
+        ${r.estudiante ? `<div class="who">${esc(r.estudiante)}</div>` : ''}<div class="txt">${esc(r.texto)}</div></div>`).join('') || '<p class="empty">No hubo respuestas.</p>'}</div>` : '';
+    const fb = mine && myFeedback && (myFeedback.nota || myFeedback.comentario)
+      ? `<div class="feedback"><b>Devolución${myFeedback.nota ? ' · Nota: ' + esc(myFeedback.nota) : ''}</b>${myFeedback.comentario ? '\n' + esc(myFeedback.comentario) : ''}</div>` : '';
+    wrap.innerHTML = `<section class="pz">
+      <div class="pz-consigna"><b>Consigna</b>${linkify(pg.prompt || '')}</div>
+      <p class="pz-count">${pg.revealed ? 'Respuestas de todo el grupo' + (mine ? ' (la tuya está marcada)' : '') + ':'
+        : `<b>${pg.respondieron || 0}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} ya respondieron. Las respuestas de los demás se van a ver cuando se habiliten.`}</p>
+      ${fb}${form}${wall}</section>`;
+    if (msg && $('#pzMsg')) { $('#pzMsg').textContent = msg.text; $('#pzMsg').className = 'pz-msg ' + (msg.ok ? 'ok' : 'err'); }
+  }
+  async function loadMine() {
+    mine = ls.json(pzKey(), null);
+    if (!mine) return;
+    try {
+      const r = await api({ accion: 'mirespuesta', p: pubPage.slug, estudiante: mine.estudiante, token: mine.token });
+      if (r.ok) { mine.texto = r.texto; mine.id = r.id; myFeedback = { nota: r.nota, comentario: r.comentario }; }
+      else { ls.del(pzKey()); mine = null; myFeedback = null; } // la respuesta fue borrada
+    } catch (e) {}
+  }
+  async function pollPublic() {
+    try {
+      const r = await api({ accion: 'publico', p: pubPage.slug });
+      if (!r.ok) return;
+      Object.assign(pubPage, r.pagina); pubResp = r.respuestas || [];
+      await loadMine();
+      renderPzPublic();
+    } catch (e) {}
+  }
+  async function pzSend() {
+    const name = mine ? mine.estudiante : ($('#pzName') ? $('#pzName').value : '');
+    const texto = $('#pzText').value.trim();
+    const say = (text, ok) => { $('#pzMsg').textContent = text; $('#pzMsg').className = 'pz-msg ' + (ok ? 'ok' : 'err'); };
+    if (!name) return say('Falta elegir tu nombre de la lista.');
+    if (!texto) return say('La respuesta está vacía.');
+    if (!mine && !confirm(`¿Enviar la respuesta como «${name}»?`)) return;
+    $('#pzSend').disabled = true; say('Enviando…', true);
+    try {
+      const r = await api({ accion: 'responder', p: pubPage.slug, estudiante: name, texto, token: mine ? mine.token : '' });
+      if (r.ok) {
+        const nueva = !mine;
+        mine = { estudiante: name, token: r.token, id: r.id, texto };
+        ls.set(pzKey(), JSON.stringify(mine));
+        if (nueva) pubPage.respondieron = (pubPage.respondieron || 0) + 1;
+        $('#pzText').blur();
+        renderPzPublic({ text: nueva ? '¡Respuesta enviada! ✓' : 'Cambios guardados ✓', ok: true });
+      } else { say(r.error || 'No se pudo enviar'); $('#pzSend').disabled = false; }
+    } catch (e) { say('Sin conexión: no se envió. Probar de nuevo.'); $('#pzSend').disabled = false; }
+  }
+ 
   /* ---------------- diálogo de nota ---------------- */
   let editing = null, dlgMode = 'one', chosenColor = 'yellow';
   function colorPicker(el, current, onPick) {
@@ -732,7 +1018,7 @@
     $('#oneFields').hidden = m !== 'one'; $('#manyFields').hidden = m !== 'many'; $('#favWrap').hidden = m !== 'one';
   }
   $('#modes').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
-
+ 
   function renderTagSuggest() {
     const cur = new Set(parseTags($('#fTags').value));
     const all = {}; items.forEach(i => i.tags.forEach(t => all[t] = (all[t] || 0) + 1));
@@ -745,7 +1031,7 @@
     $('#fTags').value = cur.join(', ') + ', '; renderTagSuggest(); $('#fTags').focus();
   });
   $('#fTags').addEventListener('input', renderTagSuggest);
-
+ 
   function openNoteDialog(it, prefill) {
     editing = it || null;
     $('#dlgTitle').textContent = it ? 'Editar nota' : (prefill ? 'Guardar en el cuaderno' : 'Nueva nota');
@@ -753,7 +1039,7 @@
     setMode('one');
     const src = it || prefill || {};
     $('#fUrl').value = src.url || ''; $('#fName').value = src.name || ''; $('#fIcon').value = src.icon || '';
-    $('#fDesc').value = src.desc || ''; $('#fNote').value = src.note || ''; $('#fNotePriv').checked = !!src.notePrivate;
+    $('#fDesc').value = src.desc || ''; $('#fEmbed').value = src.embed || ''; $('#fNote').value = src.note || ''; $('#fNotePriv').checked = !!src.notePrivate;
     $('#fCat').value = src.cat || ''; $('#fFav').checked = !!src.fav; $('#fMany').value = '';
     $('#fTags').value = (src.tags || []).join(', ');
     const inPages = new Set(it ? it.pages : (view !== 'all' ? [view] : []));
@@ -792,7 +1078,7 @@
       if (!raw) { toast('Falta la dirección'); $('#fUrl').focus(); return; }
       const url = normUrl(raw);
       const data = { url, name: $('#fName').value.trim() || guessName(url), icon: $('#fIcon').value.trim(),
-        desc: $('#fDesc').value.trim(), note: $('#fNote').value.trim(), notePrivate: $('#fNotePriv').checked,
+        desc: $('#fDesc').value.trim(), embed: $('#fEmbed').value.trim(), note: $('#fNote').value.trim(), notePrivate: $('#fNotePriv').checked,
         tags, cat, pages: pgs, color: chosenColor, fav: $('#fFav').checked };
       if (editing) { Object.assign(editing, data); toast('Nota actualizada'); }
       else { items.push(normItem({ ...data, added: now() })); toast('Nota pegada'); }
@@ -803,13 +1089,13 @@
       else { await persist(); setTimeout(() => window.close(), 700); }
     } else persist();
   });
-
+ 
   function showNote(it) {
     if (!it) return;
     $('#nvTitle').textContent = it.name; $('#nvBody').innerHTML = linkify(it.note);
     $('#nvOpen').href = it.url; $('#dlgNote').showModal();
   }
-
+ 
   /* ---------------- diálogo de página ---------------- */
   let editingPage = null, pageColor = 'yellow';
   function openPageDialog(pg) {
@@ -817,16 +1103,30 @@
     $('#pageDlgTitle').textContent = pg ? 'Editar página' : 'Nueva página';
     $('#pTitle').value = pg?.title || ''; $('#pDesc').value = pg?.desc || '';
     document.querySelector(`input[name=pVis][value=${pg?.visibility || 'privada'}]`).checked = true;
+    document.querySelector(`input[name=pType][value=${pg?.type || 'recursos'}]`).checked = true;
+    $('#pPrompt').value = pg?.prompt || ''; $('#pRoster').value = pg?.roster || ''; $('#pAnon').checked = !!pg?.anonymous;
+    syncPageType();
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
     colorPicker($('#pColors'), pageColor, c => pageColor = c);
     $('#pDel').hidden = !pg;
     $('#pNewLinkWrap').hidden = !pg; $('#pNewLink').checked = false;
     $('#dlgPage').showModal(); $('#pTitle').focus();
   }
+  function syncPageType() {
+    const pz = document.querySelector('input[name=pType]:checked').value === 'pizarron';
+    $('#pzFields').hidden = !pz; $('#visWrap').hidden = pz;
+  }
+  document.querySelectorAll('input[name=pType]').forEach(r => r.addEventListener('change', syncPageType));
   $('#formPage').addEventListener('submit', e => {
     e.preventDefault();
     const title = $('#pTitle').value.trim(); if (!title) return;
-    const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, visibility: document.querySelector('input[name=pVis]:checked').value };
+    const type = document.querySelector('input[name=pType]:checked').value;
+    const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, type,
+      visibility: type === 'pizarron' ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
+    if (type === 'pizarron') Object.assign(data, {
+      prompt: $('#pPrompt').value.trim(),
+      roster: $('#pRoster').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean).join('\n'),
+      anonymous: $('#pAnon').checked });
     if (editingPage) {
       Object.assign(editingPage, data);
       if ($('#pNewLink').checked) editingPage.slug = slugify(title);
@@ -842,7 +1142,7 @@
     pages = pages.filter(p => p.id !== id); items.forEach(i => i.pages = i.pages.filter(x => x !== id));
     view = 'all'; $('#dlgPage').close(); persist(); render(); toast('Página borrada');
   });
-
+ 
   /* ---------------- entrar ---------------- */
   let afterLogin = null;
   function openLogin(then) { afterLogin = then || null; $('#lErr').textContent = ''; $('#lClave').value = ''; $('#dlgLogin').showModal(); $('#lClave').focus(); }
@@ -858,7 +1158,7 @@
       afterLogin && afterLogin();
     } catch (err) { $('#lErr').textContent = err.message === 'Clave incorrecta' ? 'Clave incorrecta' : 'No se pudo conectar: ' + err.message; }
   });
-
+ 
   /* ---------------- bookmarklet ---------------- */
   function openBookmarklet() {
     const code = `javascript:(function(){var w=window,d=document,s='';try{s=String(w.getSelection()).trim().slice(0,1500)}catch(e){}w.open('${baseUrl()}?add='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(d.title)+'&s='+encodeURIComponent(s),'cuaderno','width=620,height=780,scrollbars=yes')})();`;
@@ -869,7 +1169,7 @@
     $('#dlgBm').showModal();
   }
   $('#bmLink').addEventListener('click', e => { e.preventDefault(); toast('Arrastralo a la barra de marcadores'); });
-
+ 
   /* ---------------- exportar / restaurar ---------------- */
   function exportData() {
     const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), pages, items }, null, 2)], { type: 'application/json' });
@@ -890,7 +1190,7 @@
     } catch (err) { toast('Ese archivo no es una copia válida'); }
     e.target.value = '';
   });
-
+ 
   /* ---------------- inicio ---------------- */
   function handleAdd() {
     if (!addReq) return;
@@ -899,7 +1199,7 @@
     else openNoteDialog(null, { url: addReq.url, name: addReq.title.slice(0, 90), note: addReq.sel ? `«${addReq.sel}»` : '' });
     if (!isPopup) history.replaceState(null, '', location.pathname);
   }
-
+ 
   async function start() {
     $('#today').textContent = new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' });
     if (!API_URL) {
@@ -918,6 +1218,7 @@
       if (slug) {
         if (!r.ok) { mode = 'index'; render(); app.insertAdjacentHTML('afterbegin', `<div class="notice">${esc(r.error)}</div>`); return; }
         pubPage = r.pagina; items = (r.marcadores || []).map(normItem); mode = 'public';
+        if (pubPage.type === 'pizarron') { pubResp = r.respuestas || []; await loadMine(); }
       } else mode = 'index';
       render();
       if (addReq) openLogin(handleAdd);
