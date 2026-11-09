@@ -106,8 +106,8 @@ function leerTodo() {
 function publico(slug) {
   const paginas = leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina)
     .filter(p => p.visibility === 'publica').sort((a, b) => a.order - b.order);
-  const resumen = paginas.map(p => ({ title: p.title, slug: p.slug, desc: p.desc, color: p.color }));
-  if (!slug) return { ok: true, paginas: resumen };
+  // Nunca se entrega la lista de páginas: cada una se ve solo con su link.
+  if (!slug) return { ok: false, error: 'Falta el link de la página' };
 
   const pag = paginas.find(p => p.slug === String(slug));
   if (!pag) return { ok: false, error: 'Esta página no existe o no es pública' };
@@ -119,7 +119,7 @@ function publico(slug) {
       note: m.notePrivate ? '' : m.note, tags: m.tags, color: m.color, fav: m.fav, added: m.added
     }));
   return { ok: true, pagina: { title: pag.title, slug: pag.slug, desc: pag.desc, color: pag.color },
-           paginas: resumen, marcadores: marcadores };
+           marcadores: marcadores };
 }
 
 /* ---------- guardado (con clave) ---------- */
