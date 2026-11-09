@@ -279,6 +279,7 @@
     <label>Quién la puede ver</label>
     <label class="check"><input type="radio" name="pVis" value="privada" checked> 🔒 Privada: solo yo, con la clave</label>
     <label class="check"><input type="radio" name="pVis" value="publica"> 🌐 Compartida: cualquiera con el link</label>
+    <label class="check" id="pNewLinkWrap" hidden><input type="checkbox" id="pNewLink"> Generar un link nuevo (el anterior deja de funcionar)</label>
     <label>Color del separador</label>
     <div class="colors" id="pColors"></div>
     <div class="dlg-actions">
@@ -339,15 +340,13 @@
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <div class="toast" id="toast" role="status"></div>
 
+<!-- La configuración (URL de Apps Script y nombre) está en config.js -->
+<script src="config.js"></script>
 <script>
 (() => {
-  /* ================= CONFIGURACIÓN =================
-     API_URL: la URL de la app web de Apps Script (termina en /exec).
-              Vacía = el cuaderno funciona solo en este navegador.
-     AUTORA:  nombre opcional que aparece en las páginas compartidas. */
-  const API_URL = 'https://script.google.com/macros/s/AKfycbz6HxO6cKiawRUUjTI512kVpiDNFMbYBzm8wxz2qVDirUpJtcsNSHtJiGmTPC2ekRml/exec';
-  const AUTORA = 'Elizabeth Izquierdo';
-  /* ================================================= */
+  const CFG = window.CUADERNO_CONFIG || {};
+  const API_URL = String(CFG.API_URL || '').trim();
+  const AUTORA = String(CFG.AUTORA || '').trim();
 
   const KEY = 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
   const KEY_PAGES = 'cuaderno-paginas-v1';
@@ -378,7 +377,7 @@
   let platform = 'all';
   const tagSel = new Set();
   let opened = ls.json(KEY_OPEN, {});
-  let pubPage = null, pubIndex = [];
+  let pubPage = null;
   const params = new URLSearchParams(location.search);
   const addReq = params.get('add') ? { url: params.get('add'), title: params.get('t') || '', sel: params.get('s') || '' } : null;
   const isPopup = !!addReq && !!window.opener;
@@ -501,8 +500,9 @@
   function tilt(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return ((Math.abs(h) % 7) - 3) * 0.7; }
   function slugify(t) {
     let base = String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'pagina';
-    let s = base, n = 2;
-    while (pages.some(p => p.slug === s)) s = base + '-' + n++;
+    // sufijo al azar: así nadie puede adivinar el link de otra página
+    let s;
+    do { s = base.slice(0, 32) + '-' + Math.random().toString(36).slice(2, 7); } while (pages.some(p => p.slug === s));
     return s;
   }
   function parseTags(s) { return [...new Set(String(s).split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean))]; }
@@ -657,9 +657,7 @@
     $('#title').firstChild.textContent = 'Cuaderno de recursos';
     $('#subtitle').textContent = AUTORA ? `de ${AUTORA}` : 'páginas compartidas';
     app.innerHTML = `
-      <ul class="index-list">${pubIndex.length ? pubIndex.map(p =>
-        `<li><a href="?p=${encodeURIComponent(p.slug)}"><span class="sw" style="--c:var(--n-${esc(p.color)})"></span>${esc(p.title)}${p.desc ? ` <small>— ${esc(p.desc)}</small>` : ''}</a></li>`).join('')
-        : '<li class="empty">Todavía no hay páginas compartidas.</li>'}</ul>
+      <p class="empty">Para ver una página compartida hace falta su link.</p>
       <footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
   }
 
@@ -668,7 +666,7 @@
     $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
     document.title = pubPage.title + ' · Cuaderno de recursos';
     app.innerHTML = toolbarHTML(false) +
-      `<footer class="foot"><a class="linkbtn" href="${esc(baseUrl())}">Otras páginas compartidas</a><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
+      `<footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
     refresh();
   }
 
@@ -822,13 +820,17 @@
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
     colorPicker($('#pColors'), pageColor, c => pageColor = c);
     $('#pDel').hidden = !pg;
+    $('#pNewLinkWrap').hidden = !pg; $('#pNewLink').checked = false;
     $('#dlgPage').showModal(); $('#pTitle').focus();
   }
   $('#formPage').addEventListener('submit', e => {
     e.preventDefault();
     const title = $('#pTitle').value.trim(); if (!title) return;
     const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, visibility: document.querySelector('input[name=pVis]:checked').value };
-    if (editingPage) Object.assign(editingPage, data);
+    if (editingPage) {
+      Object.assign(editingPage, data);
+      if ($('#pNewLink').checked) editingPage.slug = slugify(title);
+    }
     else { const p = normPage({ ...data, id: uid(), slug: slugify(title) }); pages.push(p); view = p.id; }
     $('#dlgPage').close(); persist(); render(); toast(editingPage ? 'Página actualizada' : 'Página creada');
   });
@@ -910,9 +912,9 @@
       try { await loadOwner(); handleAdd(); return; }
       catch (e) { if (/clave/i.test(e.message)) ls.del(KEY_CLAVE); clave = ''; }
     }
+    if (!slug) { mode = 'index'; render(); if (addReq) openLogin(handleAdd); return; }
     try {
-      const r = await api({ accion: 'publico', p: slug || '' });
-      pubIndex = r.paginas || [];
+      const r = await api({ accion: 'publico', p: slug });
       if (slug) {
         if (!r.ok) { mode = 'index'; render(); app.insertAdjacentHTML('afterbegin', `<div class="notice">${esc(r.error)}</div>`); return; }
         pubPage = r.pagina; items = (r.marcadores || []).map(normItem); mode = 'public';
