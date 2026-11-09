@@ -273,7 +273,7 @@
       <input type="text" id="fDesc" placeholder="Para qué sirve (se ve en la nota)">
       <label for="fEmbed">Contenido para incrustar (opcional)</label>
       <input type="text" id="fEmbed" placeholder="Video de YouTube, Google Forms/Docs/Slides, Genially, Wordwall… o un código &lt;iframe&gt;">
-      <p class="hint">Se abre dentro del cuaderno con el botón ▶. Algunos sitios no permiten mostrarse dentro de otra página; en ese caso, usar «Abrir en pestaña nueva».</p>
+      <p class="hint">Los videos de YouTube/Vimeo y los Google Forms/Docs/Slides se incrustan solos aunque estén en «Dirección». Se abren dentro del cuaderno con el botón ▶. Algunos sitios no permiten mostrarse dentro de otra página; en ese caso, usar «Abrir en pestaña nueva».</p>
       <label for="fNote">Anotaciones</label>
       <textarea id="fNote" placeholder="Ideas, con qué grupo lo uso, qué mejorar, citas de la página…"></textarea>
       <label class="check"><input type="checkbox" id="fNotePriv"> Anotación privada (no se ve en páginas compartidas)</label>
@@ -558,6 +558,9 @@
   function guessName(url) {
     try {
       const u = new URL(url); const parts = u.pathname.split('/').filter(Boolean);
+      const hh = u.hostname.replace(/^(www|m)\./, '');
+      if (hh === 'youtu.be' || hh.endsWith('youtube.com')) return 'Video de YouTube';
+      if (hh === 'vimeo.com') return 'Video de Vimeo';
       let n = parts.length ? parts[parts.length - 1] : u.hostname.split('.')[0];
       if (u.hostname === 'github.com' && parts[1]) n = parts[1];
       return decodeURIComponent(n).replace(/[-_]+/g, ' ').replace(/\.html?$/, '').replace(/^\w/, c => c.toUpperCase());
@@ -605,11 +608,20 @@
     if (h === 'drive.google.com') { const id = (x.pathname.match(/\/file\/d\/([^/]+)/) || [])[1]; if (id) return 'https://drive.google.com/file/d/' + id + '/preview'; }
     return x.href;
   }
+  /* Lo que se incrusta: el campo propio, o la dirección si es un video/documento conocido */
+  function autoEmbedOk(u) {
+    try {
+      const x = new URL(normUrl(u)), h = x.hostname.replace(/^(www|m)\./, '');
+      return h === 'youtu.be' || (h.endsWith('youtube.com') && /^\/(watch|shorts|embed|live)/.test(x.pathname)) ||
+        (h === 'vimeo.com' && /^\/\d+/.test(x.pathname)) || h === 'drive.google.com' ||
+        (h === 'docs.google.com' && /^\/(forms\/d\/e|document\/d|spreadsheets\/d|presentation\/d)\//.test(x.pathname));
+    } catch (e) { return false; }
+  }
+  function embedOf(it) { return (it.embed && it.embed.trim()) || (autoEmbedOk(it.url) ? it.url : ''); }
   function openEmbed(it) {
-    const src = embedUrl(it.embed); if (!src) return;
+    const raw = embedOf(it), src = embedUrl(raw); if (!src) return;
     $('#emTitle').textContent = it.name;
     $('#emFrame').src = src;
-    const raw = String(it.embed).trim();
     $('#emOpen').href = /^https?:/i.test(raw) ? raw : src;
     $('#dlgEmbed').showModal();
   }
@@ -635,7 +647,7 @@
       ${tags ? `<div class="ntags">${tags}</div>` : ''}
       <div class="foot"><span class="tag ${p}">${PLAT[p]}</span><span class="tag host">${esc(hostOf(it.url))}</span></div>
       <div class="tools">
-        ${it.embed ? `<button type="button" data-embed="${esc(it.id)}" aria-label="Ver ${esc(it.name)} aquí" title="Ver aquí">▶</button>` : ''}
+        ${embedOf(it) ? `<button type="button" data-embed="${esc(it.id)}" aria-label="Ver ${esc(it.name)} aquí" title="Ver aquí">▶</button>` : ''}
         ${it.note ? `<button type="button" data-note="${esc(it.id)}" aria-label="Ver anotaciones" title="Anotaciones${it.notePrivate && editable() ? ' (privadas)' : ''}">📝</button>` : ''}
         ${editable() ? `<button type="button" class="edit" data-edit="${esc(it.id)}" aria-label="Editar ${esc(it.name)}">✎</button>` : ''}
       </div>
