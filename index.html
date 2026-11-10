@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -240,12 +240,19 @@
   .inc tr.salida td { color: var(--err); }
   .inc .tablewrap { max-height: 320px; overflow: auto; }
   /* videos y contenidos abiertos en el pizarrón */
-  .pz-media { margin: 16px 0 0; max-width: 900px; }
-  .pz-media figcaption { font-family: var(--hand); font-size: 1.2rem; margin-bottom: 6px; }
+  .pz-media { margin: 18px auto 0; max-width: 900px; }
+  .pz-media figcaption { font-family: var(--hand); font-size: 1.2rem; margin-bottom: 6px; text-align: center; }
   .pz-media .frame { background: #fff; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: 2px 4px 10px rgba(60,50,30,.12); }
   .pz-media .frame.video { aspect-ratio: 16 / 9; }
   .pz-media .frame:not(.video) { height: min(70vh, 600px); }
   .pz-media iframe { width: 100%; height: 100%; border: 0; display: block; }
+  /* video dentro de la nota */
+  .vthumb { position: relative; z-index: 2; aspect-ratio: 16 / 9; background: #1b1b1b; border-radius: 4px; overflow: hidden; cursor: pointer; margin: 2px 0; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vthumb .vplay { position: absolute; inset: 0; margin: auto; width: 52px; height: 36px; border-radius: 10px; background: rgba(214,0,0,.92); color: #fff; display: grid; place-items: center; font-size: 1.05rem; transition: transform .15s; }
+  .vthumb:hover .vplay { transform: scale(1.1); }
+  .vthumb iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .note.playing { transform: none; }
   [hidden] { display: none !important; }
 
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
@@ -655,7 +662,30 @@
     if (e && looksLikeLink(e) && embedUrl(e)) return e;
     return autoEmbedOk(it.url) ? it.url : '';
   }
+  /* Datos para mostrar un video dentro de la nota (solo YouTube y Vimeo) */
+  function videoOf(it) {
+    const src = embedUrl(embedOf(it));
+    const yt = src.match(/youtube-nocookie\.com\/embed\/([\w-]+)/);
+    if (yt) return { src, thumb: 'https://i.ytimg.com/vi/' + yt[1] + '/hqdefault.jpg' };
+    if (/player\.vimeo\.com\/video\//.test(src)) return { src, thumb: '' };
+    return null;
+  }
+  function thumbHTML(v) { return `${v.thumb ? `<img src="${esc(v.thumb)}" alt="" loading="lazy">` : ''}<span class="vplay" aria-hidden="true">▶</span>`; }
+  function playInline(box) {
+    const it = items.find(i => i.id === box.dataset.play); const v = it && videoOf(it); if (!v) return;
+    stopInline();
+    box.innerHTML = `<iframe src="${esc(v.src + (v.src.includes('?') ? '&' : '?') + 'autoplay=1')}" title="${esc(it.name)}"
+      allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    box.closest('.note').classList.add('playing');
+  }
+  function stopInline() {
+    document.querySelectorAll('.vthumb iframe').forEach(f => {
+      const box = f.parentElement, it = items.find(i => i.id === box.dataset.play), v = it && videoOf(it);
+      box.innerHTML = v ? thumbHTML(v) : ''; box.closest('.note').classList.remove('playing');
+    });
+  }
   function openEmbed(it) {
+    stopInline();
     const raw = embedOf(it), src = embedUrl(raw); if (!src) return;
     $('#emTitle').textContent = it.name;
     $('#emFrame').src = src;
@@ -688,17 +718,19 @@
 
   /* ---------------- render ---------------- */
   function noteHTML(it) {
-    const p = platformOf(it.url);
+    const p = platformOf(it.url), vid = videoOf(it);
     const tags = (it.tags || []).map(t => `<button type="button" data-tag="${esc(t)}">#${esc(t)}</button>`).join('');
     return `<div class="note" data-id="${esc(it.id)}" style="--c:var(--n-${esc(it.color || 'yellow')});--r:${tilt(it.id)}deg">
       <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" title="${esc(it.url)}" aria-label="${esc(it.name)}"></a>
       ${it.fav ? '<span class="fav-star" aria-label="Favorita">⭐</span>' : ''}
       <div class="top"><span class="icon">${esc(iconFor(it))}</span><h3>${esc(it.name)}</h3></div>
+      ${vid ? `<div class="vthumb" data-play="${esc(it.id)}" role="button" tabindex="0" aria-label="Reproducir ${esc(it.name)}">${thumbHTML(vid)}</div>` : ''}
       ${it.desc ? `<p>${esc(it.desc)}</p>` : ''}
       ${tags ? `<div class="ntags">${tags}</div>` : ''}
       <div class="foot"><span class="tag ${p}">${PLAT[p]}</span><span class="tag host">${esc(hostOf(it.url))}</span></div>
       <div class="tools">
-        ${embedOf(it) ? `<button type="button" data-embed="${esc(it.id)}" aria-label="Ver ${esc(it.name)} aquí" title="Ver aquí">▶</button>` : ''}
+        ${vid ? `<button type="button" data-embed="${esc(it.id)}" aria-label="Ver ${esc(it.name)} en grande" title="Ver en grande">⤢</button>`
+          : embedOf(it) ? `<button type="button" data-embed="${esc(it.id)}" aria-label="Ver ${esc(it.name)} aquí" title="Ver aquí">▶</button>` : ''}
         ${it.note ? `<button type="button" data-note="${esc(it.id)}" aria-label="Ver anotaciones" title="Anotaciones${it.notePrivate && editable() ? ' (privadas)' : ''}">📝</button>` : ''}
         ${editable() ? `<button type="button" class="edit" data-edit="${esc(it.id)}" aria-label="Editar ${esc(it.name)}">✎</button>` : ''}
       </div>
@@ -866,6 +898,8 @@
     if (t.closest('#clearTags')) { tagSel.clear(); refresh(); return; }
     const ed = t.closest('[data-edit]');
     if (ed) { openNoteDialog(items.find(i => i.id === ed.dataset.edit)); return; }
+    const vt = t.closest('[data-play]');
+    if (vt) { if (!vt.querySelector('iframe')) playInline(vt); return; }
     const em = t.closest('[data-embed]');
     if (em) { openEmbed(items.find(i => i.id === em.dataset.embed)); return; }
     const nv = t.closest('[data-note]');
@@ -927,6 +961,7 @@
       pushNow(true).then(ok => { if (ok) { toast(`${items.length} notas subidas a la planilla`); render(); } }); return;
     }
   });
+  app.addEventListener('keydown', e => { const vt = e.target.closest && e.target.closest('[data-play]'); if (vt && (e.key === 'Enter' || e.key === ' ') && !vt.querySelector('iframe')) { e.preventDefault(); playInline(vt); } });
   app.addEventListener('input', e => { if (e.target.id === 'q') renderNotes(); });
   document.addEventListener('keydown', e => {
     const q = $('#q');
