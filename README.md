@@ -53,7 +53,8 @@ El cuaderno abre en el **Índice**: una hoja con todos los grupos y sus páginas
 - Al tocar la pestaña de un grupo, arriba aparecen solo las páginas de ese grupo.
 - Cada página tiene su grupo en «editar página» → «Grupo». «📚 Todo» sigue mostrando todas las notas.
 - **Copiar una página a otro grupo**: en la página, «copiar a otro grupo». Se elige el grupo de destino y se crea una copia con su propio link y sus propios resultados, con la misma consigna, contenido y materiales. La lista de estudiantes se toma de otra página de ese grupo (si hay); si no, cargarla en «editar página».
-- Los grupos se guardan en la planilla (propiedad SECCIONES del script) y no cambian los links de las páginas compartidas.
+- **Lista de estudiantes del grupo**: en el Índice, «editar grupo» → «Estudiantes del grupo» (un nombre por línea; se puede pegar una columna de Google Sheets). Todas las páginas del grupo la usan: pizarrones, actividades con registro, modo bloqueado y ruletas sin contenido. Si un estudiante entra o se va, se cambia en un solo lugar. Una página puede tener su propia lista si la necesita (por ejemplo, un subgrupo): si se deja vacía, usa la del grupo.
+- Los grupos y sus listas se guardan en la hoja **Secciones** de la planilla, y no cambian los links de las páginas compartidas.
 ## Cómo se usa
  
 - **Páginas del cuaderno**: «+ página» crea un separador nuevo. 🔒 = privada, 🌐 = compartida. Se cambia tocando el botón de la página.
@@ -127,3 +128,4 @@ Límites: una página web no puede bloquear la computadora. No detecta un celula
 ## Si se cambia `Codigo.gs`
  
 Después de editar el código: **Implementar → Administrar implementaciones → ✎ → Versión: nueva → Implementar**. Así la URL sigue siendo la misma.
+ 
