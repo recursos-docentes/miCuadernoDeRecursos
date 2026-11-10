@@ -270,6 +270,9 @@
     cursor: pointer; display: block; overflow-wrap: anywhere;
     box-shadow: 2px 1px 3px rgba(0,0,0,.08); transition: transform .12s; }
   .idx button .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .idx button .t1, .idx button .t2 { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .idx button .t1 { font-weight: 700; }
+  .idx button .t2 { font-size: .9em; color: var(--ink-soft); }
   .idx button:hover { transform: translateX(3px); }
   .idx button[aria-current="true"] { transform: translateX(7px); font-weight: 700; box-shadow: 3px 2px 7px rgba(0,0,0,.2); }
   .idx .home { background: var(--ink-blue); color: #fff; }
@@ -317,7 +320,7 @@
 <body>
 <main class="board">
   <header class="top">
-    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">proyectos en GitHub, Pages y Vercel</small></h1>
+    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">Todos los recursos a un clic de distancia</small></h1>
     <div class="head-right">
       <div class="date" id="today"></div>
       <div class="status" id="status" hidden><span><span class="dot"></span><span id="statusTxt"></span></span></div>
@@ -913,7 +916,7 @@
     const hasNone = pages.some(p => !secOf(p));
     const idx = `<nav class="idx" aria-label="Índice del cuaderno">
       <button class="home" data-sec="__index" aria-current="${view === 'index'}" title="Índice">Índice</button>
-      ${sections.map(s => `<button data-sec="${esc(s.id)}" aria-current="${view !== 'index' && view !== 'all' && curSec === s.id}" style="--c:var(--n-${esc(s.color)})" title="${esc(s.name)}"><span class="t">${esc(s.name)}</span></button>`).join('')}
+      ${sections.map(s => `<button data-sec="${esc(s.id)}" aria-current="${view !== 'index' && view !== 'all' && curSec === s.id}" style="--c:var(--n-${esc(s.color)})" title="${esc(s.name)}">${tabLabel(s.name)}</button>`).join('')}
       ${hasNone && sections.length ? `<button data-sec="" aria-current="${view !== 'index' && view !== 'all' && curSec === ''}" title="Páginas sin grupo">Sin grupo</button>` : ''}
       <button class="add" id="newSec" title="Nuevo grupo" aria-label="Nuevo grupo">+</button>
     </nav>`;
@@ -973,6 +976,13 @@
     }
   }
  
+  /* Texto de la pestaña: asignatura arriba y lugar abajo.
+     «Lógica La Paz» → Lógica / La Paz; también separa en « – », « - » o « / ». */
+  function tabLabel(name) {
+    const n = String(name).trim();
+    let m = n.match(/^(.+?)\s+[–\-\/|]\s+(.+)$/) || n.match(/^(.+?)\s+((?:La|Las|Los|El|Del)\s.+)$/);
+    return m ? `<span class="t1">${esc(m[1])}</span><span class="t2">${esc(m[2])}</span>` : `<span class="t">${esc(n)}</span>`;
+  }
   function tocHTML(only) {
     const groups = sections.map(s => ({ ...s, list: pages.filter(p => secOf(p) === s.id) }));
     const none = pages.filter(p => !secOf(p));
@@ -1781,4 +1791,3 @@
 </script>
 </body>
 </html>
- 
