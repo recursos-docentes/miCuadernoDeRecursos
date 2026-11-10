@@ -320,7 +320,7 @@
 <body>
 <main class="board">
   <header class="top">
-    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">Todos los recursos a un clic de distancia</small></h1>
+    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">proyectos en GitHub, Pages y Vercel</small></h1>
     <div class="head-right">
       <div class="date" id="today"></div>
       <div class="status" id="status" hidden><span><span class="dot"></span><span id="statusTxt"></span></span></div>
@@ -942,6 +942,7 @@
         ${pg.type !== 'recursos' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
         ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}" target="_blank" rel="noopener">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
+        <button class="linkbtn" id="dupPage">copiar a otro grupo</button>
         ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
       </div>
       ${pub && mode === 'local' ? `<div class="notice">Para compartir esta página hay que conectar la planilla de Google (ver LEEME.md). Mientras tanto, todo queda solo en este navegador.</div>` : ''}`;
@@ -1078,6 +1079,7 @@
     if (t.closest('#importBtn')) return $('#importFile').click();
     if (t.closest('#newPage')) return openPageDialog(null);
     if (t.closest('#editPage')) return openPageDialog(pages.find(p => p.id === view));
+    if (t.closest('#dupPage')) return openPageDialog(pages.find(p => p.id === view), true);
     if (t.closest('#toggleVis')) {
       const pg = pages.find(p => p.id === view); if (!pg) return;
       pg.visibility = pg.visibility === 'publica' ? 'privada' : 'publica';
@@ -1606,9 +1608,11 @@
  
   /* ---------------- diálogo de página ---------------- */
   let editingPage = null, pageColor = 'yellow';
-  function openPageDialog(pg) {
-    editingPage = pg || null;
-    $('#pageDlgTitle').textContent = pg ? 'Editar página' : 'Nueva página';
+  let dupFrom = null;
+  function openPageDialog(pg, duplicate) {
+    dupFrom = duplicate ? pg : null;
+    editingPage = duplicate ? null : (pg || null);
+    $('#pageDlgTitle').textContent = duplicate ? 'Copiar página a otro grupo' : pg ? 'Editar página' : 'Nueva página';
     $('#pTitle').value = pg?.title || ''; $('#pDesc').value = pg?.desc || '';
     document.querySelector(`input[name=pVis][value=${pg?.visibility || 'privada'}]`).checked = true;
     document.querySelector(`input[name=pType][value=${pg?.type || 'recursos'}]`).checked = true;
@@ -1624,10 +1628,24 @@
     syncPageType();
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
     colorPicker($('#pColors'), pageColor, c => pageColor = c);
-    $('#pDel').hidden = !pg;
-    $('#pNewLinkWrap').hidden = !pg; $('#pNewLink').checked = false;
-    $('#dlgPage').showModal(); $('#pTitle').focus();
+    $('#pDel').hidden = !editingPage;
+    $('#pNewLinkWrap').hidden = !editingPage; $('#pNewLink').checked = false;
+    if (duplicate) {
+      // por defecto, el primer grupo distinto del original
+      const other = sections.find(x => x.id !== secOf(pg));
+      if (other) { $('#pSec').value = other.id; rosterFromGroup(); }
+      if (pg.locked) $('#pCode').value = String(1000 + Math.floor(Math.random() * 9000));
+    }
+    $('#dlgPage').showModal(); (duplicate ? $('#pSec') : $('#pTitle')).focus();
   }
+  // al copiar, la lista del grupo se toma de otra página del grupo elegido (si existe)
+  function rosterFromGroup() {
+    if (!dupFrom) return;
+    const sec = $('#pSec').value;
+    const src = pages.find(p => p !== dupFrom && secOf(p) === sec && rosterOf(p).length);
+    $('#pRoster').value = src ? src.roster : '';
+  }
+  $('#pSec').addEventListener('change', rosterFromGroup);
   function syncPageType() {
     const pz = document.querySelector('input[name=pType]:checked').value === 'pizarron';
     const lk = $('#pLocked').checked, act = document.querySelector('input[name=pType]:checked').value === 'actividad';
@@ -1662,9 +1680,15 @@
       Object.assign(editingPage, data);
       if ($('#pNewLink').checked) editingPage.slug = slugify(title);
     }
-    else { const p = normPage({ ...data, id: uid(), slug: slugify(title) }); pages.push(p); view = p.id; }
+    else {
+      const p = normPage({ ...data, id: uid(), slug: slugify(title) }); pages.push(p); view = p.id;
+      if (dupFrom) items.forEach(i => { if (i.pages.includes(dupFrom.id)) i.pages.push(p.id); }); // los mismos materiales
+    }
     curSec = data.section; ls.set('cuaderno-sec', curSec);
-    $('#dlgPage').close(); persist(); render(); toast(editingPage ? 'Página actualizada' : 'Página creada');
+    const needsRoster = !editingPage && dupFrom && !data.roster && (type === 'pizarron' || data.locked || data.actMode === 'registro');
+    $('#dlgPage').close(); persist(); render();
+    toast(editingPage ? 'Página actualizada' : dupFrom ? (needsRoster ? 'Copia creada. Falta cargar la lista del grupo en «editar página».' : 'Copia creada en el otro grupo') : 'Página creada');
+    dupFrom = null;
   });
   $('#pDel').addEventListener('click', () => {
     if (!editingPage) return;
@@ -1791,3 +1815,4 @@
 </script>
 </body>
 </html>
+ 
