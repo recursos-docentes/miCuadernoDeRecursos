@@ -41,6 +41,14 @@ Subir `index.html` y `config.js` al repo y activar GitHub Pages.
  
 1. Abrir la página → **Entrar** → escribir la clave.
 2. Como la planilla está vacía, aparece **«Subir las notas de este navegador»**: carga las 52 notas iniciales (o las que ya tenías en ese navegador).
+## Índice por grupos
+ 
+El cuaderno abre en el **Índice**: una hoja con todos los grupos y sus páginas. A la derecha hay **pestañas de colores**, una por grupo (en el celular quedan arriba, en una fila).
+ 
+- La primera vez, el Índice ofrece crear los grupos escribiendo uno por línea. Después: pestaña **+** para un grupo nuevo, «editar grupo» para renombrarlo, cambiarle el color o borrarlo (sus páginas pasan a «Sin grupo», no se borran).
+- Al tocar la pestaña de un grupo, arriba aparecen solo las páginas de ese grupo.
+- Cada página tiene su grupo en «editar página» → «Grupo». «📚 Todo» sigue mostrando todas las notas.
+- Los grupos se guardan en la planilla (propiedad SECCIONES del script) y no cambian los links de las páginas compartidas.
 ## Cómo se usa
  
 - **Páginas del cuaderno**: «+ página» crea un separador nuevo. 🔒 = privada, 🌐 = compartida. Se cambia tocando el botón de la página.
