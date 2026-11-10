@@ -52,6 +52,7 @@ El cuaderno abre en el **Índice**: una hoja con todos los grupos y sus páginas
 - La primera vez, el Índice ofrece crear los grupos escribiendo uno por línea. Después: pestaña **+** para un grupo nuevo, «editar grupo» para renombrarlo, cambiarle el color o borrarlo (sus páginas pasan a «Sin grupo», no se borran).
 - Al tocar la pestaña de un grupo, arriba aparecen solo las páginas de ese grupo.
 - Cada página tiene su grupo en «editar página» → «Grupo». «📚 Todo» sigue mostrando todas las notas.
+- **Copiar una página a otro grupo**: en la página, «copiar a otro grupo». Se elige el grupo de destino y se crea una copia con su propio link y sus propios resultados, con la misma consigna, contenido y materiales. La lista de estudiantes se toma de otra página de ese grupo (si hay); si no, cargarla en «editar página».
 - Los grupos se guardan en la planilla (propiedad SECCIONES del script) y no cambian los links de las páginas compartidas.
 ## Cómo se usa
  
@@ -126,4 +127,3 @@ Límites: una página web no puede bloquear la computadora. No detecta un celula
 ## Si se cambia `Codigo.gs`
  
 Después de editar el código: **Implementar → Administrar implementaciones → ✎ → Versión: nueva → Implementar**. Así la URL sigue siendo la misma.
- 
