@@ -2,6 +2,10 @@
  
 Marcadores con etiquetas, anotaciones y páginas que se pueden compartir o dejar privadas.
  
+**Dirección del cuaderno:** https://recursos-docentes.github.io/miCuadernoDeRecursos/
+ 
+Las páginas compartidas usan esa misma dirección con `?p=` y el nombre de la página al final (por ejemplo `…/miCuadernoDeRecursos/?p=grupo-a-9d9f3`).
+ 
 | Archivo | Para qué |
 |---|---|
 | `index.html` | La página (va al repo de GitHub) |
