@@ -429,8 +429,13 @@
       <p class="hint">Lo escribe la docente en la computadora del estudiante para que pueda seguir. Los estudiantes nunca lo reciben.</p>
     </div>
     <div id="rosterWrap" hidden>
-      <label for="pRoster">Lista del grupo (un nombre por línea)</label>
+      <label for="pRoster">Lista de estudiantes de esta página (opcional)</label>
+      <p class="hint" id="rosterHint"></p>
       <textarea id="pRoster" placeholder="Ana Pérez&#10;Bruno Silva&#10;Carla Gómez"></textarea>
+      <div id="rosterCopyWrap" class="row" style="grid-template-columns:auto 1fr;align-items:center;margin-top:6px">
+        <label for="rosterCopy" style="margin:0">Copiar la lista de…</label>
+        <select id="rosterCopy"></select>
+      </div>
     </div>
     <label>Color del separador</label>
     <div class="colors" id="pColors"></div>
@@ -450,6 +455,9 @@
     <h2 id="secDlgTitle">Nuevo grupo</h2>
     <label for="sName">Nombre</label>
     <input type="text" id="sName" required placeholder="1ro MA La Paz">
+    <label for="sRoster">Estudiantes del grupo (un nombre por línea)</label>
+    <textarea id="sRoster" style="min-height:150px" placeholder="Ana Pérez&#10;Bruno Silva&#10;Carla Gómez"></textarea>
+    <p class="hint" id="sRosterHint">Todas las páginas del grupo usan esta lista: pizarrones, actividades con registro, modo bloqueado y ruletas sin contenido. Se puede pegar una columna copiada desde Google Sheets.</p>
     <label>Color de la pestaña</label>
     <div class="colors" id="sColors"></div>
     <div class="dlg-actions">
@@ -559,7 +567,8 @@
   let sections = [];         // grupos: pestañas del índice
   let curSec = ls.get('cuaderno-sec') || '';
   const KEY_SECS = 'cuaderno-secciones-v1';
-  const normSec = x => ({ id: String(x.id || uid()), name: String(x.name || 'Grupo'), color: x.color || 'yellow' });
+  const normSec = x => ({ id: String(x.id || uid()), name: String(x.name || 'Grupo'), color: x.color || 'yellow', roster: String(x.roster || '') });
+  const splitNames = v => String(v || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   const secOf = p => (p.section && sections.some(s => s.id === p.section)) ? p.section : '';
   let sort = ls.get(KEY_SORT) || 'cat';
   let platform = 'all';
@@ -709,7 +718,14 @@
   }
   const baseUrl = () => location.origin + location.pathname;
   function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
-  function rosterOf(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean); }
+  /* Lista de una página: la propia si tiene; si no, la de su grupo */
+  function ownRoster(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean); }
+  function groupRoster(secId) { const g = sections.find(x => x.id === secId); return g ? splitNames(g.roster) : []; }
+  function rosterOf(pg) {
+    const own = ownRoster(pg);
+    if (own.length || Array.isArray(pg.roster)) return own;
+    return groupRoster(pg.section);
+  }
  
   /* Convierte un link (o un código <iframe>) en una dirección que se pueda incrustar */
   function embedUrl(raw) {
@@ -967,7 +983,7 @@
     if (isPz) renderPzOwner(pg);
     if (isLk) renderIncidents(pg);
     if (isAct) {
-      if (window.Actividades) Actividades.play($('#actPlay'), { template: pg.template, pairs: pg.pairs, onResult: () => 'Vista previa de la docente: no se registra.' });
+      if (window.Actividades) Actividades.play($('#actPlay'), { template: pg.template, pairs: pg.template === 'ruleta' && !pg.pairs.length ? rosterOf(pg).map(n => ({ a: n, b: '' })) : pg.pairs, onResult: () => 'Vista previa de la docente: no se registra.' });
       renderResults(pg);
     }
     if (isPz || isLk || (isAct && pg.actMode === 'registro')) {
@@ -996,7 +1012,7 @@
     return `<div class="toc"><h2>${only === undefined ? 'Índice' : esc((shown[0] || {}).name || 'Sin grupo')}</h2>${setup}
       ${shown.map(g => `<div class="toc-sec" style="--c:var(--n-${esc(g.color)})">
         <h3><span class="sw"></span>${only === undefined ? `<button class="name" data-sec="${esc(g.id)}">${esc(g.name)}</button>` : ''}
-          <small>${g.list.length} página${g.list.length === 1 ? '' : 's'}</small>
+          <small>${g.list.length} página${g.list.length === 1 ? '' : 's'}${g.id ? ` · 👥 ${splitNames(g.roster).length} estudiante${splitNames(g.roster).length === 1 ? '' : 's'}` : ''}</small>
           <button class="linkbtn" data-newpagein="${esc(g.id)}">+ página</button>
           ${g.id ? `<button class="linkbtn" data-editsec="${esc(g.id)}">editar grupo</button>` : ''}</h3>
         ${g.list.length ? `<ol>${g.list.map(p => `<li><button data-goto="${esc(p.id)}">${icon(p)} ${esc(p.title)}<span class="dots"></span>${p.visibility === 'publica' ? '🌐' : '🔒'}${p.locked ? '🔐' : ''}</button></li>`).join('')}</ol>`
@@ -1628,6 +1644,8 @@
     syncPageType();
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
     colorPicker($('#pColors'), pageColor, c => pageColor = c);
+    fillRosterCopy();
+    rosterHint();
     $('#pDel').hidden = !editingPage;
     $('#pNewLinkWrap').hidden = !editingPage; $('#pNewLink').checked = false;
     if (duplicate) {
@@ -1638,13 +1656,45 @@
     }
     $('#dlgPage').showModal(); (duplicate ? $('#pSec') : $('#pTitle')).focus();
   }
-  // al copiar, la lista del grupo se toma de otra página del grupo elegido (si existe)
-  function rosterFromGroup() {
-    if (!dupFrom) return;
-    const sec = $('#pSec').value;
-    const src = pages.find(p => p !== dupFrom && secOf(p) === sec && rosterOf(p).length);
-    $('#pRoster').value = src ? src.roster : '';
+  /* Nombres que tiene una página: su lista del grupo, o los nombres de una ruleta */
+  function namesOf(p) {
+    const r = ownRoster(p);
+    if (r.length) return r;
+    if (p.type === 'actividad' && p.template === 'ruleta') return (p.pairs || []).map(x => String(x.a || '').trim()).filter(Boolean);
+    return [];
   }
+  function fillRosterCopy() {
+    const sec = $('#pSec').value, self = editingPage;
+    const cand = pages.filter(p => p !== self && namesOf(p).length)
+      .sort((a, b) => (secOf(b) === sec) - (secOf(a) === sec));
+    const grp = id => (sections.find(x => x.id === id) || {}).name || 'Sin grupo';
+    $('#rosterCopy').innerHTML = '<option value="">— elegir —</option>' + cand.map(p =>
+      `<option value="${esc(p.id)}">${p.type === 'actividad' && p.template === 'ruleta' ? '🎡' : p.type === 'pizarron' ? '🧑‍🏫' : '📄'} ${esc(p.title)} · ${esc(grp(secOf(p)))} (${namesOf(p).length})</option>`).join('');
+    $('#rosterCopyWrap').hidden = !cand.length;
+  }
+  $('#rosterCopy').addEventListener('change', () => {
+    const p = pages.find(x => x.id === $('#rosterCopy').value); if (!p) return;
+    if ($('#pRoster').value.trim() && !confirm('¿Reemplazar la lista actual por la de «' + p.title + '»?')) { $('#rosterCopy').value = ''; return; }
+    $('#pRoster').value = namesOf(p).join('\n'); $('#rosterCopy').value = '';
+    toast(namesOf(p).length + ' nombres copiados');
+  });
+  // al copiar una página, la lista del grupo se toma de otra página del grupo elegido (si existe)
+  function rosterFromGroup() {
+    fillRosterCopy();
+    if (dupFrom) {
+      // la copia usa la lista del grupo de destino; si ese grupo no tiene, se busca otra página suya con nombres
+      const sec = $('#pSec').value, src = pages.find(p => p !== dupFrom && secOf(p) === sec && namesOf(p).length);
+      $('#pRoster').value = groupRoster(sec).length || !src ? '' : namesOf(src).join('\n');
+    }
+    rosterHint();
+  }
+  function rosterHint() {
+    const sec = $('#pSec').value, g = sections.find(x => x.id === sec), n = groupRoster(sec).length;
+    $('#rosterHint').textContent = n ? `Si se deja vacía, se usa la lista del grupo «${g.name}» (${n} estudiantes). Escribir acá solo si esta página necesita otra lista.`
+      : g ? `El grupo «${g.name}» todavía no tiene lista. Conviene cargarla en «editar grupo» del Índice para que la usen todas sus páginas.`
+      : 'Esta página no tiene grupo: escribir la lista acá, o asignarle un grupo con lista.';
+  }
+  $('#pRoster').addEventListener('input', rosterHint);
   $('#pSec').addEventListener('change', rosterFromGroup);
   function syncPageType() {
     const pz = document.querySelector('input[name=pType]:checked').value === 'pizarron';
@@ -1654,7 +1704,8 @@
     $('#promptWrap').hidden = !(pz || act); $('#actFields').hidden = !act; $('#pSingleWrap').hidden = !reg;
     $('#lockFields').hidden = !lk; $('#rosterWrap').hidden = !(pz || lk || reg);
     const t = window.Actividades && Actividades.TEMPLATES[$('#pTpl').value];
-    if (t) $('#pPairsHint').textContent = `Para «${t.name}»: ${t.cols[0]} | ${t.cols[1]}. Con la misma lista se puede cambiar de plantilla en cualquier momento.`;
+    if (t) $('#pPairsHint').textContent = `Para «${t.name}»: ${t.cols[0]} | ${t.cols[1]}. Con la misma lista se puede cambiar de plantilla en cualquier momento.` +
+      ($('#pTpl').value === 'ruleta' ? ' Si se deja vacío, la ruleta gira con los nombres del grupo.' : '');
   }
   document.querySelectorAll('input[name=pActMode]').forEach(r => r.addEventListener('change', syncPageType));
   $('#pTpl').addEventListener('change', syncPageType);
@@ -1685,7 +1736,7 @@
       if (dupFrom) items.forEach(i => { if (i.pages.includes(dupFrom.id)) i.pages.push(p.id); }); // los mismos materiales
     }
     curSec = data.section; ls.set('cuaderno-sec', curSec);
-    const needsRoster = !editingPage && dupFrom && !data.roster && (type === 'pizarron' || data.locked || data.actMode === 'registro');
+    const needsRoster = !editingPage && dupFrom && !data.roster && !groupRoster(data.section).length && (type === 'pizarron' || data.locked || data.actMode === 'registro');
     $('#dlgPage').close(); persist(); render();
     toast(editingPage ? 'Página actualizada' : dupFrom ? (needsRoster ? 'Copia creada. Falta cargar la lista del grupo en «editar página».' : 'Copia creada en el otro grupo') : 'Página creada');
     dupFrom = null;
@@ -1705,6 +1756,14 @@
     editingSec = sec || null;
     $('#secDlgTitle').textContent = sec ? 'Editar grupo' : 'Nuevo grupo';
     $('#sName').value = sec ? sec.name : '';
+    $('#sRoster').value = sec ? sec.roster : '';
+    $('#sRosterHint').dataset.base = $('#sRosterHint').dataset.base || $('#sRosterHint').textContent;
+    $('#sRosterHint').textContent = $('#sRosterHint').dataset.base;
+    if (sec && !splitNames(sec.roster).length) {
+      // propone los nombres que ya estén en alguna página del grupo (un pizarrón, una ruleta…)
+      const src = pages.find(p => secOf(p) === sec.id && namesOf(p).length);
+      if (src) { $('#sRoster').value = namesOf(src).join('\n'); $('#sRosterHint').textContent = `Nombres tomados de «${src.title}». Revisar y guardar.`; }
+    }
     secColor = sec ? sec.color : COLORS[sections.length % COLORS.length];
     colorPicker($('#sColors'), secColor, c => secColor = c);
     $('#sDel').hidden = !sec;
@@ -1713,8 +1772,9 @@
   $('#formSec').addEventListener('submit', e => {
     e.preventDefault();
     const name = $('#sName').value.trim(); if (!name) return;
-    if (editingSec) Object.assign(editingSec, { name, color: secColor });
-    else { const s = normSec({ id: uid(), name, color: secColor }); sections.push(s); curSec = s.id; view = 'sec'; ls.set('cuaderno-sec', curSec); }
+    const roster = splitNames($('#sRoster').value).join('\n');
+    if (editingSec) Object.assign(editingSec, { name, color: secColor, roster });
+    else { const s = normSec({ id: uid(), name, color: secColor, roster }); sections.push(s); curSec = s.id; view = 'sec'; ls.set('cuaderno-sec', curSec); }
     $('#dlgSec').close(); persist(); render(); toast(editingSec ? 'Grupo actualizado' : 'Grupo creado');
   });
   $('#sDel').addEventListener('click', () => {
