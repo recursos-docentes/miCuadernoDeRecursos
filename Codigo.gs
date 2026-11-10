@@ -15,6 +15,7 @@ const HOJA_PAGINAS = 'Paginas';
 const HOJA_RESPUESTAS = 'Respuestas';
 const HOJA_INCIDENTES = 'Incidentes';
 const HOJA_RESULTADOS = 'Resultados';
+const HOJA_SECCIONES = 'Secciones';
  
 const COLS_M = ['id', 'url', 'nombre', 'icono', 'categoria', 'descripcion', 'nota', 'notaPrivada',
                 'etiquetas', 'color', 'favorita', 'paginas', 'agregado', 'incrustar'];
@@ -23,6 +24,7 @@ const COLS_P = ['id', 'titulo', 'slug', 'visibilidad', 'descripcion', 'color', '
                 'bloqueado', 'codigo', 'plantilla', 'contenido', 'modoActividad', 'intentoUnico', 'seccion'];
 const COLS_R = ['id', 'pagina', 'estudiante', 'texto', 'creado', 'editado', 'nota', 'comentario', 'token'];
 const COLS_I = ['id', 'pagina', 'estudiante', 'tipo', 'detalle', 'fecha'];
+const COLS_S = ['id', 'nombre', 'color', 'lista'];
 const COLS_A = ['id', 'pagina', 'estudiante', 'plantilla', 'puntaje', 'total', 'segundos', 'detalle', 'fecha'];
  
 const MAX_TEXTO = 3000;
@@ -111,7 +113,17 @@ function escribirFila(nombre, cols, fila, obj) {
 }
  
 const lista = v => String(v || '').split(',').map(x => x.trim()).filter(String);
-const lineas = v => String(v || '').split(/\r?\n/).map(x => x.trim()).filter(String);
+// nombres: tabulaciones, espacios dobles o espacios «duros» (pegados desde una planilla) cuentan como un espacio
+const limpiarNombre = v => String(v == null ? '' : v).replace(/[\s\u00a0]+/g, ' ').trim();
+const canon = v => limpiarNombre(v).toLowerCase();
+const lineas = v => String(v || '').split(/\r?\n/).map(limpiarNombre).filter(String);
+/* Devuelve el nombre tal como está en la lista (o null si no está); sin lista, acepta el nombre */
+function nombreEnLista(roster, nombre) {
+  const n = limpiarNombre(nombre);
+  if (!n) return null;
+  if (!roster.length) return n;
+  return roster.find(x => canon(x) === canon(n)) || null;
+}
 const bool = v => v === true || String(v).toUpperCase() === 'TRUE' || v === 1 || v === '1';
 const boolDef = (v, def) => (v === '' || v == null ? def : bool(v));
  
@@ -140,6 +152,21 @@ function aPagina(f) {
   };
 }
 function jsonLista(v) { try { const a = JSON.parse(String(v || '[]')); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+ 
+/* Grupos del índice, con su lista de estudiantes */
+function leerSecciones() {
+  const filas = leerFilas(HOJA_SECCIONES, COLS_S);
+  if (filas.length) return filas.map(f => ({ id: String(f.id), name: String(f.nombre), color: String(f.color || 'yellow'), roster: String(f.lista || '') }));
+  // versión anterior: los grupos estaban en una propiedad
+  return jsonLista(PropertiesService.getScriptProperties().getProperty('SECCIONES')).map(x => ({ ...x, roster: '' }));
+}
+/* Lista que usa una página: la propia si tiene; si no, la de su grupo */
+function listaEfectiva(pag) {
+  const propia = lineas(pag.roster);
+  if (propia.length || !pag.section) return propia;
+  const g = leerSecciones().find(x => x.id === pag.section);
+  return g ? lineas(g.roster) : [];
+}
 function aRespuesta(f) {
   return {
     id: String(f.id), pagina: String(f.pagina), estudiante: String(f.estudiante), texto: String(f.texto),
@@ -154,7 +181,7 @@ function leerTodo() {
     rev: rev,
     marcadores: leerFilas(HOJA_MARCADORES, COLS_M).map(aMarcador),
     paginas: leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina).sort((a, b) => a.order - b.order),
-    secciones: jsonLista(PropertiesService.getScriptProperties().getProperty('SECCIONES'))
+    secciones: leerSecciones()
   };
 }
  
@@ -182,18 +209,21 @@ function publico(slug) {
   const pagina = { title: pag.title, slug: pag.slug, desc: pag.desc, color: pag.color, type: pag.type,
                    locked: pag.locked };
   // el código de desbloqueo nunca sale del servidor
-  if (pag.locked) pagina.roster = lineas(pag.roster);
+  const lista = listaEfectiva(pag);
+  if (pag.locked) pagina.roster = lista;
   if (pag.type === 'actividad') {
     pagina.prompt = pag.prompt;
-    pagina.activity = { template: pag.template, pairs: pag.pairs, mode: pag.actMode, single: pag.single };
-    if (pag.actMode === 'registro') pagina.roster = lineas(pag.roster);
+    // una ruleta sin contenido gira con los nombres del grupo
+    const pares = pag.template === 'ruleta' && !pag.pairs.length ? lista.map(n => ({ a: n, b: '' })) : pag.pairs;
+    pagina.activity = { template: pag.template, pairs: pares, mode: pag.actMode, single: pag.single };
+    if (pag.actMode === 'registro') pagina.roster = lista;
   }
   const salida = { ok: true, pagina: pagina, marcadores: marcadores };
  
   if (pag.type === 'pizarron') {
     const resp = leerFilas(HOJA_RESPUESTAS, COLS_R).map(aRespuesta).filter(r => r.pagina === pag.id);
     Object.assign(pagina, {
-      prompt: pag.prompt, roster: lineas(pag.roster), open: pag.open,
+      prompt: pag.prompt, roster: lista, open: pag.open,
       revealed: pag.revealed, anonymous: pag.anonymous, feedback: pag.feedback,
       respondieron: resp.length
     });
@@ -217,16 +247,15 @@ function responderPizarron(d) {
     if (pag.revealed) throw new Error('Las respuestas ya se mostraron: no se pueden enviar ni cambiar');
     if (!pag.open) throw new Error('El pizarrón no está recibiendo respuestas');
  
-    const estudiante = String(d.estudiante || '').trim();
-    const roster = lineas(pag.roster);
-    if (!estudiante) throw new Error('Falta elegir el nombre');
-    if (roster.length && roster.indexOf(estudiante) < 0) throw new Error('Ese nombre no está en la lista');
+    if (!limpiarNombre(d.estudiante)) throw new Error('Falta elegir el nombre');
+    const estudiante = nombreEnLista(listaEfectiva(pag), d.estudiante);
+    if (!estudiante) throw new Error('Ese nombre no está en la lista');
     const texto = String(d.texto || '').trim();
     if (!texto) throw new Error('La respuesta está vacía');
     if (texto.length > MAX_TEXTO) throw new Error('La respuesta es demasiado larga (máximo ' + MAX_TEXTO + ' caracteres)');
  
     const filas = leerFilas(HOJA_RESPUESTAS, COLS_R);
-    const previa = filas.find(f => String(f.pagina) === pag.id && String(f.estudiante) === estudiante);
+    const previa = filas.find(f => String(f.pagina) === pag.id && canon(f.estudiante) === canon(estudiante));
     const ahora = Date.now();
  
     if (previa) {
@@ -235,7 +264,7 @@ function responderPizarron(d) {
       }
       previa.texto = seguro(texto); previa.editado = ahora;
       escribirFila(HOJA_RESPUESTAS, COLS_R, previa._fila, previa);
-      return { ok: true, id: String(previa.id), token: String(previa.token), editado: ahora };
+      return { ok: true, id: String(previa.id), token: String(previa.token), editado: ahora, estudiante: String(previa.estudiante) };
     }
     const nueva = { id: Utilities.getUuid().slice(0, 8), pagina: pag.id, estudiante: seguro(estudiante),
                     texto: seguro(texto), creado: ahora, editado: '', nota: '', comentario: '',
@@ -243,7 +272,7 @@ function responderPizarron(d) {
     const h = hoja(HOJA_RESPUESTAS, COLS_R);
     const cab = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
     h.appendRow(cab.map(c => (c in nueva ? nueva[c] : '')));
-    return { ok: true, id: nueva.id, token: nueva.token, creado: ahora };
+    return { ok: true, id: nueva.id, token: nueva.token, creado: ahora, estudiante: estudiante };
   } finally {
     lock.releaseLock();
   }
@@ -252,7 +281,7 @@ function responderPizarron(d) {
 function miRespuesta(d) {
   const pag = paginaPublica(d.p);
   const f = leerFilas(HOJA_RESPUESTAS, COLS_R)
-    .find(r => String(r.pagina) === pag.id && String(r.estudiante) === String(d.estudiante || ''));
+    .find(r => String(r.pagina) === pag.id && canon(r.estudiante) === canon(d.estudiante));
   if (!f || !d.token || String(f.token) !== String(d.token)) return { ok: false, error: 'Sin respuesta' };
   const r = aRespuesta(f);
   return { ok: true, id: r.id, texto: r.texto,
@@ -335,11 +364,10 @@ function guardarResultado(d) {
   try {
     const pag = paginaPublica(d.p);
     if (pag.type !== 'actividad' || pag.actMode !== 'registro') return { ok: true, sinRegistro: true };
-    const estudiante = String(d.estudiante || '').trim();
-    const roster = lineas(pag.roster);
-    if (!estudiante) throw new Error('Falta el nombre');
-    if (roster.length && roster.indexOf(estudiante) < 0) throw new Error('Ese nombre no está en la lista');
-    if (pag.single && leerFilas(HOJA_RESULTADOS, COLS_A).some(r => String(r.pagina) === pag.id && String(r.estudiante) === estudiante)) {
+    if (!limpiarNombre(d.estudiante)) throw new Error('Falta el nombre');
+    const estudiante = nombreEnLista(listaEfectiva(pag), d.estudiante);
+    if (!estudiante) throw new Error('Ese nombre no está en la lista');
+    if (pag.single && leerFilas(HOJA_RESULTADOS, COLS_A).some(r => String(r.pagina) === pag.id && canon(r.estudiante) === canon(estudiante))) {
       throw new Error('Ya hay un resultado registrado con ese nombre (un solo intento).');
     }
     const num = v => Math.max(0, Math.min(10000, Number(v) || 0));
@@ -413,11 +441,12 @@ function guardar(d) {
       seguro(p.template || ''), JSON.stringify(Array.isArray(p.pairs) ? p.pairs.map(x => ({ a: String(x.a || ''), b: String(x.b || '') })) : []),
       p.actMode === 'registro' ? 'registro' : 'practica', !!p.single, seguro(p.section || '')
     ]));
-    // secciones del índice (grupos): lista corta, se guarda como propiedad
+    // grupos del índice, con su lista de estudiantes
     if (Array.isArray(d.secciones)) {
-      props.setProperty('SECCIONES', JSON.stringify(d.secciones.slice(0, 60).map(x => ({
-        id: String(x.id || '').slice(0, 20), name: String(x.name || '').slice(0, 60), color: String(x.color || 'yellow').slice(0, 10)
-      })).filter(x => x.id && x.name)));
+      escribir(HOJA_SECCIONES, COLS_S, d.secciones.filter(x => x && x.id && x.name).slice(0, 100).map(x => [
+        seguro(String(x.id).slice(0, 20)), seguro(String(x.name).slice(0, 60)), seguro(String(x.color || 'yellow').slice(0, 10)),
+        seguro(String(x.roster || '').slice(0, 5000))
+      ]));
     }
  
     props.setProperty('REV', String(rev + 1));
