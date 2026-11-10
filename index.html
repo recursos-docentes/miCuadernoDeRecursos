@@ -616,7 +616,10 @@
   let curSec = ls.get('cuaderno-sec') || '';
   const KEY_SECS = 'cuaderno-secciones-v1';
   const normSec = x => ({ id: String(x.id || uid()), name: String(x.name || 'Grupo'), color: x.color || 'yellow', roster: String(x.roster || '') });
-  const splitNames = v => String(v || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  // tabulaciones, espacios dobles o «duros» (pegados desde una planilla) se convierten en un espacio
+  const cleanName = v => String(v == null ? '' : v).replace(/[\s\u00a0]+/g, ' ').trim();
+  const sameName = (a, b) => cleanName(a).toLowerCase() === cleanName(b).toLowerCase();
+  const splitNames = v => String(v || '').split(/\r?\n/).map(cleanName).filter(Boolean);
   const secOf = p => (p.section && sections.some(s => s.id === p.section)) ? p.section : '';
   let sort = ls.get(KEY_SORT) || 'cat';
   let platform = 'all';
@@ -767,7 +770,7 @@
   const baseUrl = () => location.origin + location.pathname;
   function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
   /* Lista de una página: la propia si tiene; si no, la de su grupo */
-  function ownRoster(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean); }
+  function ownRoster(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(cleanName).filter(Boolean); }
   function groupRoster(secId) { const g = sections.find(x => x.id === secId); return g ? splitNames(g.roster) : []; }
   function rosterOf(pg) {
     const own = ownRoster(pg);
@@ -1004,7 +1007,7 @@
         <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : pg.type === 'actividad' ? '🎮 ' : ''}${esc(pg.title)}</h2>
         ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span>` : ''}
         ${pg.type !== 'recursos' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
-        ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}" target="_blank" rel="noopener">ver como visitante</a>` : ''}
+        ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}&prueba=1" target="_blank" rel="noopener" title="Abre la página como la ve un estudiante, empezando de cero">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
         <button class="linkbtn" id="dupPage">copiar a otro grupo</button>
         ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
@@ -1304,7 +1307,7 @@
       form = `<div class="pz-form">
         ${mine ? `<p class="pz-msg">Respondiendo como <b>${esc(mine.estudiante)}</b>${guardsOn ? '' : ' · <button class="linkbtn" id="pzNotMe">no soy yo</button>'}</p>`
                : guardsOn && lockName ? `<p class="pz-msg">Respondiendo como <b>${esc(lockName)}</b></p><input type="hidden" id="pzName" value="${esc(lockName)}">`
-               : `<label for="pzName">Elegir tu nombre</label><select id="pzName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>`}
+               : `<label for="pzName">Elegir tu nombre</label><select id="pzName"><option value="">—</option>${roster.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>`}
         <label for="pzText">${mine ? 'Tu respuesta (se puede corregir hasta que se muestren todas)' : 'Tu respuesta'}</label>
         <textarea id="pzText" maxlength="3000">${esc(draft ?? (mine && mine.texto) ?? '')}</textarea>
         <div class="dlg-actions"><div class="right"><button class="btn" id="pzSend">${mine ? 'Guardar cambios' : 'Enviar'}</button></div></div>
@@ -1355,7 +1358,7 @@
       const r = await api({ accion: 'responder', p: pubPage.slug, estudiante: name, texto, token: mine ? mine.token : '' });
       if (r.ok) {
         const nueva = !mine;
-        mine = { estudiante: name, token: r.token, id: r.id, texto };
+        mine = { estudiante: r.estudiante || name, token: r.token, id: r.id, texto };
         ls.set(pzKey(), JSON.stringify(mine));
         if (nueva) pubPage.respondieron = (pubPage.respondieron || 0) + 1;
         $('#pzText').blur();
@@ -1416,7 +1419,7 @@
     const roster = pubPage.roster || [];
     const needName = reg && !actName && roster.length;
     app.innerHTML = `<div class="pz">${pubPage.prompt ? `<div class="pz-consigna"><b>Consigna</b>${linkify(pubPage.prompt)}</div>` : ''}
-      ${needName ? `<div class="pz-form"><label for="actName">Elegir tu nombre</label><select id="actName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>
+      ${needName ? `<div class="pz-form"><label for="actName">Elegir tu nombre</label><select id="actName"><option value="">—</option>${roster.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>
         <div class="dlg-actions"><div class="right"><button class="btn" id="actGo">Empezar</button></div></div><div class="pz-msg err" id="actMsg"></div></div>`
         : `${reg ? `<p class="pz-count">Jugando como <b>${esc(actName)}</b>${guardsOn ? '' : ' · <button class="linkbtn" id="actNotMe">no soy yo</button>'}${A.single ? ' · un solo intento' : ''}</p>` : ''}<div id="actPlay"></div>`}
       </div>` + (items.length ? '<h2 class="mat">Materiales</h2>' + toolbarHTML(false) : '') +
@@ -1490,7 +1493,7 @@
         <li>Si se sale de la pantalla completa o se cambia de ventana, la página se bloquea y queda registrado. Para seguir hace falta el código de la docente.</li>
       </ul>
       ${st.name ? `<p>Entrando como <b>${esc(st.name)}</b></p>`
-        : roster.length ? `<label for="lkName">Elegir tu nombre</label><select id="lkName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>` : ''}
+        : roster.length ? `<label for="lkName">Elegir tu nombre</label><select id="lkName"><option value="">—</option>${roster.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>` : ''}
       <div class="dlg-actions"><div class="right"><button class="btn" id="lkStart">Comenzar</button></div></div>
       <div class="pz-msg err" id="lkMsg"></div>
     </div>`;
@@ -2066,6 +2069,20 @@
       if (slug) {
         if (!r.ok) { mode = 'index'; render(); app.insertAdjacentHTML('afterbegin', `<div class="notice">${esc(r.error)}</div>`); return; }
         pubPage = r.pagina; items = (r.marcadores || []).map(normItem); mode = 'public';
+        // «ver como visitante» desde la vista docente: empezar de cero (sin nombre ni bloqueo guardados de pruebas anteriores)
+        if (params.get('prueba')) {
+          ['cuaderno-lock-', 'cuaderno-pz-', 'cuaderno-act-'].forEach(k => ls.del(k + slug));
+          history.replaceState(null, '', location.pathname + '?p=' + encodeURIComponent(slug));
+        }
+        // un nombre guardado que ya no está en la lista (porque la lista cambió) se olvida
+        const lista = pubPage.roster || [];
+        const vigente = n => !lista.length || lista.some(x => sameName(x, n));
+        const lk = ls.json('cuaderno-lock-' + slug, null);
+        if (lk && lk.name && !vigente(lk.name)) ls.del('cuaderno-lock-' + slug);
+        const ac = ls.json('cuaderno-act-' + slug, null);
+        if (ac && ac.name && !vigente(ac.name)) ls.del('cuaderno-act-' + slug);
+        const pzm = ls.json('cuaderno-pz-' + slug, null);
+        if (pzm && pzm.estudiante && !vigente(pzm.estudiante)) ls.del('cuaderno-pz-' + slug);
         if (pubPage.type === 'pizarron') { pubResp = r.respuestas || []; await loadMine(); }
       } else mode = 'index';
       render();
