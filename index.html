@@ -47,7 +47,7 @@
     content: ""; position: absolute; top: 0; bottom: 0; left: 26px; width: 22px;
     background: radial-gradient(circle at 11px 50%, var(--desk) 0 9px, rgba(0,0,0,.08) 9.5px, transparent 10.5px) 0 40px / 22px 180px repeat-y;
   }
-
+ 
   header.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 24px; justify-content: space-between; min-height: 74px; }
   h1 { font-family: var(--script); font-weight: 700; color: var(--ink-blue); font-size: clamp(2.4rem, 6vw, 3.4rem); line-height: 1; margin: 0; }
   h1 small { display: block; font-family: var(--hand); font-size: .36em; color: var(--ink-soft); font-weight: 400; margin-top: 6px; }
@@ -60,7 +60,7 @@
   .status[data-k="err"] { color: var(--err); }
   .status[data-k="err"] .dot { background: var(--err); }
   .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--ink-blue); text-decoration: underline; cursor: pointer; }
-
+ 
   /* separadores (páginas) */
   .tabs-pages { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; border-bottom: 2px solid var(--ink-blue); padding-left: 4px; }
   .sep {
@@ -73,7 +73,7 @@
   .sep[aria-selected="true"] { opacity: 1; border-color: var(--ink-blue); border-bottom: 2px solid var(--c, #fff); background: var(--c, #fff); font-weight: 700; }
   .sep.add { background: transparent; border-style: dashed; color: var(--ink-soft); }
   .sep .vis { font-size: .85em; }
-
+ 
   .page-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 14px 0 4px; }
   .page-head h2 { font-family: var(--script); font-size: 2.3rem; margin: 0; color: var(--ink); }
   .page-head p { margin: 0; flex-basis: 100%; font-family: var(--hand); font-size: 1.15rem; color: var(--ink-soft); }
@@ -85,7 +85,7 @@
   .pill.priv { background: #f4f1ea; }
   .notice { font-family: var(--hand); font-size: 1.05rem; background: #fff8d6; border: 1.5px dashed #e3c96a; padding: 8px 12px; border-radius: 4px; margin: 10px 0; }
   .notice .btn { margin-left: 8px; }
-
+ 
   .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 6px; }
   .search { flex: 1 1 220px; min-width: 0; background: transparent; border: 0; border-bottom: 2px solid var(--ink-blue); color: var(--ink); font-family: var(--hand); font-size: 1.25rem; padding: 4px; outline: none; }
   .search::placeholder { color: var(--ink-soft); opacity: .7; }
@@ -98,7 +98,7 @@
   .btn.ghost { background: var(--paper); color: var(--ink-soft); box-shadow: none; border: 1.5px dashed var(--line); }
   .btn.ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
   .btn.small { font-size: 1rem; padding: 3px 10px; }
-
+ 
   /* nube de etiquetas */
   .tagcloud { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin: 4px 0 6px; font-family: var(--hand); }
   .tagcloud .lbl { color: var(--ink-soft); font-size: 1rem; margin-right: 2px; }
@@ -107,12 +107,12 @@
   .tc[aria-pressed="true"] { background: var(--ink-blue); color: #fff; }
   .tc small { color: var(--ink-soft); font-size: .75em; }
   .tc[aria-pressed="true"] small { color: #dbe6f7; }
-
+ 
   section.group { margin-top: 26px; }
   section.group h2 { font-family: var(--script); font-weight: 700; font-size: 2.1rem; margin: 0 0 16px; display: inline-block; position: relative; color: var(--ink); z-index: 0; }
   section.group h2::after { content: ""; position: absolute; left: -6px; right: -10px; bottom: 4px; height: 12px; z-index: -1; background: var(--hl, #fff1a8); opacity: .9; border-radius: 3px; transform: rotate(-1deg); }
   section.group h2 .count { font-size: .55em; color: var(--ink-soft); margin-left: 6px; }
-
+ 
   .notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 26px 22px; }
   .note {
     position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 150px; padding: 22px 16px 14px;
@@ -145,10 +145,10 @@
   .tools .edit { opacity: 0; transition: opacity .15s; }
   .note:hover .edit, .note:focus-within .edit { opacity: 1; }
   @media (hover: none) { .tools .edit { opacity: .8; } }
-
+ 
   .empty { font-family: var(--script); font-size: 1.9rem; color: var(--ink-soft); text-align: center; margin: 60px 0; }
   .loading { font-family: var(--script); font-size: 2rem; color: var(--ink-soft); text-align: center; margin: 80px 0; }
-
+ 
   /* índice público */
   .index-list { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 4px; }
   .index-list a { display: flex; gap: 12px; align-items: baseline; text-decoration: none; color: var(--ink); font-family: var(--hand); font-size: 1.4rem; padding: 2px 6px; border-radius: 4px; line-height: var(--lh); }
@@ -156,7 +156,7 @@
   .index-list .sw { width: 14px; height: 14px; border-radius: 3px; background: var(--c); flex: none; align-self: center; border: 1px solid rgba(0,0,0,.1); }
   .index-list small { color: var(--ink-soft); font-size: .8em; }
   footer.foot { margin-top: 48px; font-family: var(--hand); color: var(--ink-soft); font-size: 1rem; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
-
+ 
   /* diálogos */
   dialog { border: 0; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: #fffdf3; color: var(--ink); border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,.5); background-image: repeating-linear-gradient(transparent 0 31px, #d9e6f2 31px 32px); }
   dialog::backdrop { background: rgba(30,35,50,.55); }
@@ -262,11 +262,42 @@
   .res-table th, .res-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
   .res-wrap { margin-top: 18px; background: #fff; border: 1.5px solid var(--line); border-radius: 6px; padding: 10px 14px; }
   .res-wrap h3 { font-family: var(--script); font-size: 1.6rem; margin: 0 0 6px; }
+  /* índice con pestañas al costado, como un cuaderno */
+  @media (min-width: 701px) { body { padding-right: 52px; } }
+  .idx { position: absolute; top: 120px; right: -40px; display: flex; flex-direction: column; gap: 3px; z-index: 3; }
+  .idx button { writing-mode: vertical-rl; font-family: var(--hand); font-size: 1.02rem; width: 40px; max-height: 220px; padding: 10px 6px;
+    border: 1px solid rgba(0,0,0,.14); border-left: 0; border-radius: 0 9px 9px 0; background: var(--c, #f4f6fa); color: var(--ink);
+    cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 2px 1px 3px rgba(0,0,0,.08); transition: transform .12s; }
+  .idx button:hover { transform: translateX(3px); }
+  .idx button[aria-current="true"] { transform: translateX(7px); font-weight: 700; box-shadow: 3px 2px 7px rgba(0,0,0,.2); }
+  .idx .home { background: var(--ink-blue); color: #fff; }
+  .idx .add { background: var(--paper); border-style: dashed; color: var(--ink-soft); writing-mode: horizontal-tb; padding: 4px 0; }
+  @media (max-width: 700px) {
+    .idx { position: static; flex-direction: row; overflow-x: auto; margin: 12px 0 0; padding-bottom: 2px; }
+    .idx button { writing-mode: horizontal-tb; width: auto; max-height: none; border: 1px solid rgba(0,0,0,.14); border-radius: 9px; padding: 4px 10px; flex: none; }
+    .idx button:hover, .idx button[aria-current="true"] { transform: none; }
+    .idx button[aria-current="true"] { outline: 2px solid var(--ink-blue); }
+  }
+  .toc { margin: 18px 0; }
+  .toc > h2 { font-family: var(--script); font-size: 2.5rem; margin: 0 0 12px; color: var(--ink-blue); }
+  .toc-sec { margin: 0 0 20px; }
+  .toc-sec h3 { font-family: var(--script); font-size: 1.85rem; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+  .toc-sec h3 .sw { width: 16px; height: 16px; border-radius: 4px; background: var(--c); align-self: center; border: 1px solid rgba(0,0,0,.12); }
+  .toc-sec h3 button.name { background: none; border: 0; font: inherit; color: var(--ink); cursor: pointer; padding: 0; text-align: left; }
+  .toc-sec h3 small { font-family: var(--hand); font-size: 1rem; color: var(--ink-soft); }
+  .toc-sec h3 .linkbtn { font-family: var(--hand); font-size: 1rem; }
+  .toc ol { list-style: none; margin: 2px 0 0 28px; padding: 0; }
+  .toc li button { display: flex; width: 100%; gap: 8px; align-items: baseline; background: none; border: 0; font-family: var(--hand); font-size: 1.25rem;
+    line-height: var(--lh); color: var(--ink); cursor: pointer; padding: 0 4px; text-align: left; border-radius: 4px; }
+  .toc li button:hover { background: #f2f6fc; }
+  .toc .dots { flex: 1; border-bottom: 2px dotted #b9c3d3; transform: translateY(-7px); min-width: 20px; }
+  .toc .empty-sec { font-family: var(--hand); color: var(--ink-soft); margin: 2px 0 0 28px; }
+  .toc textarea { margin: 8px 0; }
   [hidden] { display: none !important; }
-
+ 
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
   .toast.show { opacity: 1; }
-
+ 
   @media (max-width: 600px) {
     body { padding: 8px 6px; }
     .board { padding: 16px 16px 60px 52px; background-image:
@@ -292,7 +323,7 @@
   </header>
   <div id="app"><p class="loading">Abriendo el cuaderno…</p></div>
 </main>
-
+ 
 <!-- Nota / marcador -->
 <dialog id="dlg">
   <form class="sheet" id="form">
@@ -344,13 +375,15 @@
     </div>
   </form>
 </dialog>
-
+ 
 <!-- Página del cuaderno -->
 <dialog id="dlgPage">
   <form class="sheet" id="formPage">
     <h2 id="pageDlgTitle">Nueva página</h2>
     <label for="pTitle">Título</label>
     <input type="text" id="pTitle" placeholder="Recursos para 2do BT, Robótica en el liceo…" required>
+    <label for="pSec">Grupo (pestaña del índice)</label>
+    <select id="pSec"></select>
     <label for="pDesc">Descripción (opcional)</label>
     <input type="text" id="pDesc" placeholder="Se muestra arriba de la página">
     <label>Tipo de página</label>
@@ -405,7 +438,25 @@
     </div>
   </form>
 </dialog>
-
+ 
+<!-- Grupo (sección del índice) -->
+<dialog id="dlgSec">
+  <form class="sheet" id="formSec">
+    <h2 id="secDlgTitle">Nuevo grupo</h2>
+    <label for="sName">Nombre</label>
+    <input type="text" id="sName" required placeholder="1ro MA La Paz">
+    <label>Color de la pestaña</label>
+    <div class="colors" id="sColors"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn danger" id="sDel" hidden>Borrar grupo</button>
+      <div class="right">
+        <button type="button" class="btn plain" data-close>Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+ 
 <!-- Ver anotación -->
 <dialog id="dlgNote">
   <div class="sheet">
@@ -417,7 +468,7 @@
     </div></div>
   </div>
 </dialog>
-
+ 
 <!-- Ver contenido incrustado -->
 <dialog id="dlgEmbed" class="wide">
   <div class="embed-head">
@@ -429,7 +480,7 @@
   </div>
   <div class="embed-body"><p class="hint" id="emHint" hidden>Si el contenido no se ve, avisar a la docente.</p><iframe id="emFrame" class="embed-frame" title="Contenido incrustado" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
 </dialog>
-
+ 
 <!-- Entrar -->
 <dialog id="dlgLogin">
   <form class="sheet" id="formLogin">
@@ -444,7 +495,7 @@
     </div></div>
   </form>
 </dialog>
-
+ 
 <!-- Guardar desde otras webs -->
 <dialog id="dlgBm">
   <div class="sheet">
@@ -462,10 +513,10 @@
     <div class="dlg-actions"><div class="right"><button type="button" class="btn" data-close>Listo</button></div></div>
   </div>
 </dialog>
-
+ 
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <div class="toast" id="toast" role="status"></div>
-
+ 
 <!-- La configuración (URL de Apps Script y nombre) está en config.js -->
 <script src="config.js"></script>
 <script src="actividades.js"></script>
@@ -474,7 +525,7 @@
   const CFG = window.CUADERNO_CONFIG || {};
   const API_URL = String(CFG.API_URL || '').trim();
   const AUTORA = String(CFG.AUTORA || '').trim();
-
+ 
   const KEY = 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
   const KEY_PAGES = 'cuaderno-paginas-v1';
   const KEY_CLAVE = 'cuaderno-clave';
@@ -483,7 +534,7 @@
   const COLORS = ['yellow', 'pink', 'blue', 'green', 'orange', 'lilac'];
   const SEED_VERSION = 2;
   const SEED = [];
-
+ 
   const $ = s => document.querySelector(s);
   const app = $('#app');
   function uid() { return Math.random().toString(36).slice(2, 10); }
@@ -495,11 +546,16 @@
     del(k) { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} },
     json(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
   };
-
+ 
   /* ---------------- estado ---------------- */
   let mode = 'loading';      // 'local' | 'owner' | 'public' | 'index'
   let items = [], pages = [], rev = 0, clave = '';
-  let view = 'all';          // 'all' o id de página
+  let view = 'index';        // 'index' (índice), 'sec' (un grupo), 'all' (todas las notas) o id de página
+  let sections = [];         // grupos: pestañas del índice
+  let curSec = ls.get('cuaderno-sec') || '';
+  const KEY_SECS = 'cuaderno-secciones-v1';
+  const normSec = x => ({ id: String(x.id || uid()), name: String(x.name || 'Grupo'), color: x.color || 'yellow' });
+  const secOf = p => (p.section && sections.some(s => s.id === p.section)) ? p.section : '';
   let sort = ls.get(KEY_SORT) || 'cat';
   let platform = 'all';
   const tagSel = new Set();
@@ -508,7 +564,7 @@
   const params = new URLSearchParams(location.search);
   const addReq = params.get('add') ? { url: params.get('add'), title: params.get('t') || '', sel: params.get('s') || '' } : null;
   const isPopup = !!addReq && !!window.opener;
-
+ 
   function normItem(i) {
     return {
       id: i.id || uid(), url: i.url || '', name: i.name || '', icon: i.icon || '', cat: i.cat || '',
@@ -522,13 +578,13 @@
     return { id: p.id || uid(), title: p.title || 'Sin título', slug: p.slug || slugify(p.title || 'pagina'),
       visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow',
       type: ['pizarron', 'actividad'].includes(p.type) ? p.type : 'recursos', prompt: p.prompt || '', roster: p.roster || '',
-      template: p.template || 'unir', pairs: Array.isArray(p.pairs) ? p.pairs : [], actMode: p.actMode === 'registro' ? 'registro' : 'practica', single: !!p.single,
+      section: p.section || '', template: p.template || 'unir', pairs: Array.isArray(p.pairs) ? p.pairs : [], actMode: p.actMode === 'registro' ? 'registro' : 'practica', single: !!p.single,
       open: p.open !== false, revealed: !!p.revealed, anonymous: !!p.anonymous, feedback: !!p.feedback,
       locked: !!p.locked, code: p.code == null ? '' : String(p.code) };
   }
   function fromSeed(r, t) { const [url, name, icon, cat, desc, color, fav] = r; return normItem({ url, name, icon, cat, desc, color, fav, added: t }); }
   function urlKey(u) { return String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, ''); }
-
+ 
   function loadLocal() {
     const t = now();
     let list = ls.json(KEY, null);
@@ -540,9 +596,9 @@
     }
     ls.set(KEY + '-seed', String(SEED_VERSION));
     list.forEach(i => { if (i.opened && !opened[i.id]) opened[i.id] = i.opened; });
-    return { items: list.map(normItem), pages: ls.json(KEY_PAGES, []).map(normPage) };
+    return { items: list.map(normItem), pages: ls.json(KEY_PAGES, []).map(normPage), sections: ls.json(KEY_SECS, []).map(normSec) };
   }
-
+ 
   /* ---------------- servidor ---------------- */
   async function api(body) {
     const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
@@ -553,11 +609,11 @@
     $('#status').hidden = false; $('#status').dataset.k = kind || '';
     $('#statusTxt').textContent = txt;
   }
-
+ 
   let saveTimer = null, saving = false, again = false;
   function persist() {
     if (mode === 'local') {
-      ls.set(KEY, JSON.stringify(items)); ls.set(KEY_PAGES, JSON.stringify(pages));
+      ls.set(KEY, JSON.stringify(items)); ls.set(KEY_PAGES, JSON.stringify(pages)); ls.set(KEY_SECS, JSON.stringify(sections));
       setStatus('Guardado en este navegador', 'ok');
       return Promise.resolve(true);
     }
@@ -573,7 +629,7 @@
     saving = true; setStatus('Guardando…', 'wait');
     let ok = false;
     try {
-      const r = await api({ accion: 'guardar', clave, rev, forzar: !!force, paginas: pages, marcadores: items });
+      const r = await api({ accion: 'guardar', clave, rev, forzar: !!force, paginas: pages, marcadores: items, secciones: sections });
       if (r.ok) { rev = r.rev; ok = true; setStatus('Guardado en la planilla ✓', 'ok'); }
       else if (r.conflicto) {
         setStatus('Hubo cambios desde otro dispositivo', 'err');
@@ -589,16 +645,18 @@
     if (again) { again = false; return pushNow(); }
     return ok;
   }
-
+ 
   async function loadOwner() {
     const r = await api({ accion: 'cargar', clave });
     if (!r.ok) throw new Error(r.error || 'Error');
     rev = r.rev; items = (r.marcadores || []).map(normItem); pages = (r.paginas || []).map(normPage);
+    sections = (r.secciones || []).map(normSec);
+    if (curSec && !sections.some(s => s.id === curSec)) curSec = '';
     mode = 'owner'; setStatus('Conectado a la planilla', 'ok');
-    if (view !== 'all' && !pages.some(p => p.id === view)) view = 'all';
+    if (!['all', 'index', 'sec'].includes(view) && !pages.some(p => p.id === view)) view = 'index';
     render();
   }
-
+ 
   function rememberedClave() {
     try { return localStorage.getItem(KEY_CLAVE) || sessionStorage.getItem(KEY_CLAVE) || ''; } catch (e) { return ''; }
   }
@@ -606,7 +664,7 @@
     ls.del(KEY_CLAVE); clave = ''; items = []; pages = [];
     location.href = location.pathname;
   }
-
+ 
   /* ---------------- utilidades ---------------- */
   function platformOf(url) {
     try {
@@ -647,7 +705,7 @@
   const baseUrl = () => location.origin + location.pathname;
   function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
   function rosterOf(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean); }
-
+ 
   /* Convierte un link (o un código <iframe>) en una dirección que se pueda incrustar */
   function embedUrl(raw) {
     let u = String(raw || '').trim(); if (!u) return '';
@@ -719,7 +777,7 @@
     $('#dlgEmbed').showModal();
   }
   $('#dlgEmbed').addEventListener('close', () => { $('#emFrame').src = 'about:blank'; });
-
+ 
   /* Consigna + contenidos incrustados del pizarrón, ya abiertos.
      Se dibujan una sola vez (fuera de la parte que se actualiza sola) para que un video no se reinicie. */
   function pzStaticHTML(prompt, media, owner) {
@@ -733,14 +791,14 @@
       }).join('');
   }
   const editable = () => mode === 'local' || mode === 'owner';
-
+ 
   let tt;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
   async function copy(text) {
     try { await navigator.clipboard.writeText(text); toast('Link copiado'); }
     catch (e) { prompt('Copiar este link:', text); }
   }
-
+ 
   /* ---------------- render ---------------- */
   function noteHTML(it) {
     const p = platformOf(it.url), vid = videoOf(it);
@@ -766,7 +824,7 @@
     return `<section class="group" style="--hl:${hl}"><h2>${esc(title)}<span class="count">(${list.length})</span></h2>
       <div class="notes">${list.map(noteHTML).join('')}</div></section>`;
   }
-
+ 
   function currentList() {
     const q = ($('#q')?.value || '').trim().toLowerCase();
     let list = items;
@@ -777,7 +835,7 @@
     return list;
   }
   function baseList() { return editable() && view !== 'all' ? items.filter(i => i.pages.includes(view)) : items; }
-
+ 
   function renderNotes() {
     const list = currentList();
     const byName = (a, b) => a.name.localeCompare(b.name, 'es');
@@ -799,7 +857,7 @@
     }
     $('#board').innerHTML = html;
   }
-
+ 
   function renderTagCloud() {
     const counts = {};
     baseList().forEach(i => i.tags.forEach(t => counts[t] = (counts[t] || 0) + 1));
@@ -818,7 +876,7 @@
       `<button class="chip" data-plat="${k}" aria-pressed="${platform === k}">${k === 'all' ? 'Todas' : PLAT[k]} · ${counts[k]}</button>`).join('');
   }
   function refresh() { if (!$('#board')) return; renderTagCloud(); renderFilters(); renderNotes(); }
-
+ 
   function toolbarHTML(withActions) {
     return `
       <div class="toolbar">
@@ -840,7 +898,7 @@
       <div class="tagcloud" id="tagcloud"></div>
       <div id="board"></div>`;
   }
-
+ 
   function render() {
     stopPz();
     if (mode === 'index') return renderIndex();
@@ -850,12 +908,26 @@
     $('#subtitle').textContent = 'proyectos en GitHub, Pages y Vercel';
     document.title = 'Mi Cuaderno de Recursos';
     const pg = pages.find(p => p.id === view);
-    const tabs = `<div class="tabs-pages" role="tablist" aria-label="Páginas del cuaderno">
+    const hasNone = pages.some(p => !secOf(p));
+    const idx = `<nav class="idx" aria-label="Índice del cuaderno">
+      <button class="home" data-sec="__index" aria-current="${view === 'index'}" title="Índice">Índice</button>
+      ${sections.map(s => `<button data-sec="${esc(s.id)}" aria-current="${view !== 'index' && view !== 'all' && curSec === s.id}" style="--c:var(--n-${esc(s.color)})" title="${esc(s.name)}">${esc(s.name)}</button>`).join('')}
+      ${hasNone && sections.length ? `<button data-sec="" aria-current="${view !== 'index' && view !== 'all' && curSec === ''}" title="Páginas sin grupo">Sin grupo</button>` : ''}
+      <button class="add" id="newSec" title="Nuevo grupo" aria-label="Nuevo grupo">+</button>
+    </nav>`;
+    const secPages = pages.filter(p => secOf(p) === curSec);
+    const tabs = idx + `<div class="tabs-pages" role="tablist" aria-label="Páginas del grupo">
       <button class="sep" role="tab" data-view="all" aria-selected="${view === 'all'}">📚 Todo <small>(${items.length})</small></button>
-      ${pages.map(p => `<button class="sep" role="tab" data-view="${esc(p.id)}" aria-selected="${view === p.id}" style="--c:var(--n-${esc(p.color)})">
+      ${view === 'index' || view === 'all' ? '' : secPages.map(p => `<button class="sep" role="tab" data-view="${esc(p.id)}" aria-selected="${view === p.id}" style="--c:var(--n-${esc(p.color)})">
         <span class="vis" title="${p.visibility === 'publica' ? 'Compartida' : 'Privada'}">${p.visibility === 'publica' ? '🌐' : '🔒'}</span>${esc(p.title)}</button>`).join('')}
       <button class="sep add" id="newPage">+ página</button>
     </div>`;
+    if (view === 'index' || view === 'sec') {
+      app.innerHTML = tabs + tocHTML(view === 'sec' ? curSec : undefined) +
+        `<footer class="foot"><span>${mode === 'owner' ? 'Conectado a Google Sheets' : 'Guardado solo en este navegador'}</span>
+         ${mode === 'owner' ? '<button class="linkbtn" id="logoutBtn">Salir</button>' : ''}</footer>`;
+      return;
+    }
     let head = '';
     if (pg) {
       const pub = pg.visibility === 'publica';
@@ -898,7 +970,28 @@
       if (mode === 'owner') pzTimer = setInterval(() => tick(true), 15000);
     }
   }
-
+ 
+  function tocHTML(only) {
+    const groups = sections.map(s => ({ ...s, list: pages.filter(p => secOf(p) === s.id) }));
+    const none = pages.filter(p => !secOf(p));
+    if (none.length || only === '') groups.push({ id: '', name: 'Sin grupo', color: 'yellow', list: none });
+    const shown = only === undefined ? groups : groups.filter(g => g.id === only);
+    const icon = p => p.type === 'pizarron' ? '🧑‍🏫' : p.type === 'actividad' ? '🎮' : '📄';
+    const setup = only === undefined && !sections.length ? `<div class="notice">Para ordenar el cuaderno por grupos, escribir un grupo por línea (después se pueden renombrar, cambiar de color o borrar):
+        <textarea id="secBulk" placeholder="1ro MA La Paz&#10;1ro MA Las Piedras&#10;2do MB La Paz"></textarea>
+        <button class="btn small" id="secBulkGo">Crear grupos</button></div>` : '';
+    return `<div class="toc"><h2>${only === undefined ? 'Índice' : esc((shown[0] || {}).name || 'Sin grupo')}</h2>${setup}
+      ${shown.map(g => `<div class="toc-sec" style="--c:var(--n-${esc(g.color)})">
+        <h3><span class="sw"></span>${only === undefined ? `<button class="name" data-sec="${esc(g.id)}">${esc(g.name)}</button>` : ''}
+          <small>${g.list.length} página${g.list.length === 1 ? '' : 's'}</small>
+          <button class="linkbtn" data-newpagein="${esc(g.id)}">+ página</button>
+          ${g.id ? `<button class="linkbtn" data-editsec="${esc(g.id)}">editar grupo</button>` : ''}</h3>
+        ${g.list.length ? `<ol>${g.list.map(p => `<li><button data-goto="${esc(p.id)}">${icon(p)} ${esc(p.title)}<span class="dots"></span>${p.visibility === 'publica' ? '🌐' : '🔒'}${p.locked ? '🔐' : ''}</button></li>`).join('')}</ol>`
+          : '<p class="empty-sec">Todavía no hay páginas en este grupo.</p>'}
+      </div>`).join('')}
+    </div>`;
+  }
+ 
   function renderIndex() {
     $('#title').firstChild.textContent = 'Cuaderno de recursos';
     $('#subtitle').textContent = AUTORA ? `de ${AUTORA}` : 'páginas compartidas';
@@ -906,7 +999,7 @@
       <p class="empty">Para ver una página compartida hace falta su link.</p>
       <footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
   }
-
+ 
   function renderPublic() {
     $('#title').firstChild.textContent = pubPage.title;
     $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
@@ -923,7 +1016,7 @@
     if (isPz) renderPzPublic();
     if (isPz || pubPage.locked) pzTimer = setInterval(pollPublic, 20000);
   }
-
+ 
   /* ---------------- eventos ---------------- */
   app.addEventListener('click', e => {
     const t = e.target;
@@ -942,6 +1035,25 @@
     if (nv) { showNote(items.find(i => i.id === nv.dataset.note)); return; }
     const cover = t.closest('a.cover');
     if (cover) { const id = cover.parentElement.dataset.id; opened[id] = now(); ls.set(KEY_OPEN, JSON.stringify(opened)); return; }
+    const sc = t.closest('[data-sec]');
+    if (sc) {
+      if (sc.dataset.sec === '__index') view = 'index';
+      else { curSec = sc.dataset.sec; view = 'sec'; ls.set('cuaderno-sec', curSec); }
+      tagSel.clear(); platform = 'all'; render(); window.scrollTo({ top: 0 }); return;
+    }
+    const gt = t.closest('[data-goto]');
+    if (gt) { const p = pages.find(x => x.id === gt.dataset.goto); if (p) { curSec = secOf(p); ls.set('cuaderno-sec', curSec); view = p.id; tagSel.clear(); platform = 'all'; render(); } return; }
+    if (t.closest('#newSec')) return openSecDialog(null);
+    const es = t.closest('[data-editsec]');
+    if (es) return openSecDialog(sections.find(x => x.id === es.dataset.editsec));
+    const np = t.closest('[data-newpagein]');
+    if (np) { curSec = np.dataset.newpagein; return openPageDialog(null); }
+    if (t.closest('#secBulkGo')) {
+      const names = $('#secBulk').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      if (!names.length) { toast('Escribir al menos un grupo'); return; }
+      names.forEach((n, i) => sections.push(normSec({ id: uid(), name: n, color: COLORS[(sections.length) % COLORS.length] })));
+      persist(); render(); toast(`${names.length} grupo${names.length > 1 ? 's' : ''} creado${names.length > 1 ? 's' : ''}`); return;
+    }
     const sv = t.closest('[data-view]');
     if (sv) { view = sv.dataset.view; tagSel.clear(); platform = 'all'; render(); return; }
     const pl = t.closest('[data-plat]');
@@ -1014,7 +1126,7 @@
     }
     if (t.closest('#logoutBtn')) { if (confirm('¿Salir del cuaderno en este dispositivo?')) logout(); return; }
     if (t.closest('#migrateBtn')) {
-      const local = loadLocal(); items = local.items; pages = local.pages;
+      const local = loadLocal(); items = local.items; pages = local.pages; sections = local.sections;
       pushNow(true).then(ok => { if (ok) { toast(`${items.length} notas subidas a la planilla`); render(); } }); return;
     }
   });
@@ -1029,7 +1141,7 @@
     b.closest('dialog').close();
     if (isPopup && b.closest('#dlg')) window.close();
   }));
-
+ 
   /* ---------------- pizarrón: vista docente ---------------- */
   let pzTimer = null, pzList = [], pzFor = null;
   function stopPz() { clearInterval(pzTimer); pzTimer = null; }
@@ -1096,7 +1208,7 @@
       setStatus(res.ok ? 'Nota guardada ✓' : (res.error || 'No se pudo guardar'), res.ok ? 'ok' : 'err');
     } catch (err) { setStatus('Sin conexión: la nota no se guardó', 'err'); }
   });
-
+ 
   /* ---------------- pizarrón: vista estudiante ---------------- */
   let mine = null, myFeedback = null, pubResp = [], pzMedia = null;
   const pzKey = () => 'cuaderno-pz-' + pubPage.slug;
@@ -1170,7 +1282,7 @@
       } else { say(r.error || 'No se pudo enviar'); $('#pzSend').disabled = false; }
     } catch (e) { say('Sin conexión: no se envió. Probar de nuevo.'); $('#pzSend').disabled = false; }
   }
-
+ 
   /* ---------------- actividades: vista docente ---------------- */
   let resList = [], resFor = null;
   async function loadResults(pageId, quiet) {
@@ -1212,7 +1324,7 @@
     a.download = `${pg.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-')}-resultados-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
-
+ 
   /* ---------------- actividades: vista estudiante ---------------- */
   let actName = '';
   const actKey = () => 'cuaderno-act-' + pubPage.slug;
@@ -1241,7 +1353,7 @@
       }
     });
   }
-
+ 
   /* ---------------- modo bloqueado: vista docente ---------------- */
   let incList = [], incFor = null;
   async function loadIncidents(pageId, quiet) {
@@ -1270,7 +1382,7 @@
       </tbody></table></div>` : '<p>Todavía no hay registros.</p>'}
     </details>`;
   }
-
+ 
   /* ---------------- modo bloqueado: vista estudiante ---------------- */
   let lockName = '', guardsOn = false, lockedNow = false, guardsArmed = false;
   const lkKey = () => 'cuaderno-lock-' + pubPage.slug;
@@ -1380,7 +1492,7 @@
   }
   document.addEventListener('click', e => { if (e.target.closest('#lkUnlock')) tryUnlock(); });
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'lkCode') tryUnlock(); });
-
+ 
   /* ---------------- diálogo de nota ---------------- */
   let editing = null, dlgMode = 'one', chosenColor = 'yellow';
   function colorPicker(el, current, onPick) {
@@ -1393,7 +1505,7 @@
     $('#oneFields').hidden = m !== 'one'; $('#manyFields').hidden = m !== 'many'; $('#favWrap').hidden = m !== 'one';
   }
   $('#modes').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
-
+ 
   function renderTagSuggest() {
     const cur = new Set(parseTags($('#fTags').value));
     const all = {}; items.forEach(i => i.tags.forEach(t => all[t] = (all[t] || 0) + 1));
@@ -1406,7 +1518,7 @@
     $('#fTags').value = cur.join(', ') + ', '; renderTagSuggest(); $('#fTags').focus();
   });
   $('#fTags').addEventListener('input', renderTagSuggest);
-
+ 
   function openNoteDialog(it, prefill) {
     editing = it || null;
     $('#dlgTitle').textContent = it ? 'Editar nota' : (prefill ? 'Guardar en el cuaderno' : 'Nueva nota');
@@ -1473,13 +1585,13 @@
       else { await persist(); setTimeout(() => window.close(), 700); }
     } else persist();
   });
-
+ 
   function showNote(it) {
     if (!it) return;
     $('#nvTitle').textContent = it.name; $('#nvBody').innerHTML = linkify(it.note);
     $('#nvOpen').href = it.url; $('#dlgNote').showModal();
   }
-
+ 
   /* ---------------- diálogo de página ---------------- */
   let editingPage = null, pageColor = 'yellow';
   function openPageDialog(pg) {
@@ -1494,6 +1606,8 @@
     $('#pPairs').value = window.Actividades ? Actividades.format(pg?.pairs || []) : '';
     document.querySelector(`input[name=pActMode][value=${pg?.actMode || 'practica'}]`).checked = true;
     $('#pSingle').checked = !!pg?.single;
+    $('#pSec').innerHTML = '<option value="">Sin grupo</option>' + sections.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+    $('#pSec').value = pg ? secOf(pg) : (sections.some(x => x.id === curSec) ? curSec : '');
     $('#pLocked').checked = !!pg?.locked; $('#pCode').value = pg?.code || String(1000 + Math.floor(Math.random() * 9000));
     syncPageType();
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
@@ -1520,7 +1634,7 @@
     e.preventDefault();
     const title = $('#pTitle').value.trim(); if (!title) return;
     const type = document.querySelector('input[name=pType]:checked').value;
-    const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, type,
+    const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, type, section: $('#pSec').value,
       locked: $('#pLocked').checked,
       visibility: type !== 'recursos' || $('#pLocked').checked ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
     if (type === 'actividad') {
@@ -1537,6 +1651,7 @@
       if ($('#pNewLink').checked) editingPage.slug = slugify(title);
     }
     else { const p = normPage({ ...data, id: uid(), slug: slugify(title) }); pages.push(p); view = p.id; }
+    curSec = data.section; ls.set('cuaderno-sec', curSec);
     $('#dlgPage').close(); persist(); render(); toast(editingPage ? 'Página actualizada' : 'Página creada');
   });
   $('#pDel').addEventListener('click', () => {
@@ -1545,9 +1660,36 @@
     if (!confirm(`¿Borrar la página «${editingPage.title}»?\nLas ${n} notas que tiene NO se borran: siguen en «Todo».`)) return;
     const id = editingPage.id;
     pages = pages.filter(p => p.id !== id); items.forEach(i => i.pages = i.pages.filter(x => x !== id));
-    view = 'all'; $('#dlgPage').close(); persist(); render(); toast('Página borrada');
+    view = 'sec'; $('#dlgPage').close(); persist(); render(); toast('Página borrada');
   });
-
+ 
+  /* ---------------- diálogo de grupo ---------------- */
+  let editingSec = null, secColor = 'yellow';
+  function openSecDialog(sec) {
+    editingSec = sec || null;
+    $('#secDlgTitle').textContent = sec ? 'Editar grupo' : 'Nuevo grupo';
+    $('#sName').value = sec ? sec.name : '';
+    secColor = sec ? sec.color : COLORS[sections.length % COLORS.length];
+    colorPicker($('#sColors'), secColor, c => secColor = c);
+    $('#sDel').hidden = !sec;
+    $('#dlgSec').showModal(); $('#sName').focus();
+  }
+  $('#formSec').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#sName').value.trim(); if (!name) return;
+    if (editingSec) Object.assign(editingSec, { name, color: secColor });
+    else { const s = normSec({ id: uid(), name, color: secColor }); sections.push(s); curSec = s.id; view = 'sec'; ls.set('cuaderno-sec', curSec); }
+    $('#dlgSec').close(); persist(); render(); toast(editingSec ? 'Grupo actualizado' : 'Grupo creado');
+  });
+  $('#sDel').addEventListener('click', () => {
+    if (!editingSec) return;
+    const n = pages.filter(p => p.section === editingSec.id).length;
+    if (!confirm(`¿Borrar el grupo «${editingSec.name}»?\nSus ${n} páginas NO se borran: pasan a «Sin grupo».`)) return;
+    const id = editingSec.id;
+    sections = sections.filter(x => x.id !== id); pages.forEach(p => { if (p.section === id) p.section = ''; });
+    curSec = ''; view = 'index'; $('#dlgSec').close(); persist(); render(); toast('Grupo borrado');
+  });
+ 
   /* ---------------- entrar ---------------- */
   let afterLogin = null;
   function openLogin(then) { afterLogin = then || null; $('#lErr').textContent = ''; $('#lClave').value = ''; $('#dlgLogin').showModal(); $('#lClave').focus(); }
@@ -1563,7 +1705,7 @@
       afterLogin && afterLogin();
     } catch (err) { $('#lErr').textContent = err.message === 'Clave incorrecta' ? 'Clave incorrecta' : 'No se pudo conectar: ' + err.message; }
   });
-
+ 
   /* ---------------- bookmarklet ---------------- */
   function openBookmarklet() {
     const code = `javascript:(function(){var w=window,d=document,s='';try{s=String(w.getSelection()).trim().slice(0,1500)}catch(e){}w.open('${baseUrl()}?add='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(d.title)+'&s='+encodeURIComponent(s),'cuaderno','width=620,height=780,scrollbars=yes')})();`;
@@ -1574,10 +1716,10 @@
     $('#dlgBm').showModal();
   }
   $('#bmLink').addEventListener('click', e => { e.preventDefault(); toast('Arrastralo a la barra de marcadores'); });
-
+ 
   /* ---------------- exportar / restaurar ---------------- */
   function exportData() {
-    const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), pages, items }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), sections, pages, items }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = `cuaderno-recursos-${new Date().toISOString().slice(0, 10)}.json`;
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); toast('Copia descargada');
@@ -1590,12 +1732,13 @@
       if (!Array.isArray(list)) throw new Error();
       if (!confirm(`Se van a cargar ${list.length} notas${data.pages ? ` y ${data.pages.length} páginas` : ''} y reemplazar las actuales. ¿Seguir?`)) return;
       items = list.filter(i => i && i.url).map(normItem);
+      if (Array.isArray(data.sections)) sections = data.sections.map(normSec);
       if (Array.isArray(data.pages)) pages = data.pages.map(normPage);
       view = 'all'; persist(); render(); toast('Cuaderno restaurado');
     } catch (err) { toast('Ese archivo no es una copia válida'); }
     e.target.value = '';
   });
-
+ 
   /* ---------------- inicio ---------------- */
   function handleAdd() {
     if (!addReq) return;
@@ -1604,11 +1747,11 @@
     else openNoteDialog(null, { url: addReq.url, name: addReq.title.slice(0, 90), note: addReq.sel ? `«${addReq.sel}»` : '' });
     if (!isPopup) history.replaceState(null, '', location.pathname);
   }
-
+ 
   async function start() {
     $('#today').textContent = new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' });
     if (!API_URL) {
-      const l = loadLocal(); items = l.items; pages = l.pages; mode = 'local';
+      const l = loadLocal(); items = l.items; pages = l.pages; sections = l.sections; mode = 'local';
       render(); handleAdd(); return;
     }
     const slug = params.get('p');
@@ -1636,3 +1779,4 @@
 </script>
 </body>
 </html>
+ 
