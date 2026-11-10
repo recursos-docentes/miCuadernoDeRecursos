@@ -47,7 +47,7 @@
     content: ""; position: absolute; top: 0; bottom: 0; left: 26px; width: 22px;
     background: radial-gradient(circle at 11px 50%, var(--desk) 0 9px, rgba(0,0,0,.08) 9.5px, transparent 10.5px) 0 40px / 22px 180px repeat-y;
   }
- 
+
   header.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 24px; justify-content: space-between; min-height: 74px; }
   h1 { font-family: var(--script); font-weight: 700; color: var(--ink-blue); font-size: clamp(2.4rem, 6vw, 3.4rem); line-height: 1; margin: 0; }
   h1 small { display: block; font-family: var(--hand); font-size: .36em; color: var(--ink-soft); font-weight: 400; margin-top: 6px; }
@@ -60,7 +60,7 @@
   .status[data-k="err"] { color: var(--err); }
   .status[data-k="err"] .dot { background: var(--err); }
   .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--ink-blue); text-decoration: underline; cursor: pointer; }
- 
+
   /* separadores (páginas) */
   .tabs-pages { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; border-bottom: 2px solid var(--ink-blue); padding-left: 4px; }
   .sep {
@@ -73,7 +73,7 @@
   .sep[aria-selected="true"] { opacity: 1; border-color: var(--ink-blue); border-bottom: 2px solid var(--c, #fff); background: var(--c, #fff); font-weight: 700; }
   .sep.add { background: transparent; border-style: dashed; color: var(--ink-soft); }
   .sep .vis { font-size: .85em; }
- 
+
   .page-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 14px 0 4px; }
   .page-head h2 { font-family: var(--script); font-size: 2.3rem; margin: 0; color: var(--ink); }
   .page-head p { margin: 0; flex-basis: 100%; font-family: var(--hand); font-size: 1.15rem; color: var(--ink-soft); }
@@ -85,7 +85,7 @@
   .pill.priv { background: #f4f1ea; }
   .notice { font-family: var(--hand); font-size: 1.05rem; background: #fff8d6; border: 1.5px dashed #e3c96a; padding: 8px 12px; border-radius: 4px; margin: 10px 0; }
   .notice .btn { margin-left: 8px; }
- 
+
   .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 6px; }
   .search { flex: 1 1 220px; min-width: 0; background: transparent; border: 0; border-bottom: 2px solid var(--ink-blue); color: var(--ink); font-family: var(--hand); font-size: 1.25rem; padding: 4px; outline: none; }
   .search::placeholder { color: var(--ink-soft); opacity: .7; }
@@ -98,7 +98,7 @@
   .btn.ghost { background: var(--paper); color: var(--ink-soft); box-shadow: none; border: 1.5px dashed var(--line); }
   .btn.ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
   .btn.small { font-size: 1rem; padding: 3px 10px; }
- 
+
   /* nube de etiquetas */
   .tagcloud { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin: 4px 0 6px; font-family: var(--hand); }
   .tagcloud .lbl { color: var(--ink-soft); font-size: 1rem; margin-right: 2px; }
@@ -107,12 +107,12 @@
   .tc[aria-pressed="true"] { background: var(--ink-blue); color: #fff; }
   .tc small { color: var(--ink-soft); font-size: .75em; }
   .tc[aria-pressed="true"] small { color: #dbe6f7; }
- 
+
   section.group { margin-top: 26px; }
   section.group h2 { font-family: var(--script); font-weight: 700; font-size: 2.1rem; margin: 0 0 16px; display: inline-block; position: relative; color: var(--ink); z-index: 0; }
   section.group h2::after { content: ""; position: absolute; left: -6px; right: -10px; bottom: 4px; height: 12px; z-index: -1; background: var(--hl, #fff1a8); opacity: .9; border-radius: 3px; transform: rotate(-1deg); }
   section.group h2 .count { font-size: .55em; color: var(--ink-soft); margin-left: 6px; }
- 
+
   .notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 26px 22px; }
   .note {
     position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 150px; padding: 22px 16px 14px;
@@ -145,10 +145,10 @@
   .tools .edit { opacity: 0; transition: opacity .15s; }
   .note:hover .edit, .note:focus-within .edit { opacity: 1; }
   @media (hover: none) { .tools .edit { opacity: .8; } }
- 
+
   .empty { font-family: var(--script); font-size: 1.9rem; color: var(--ink-soft); text-align: center; margin: 60px 0; }
   .loading { font-family: var(--script); font-size: 2rem; color: var(--ink-soft); text-align: center; margin: 80px 0; }
- 
+
   /* índice público */
   .index-list { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 4px; }
   .index-list a { display: flex; gap: 12px; align-items: baseline; text-decoration: none; color: var(--ink); font-family: var(--hand); font-size: 1.4rem; padding: 2px 6px; border-radius: 4px; line-height: var(--lh); }
@@ -156,7 +156,7 @@
   .index-list .sw { width: 14px; height: 14px; border-radius: 3px; background: var(--c); flex: none; align-self: center; border: 1px solid rgba(0,0,0,.1); }
   .index-list small { color: var(--ink-soft); font-size: .8em; }
   footer.foot { margin-top: 48px; font-family: var(--hand); color: var(--ink-soft); font-size: 1rem; display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
- 
+
   /* diálogos */
   dialog { border: 0; padding: 0; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: #fffdf3; color: var(--ink); border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,.5); background-image: repeating-linear-gradient(transparent 0 31px, #d9e6f2 31px 32px); }
   dialog::backdrop { background: rgba(30,35,50,.55); }
@@ -239,11 +239,18 @@
   .inc td, .inc th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
   .inc tr.salida td { color: var(--err); }
   .inc .tablewrap { max-height: 320px; overflow: auto; }
+  /* videos y contenidos abiertos en el pizarrón */
+  .pz-media { margin: 16px 0 0; max-width: 900px; }
+  .pz-media figcaption { font-family: var(--hand); font-size: 1.2rem; margin-bottom: 6px; }
+  .pz-media .frame { background: #fff; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: 2px 4px 10px rgba(60,50,30,.12); }
+  .pz-media .frame.video { aspect-ratio: 16 / 9; }
+  .pz-media .frame:not(.video) { height: min(70vh, 600px); }
+  .pz-media iframe { width: 100%; height: 100%; border: 0; display: block; }
   [hidden] { display: none !important; }
- 
+
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
   .toast.show { opacity: 1; }
- 
+
   @media (max-width: 600px) {
     body { padding: 8px 6px; }
     .board { padding: 16px 16px 60px 52px; background-image:
@@ -269,7 +276,7 @@
   </header>
   <div id="app"><p class="loading">Abriendo el cuaderno…</p></div>
 </main>
- 
+
 <!-- Nota / marcador -->
 <dialog id="dlg">
   <form class="sheet" id="form">
@@ -321,7 +328,7 @@
     </div>
   </form>
 </dialog>
- 
+
 <!-- Página del cuaderno -->
 <dialog id="dlgPage">
   <form class="sheet" id="formPage">
@@ -368,7 +375,7 @@
     </div>
   </form>
 </dialog>
- 
+
 <!-- Ver anotación -->
 <dialog id="dlgNote">
   <div class="sheet">
@@ -380,7 +387,7 @@
     </div></div>
   </div>
 </dialog>
- 
+
 <!-- Ver contenido incrustado -->
 <dialog id="dlgEmbed" class="wide">
   <div class="embed-head">
@@ -392,7 +399,7 @@
   </div>
   <div class="embed-body"><p class="hint" id="emHint" hidden>Si el contenido no se ve, avisar a la docente.</p><iframe id="emFrame" class="embed-frame" title="Contenido incrustado" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
 </dialog>
- 
+
 <!-- Entrar -->
 <dialog id="dlgLogin">
   <form class="sheet" id="formLogin">
@@ -407,7 +414,7 @@
     </div></div>
   </form>
 </dialog>
- 
+
 <!-- Guardar desde otras webs -->
 <dialog id="dlgBm">
   <div class="sheet">
@@ -425,10 +432,10 @@
     <div class="dlg-actions"><div class="right"><button type="button" class="btn" data-close>Listo</button></div></div>
   </div>
 </dialog>
- 
+
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <div class="toast" id="toast" role="status"></div>
- 
+
 <!-- La configuración (URL de Apps Script y nombre) está en config.js -->
 <script src="config.js"></script>
 <script>
@@ -436,7 +443,7 @@
   const CFG = window.CUADERNO_CONFIG || {};
   const API_URL = String(CFG.API_URL || '').trim();
   const AUTORA = String(CFG.AUTORA || '').trim();
- 
+
   const KEY = 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
   const KEY_PAGES = 'cuaderno-paginas-v1';
   const KEY_CLAVE = 'cuaderno-clave';
@@ -445,7 +452,7 @@
   const COLORS = ['yellow', 'pink', 'blue', 'green', 'orange', 'lilac'];
   const SEED_VERSION = 2;
   const SEED = [];
- 
+
   const $ = s => document.querySelector(s);
   const app = $('#app');
   function uid() { return Math.random().toString(36).slice(2, 10); }
@@ -457,7 +464,7 @@
     del(k) { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} },
     json(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
   };
- 
+
   /* ---------------- estado ---------------- */
   let mode = 'loading';      // 'local' | 'owner' | 'public' | 'index'
   let items = [], pages = [], rev = 0, clave = '';
@@ -470,7 +477,7 @@
   const params = new URLSearchParams(location.search);
   const addReq = params.get('add') ? { url: params.get('add'), title: params.get('t') || '', sel: params.get('s') || '' } : null;
   const isPopup = !!addReq && !!window.opener;
- 
+
   function normItem(i) {
     return {
       id: i.id || uid(), url: i.url || '', name: i.name || '', icon: i.icon || '', cat: i.cat || '',
@@ -489,7 +496,7 @@
   }
   function fromSeed(r, t) { const [url, name, icon, cat, desc, color, fav] = r; return normItem({ url, name, icon, cat, desc, color, fav, added: t }); }
   function urlKey(u) { return String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, ''); }
- 
+
   function loadLocal() {
     const t = now();
     let list = ls.json(KEY, null);
@@ -503,7 +510,7 @@
     list.forEach(i => { if (i.opened && !opened[i.id]) opened[i.id] = i.opened; });
     return { items: list.map(normItem), pages: ls.json(KEY_PAGES, []).map(normPage) };
   }
- 
+
   /* ---------------- servidor ---------------- */
   async function api(body) {
     const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
@@ -514,7 +521,7 @@
     $('#status').hidden = false; $('#status').dataset.k = kind || '';
     $('#statusTxt').textContent = txt;
   }
- 
+
   let saveTimer = null, saving = false, again = false;
   function persist() {
     if (mode === 'local') {
@@ -550,7 +557,7 @@
     if (again) { again = false; return pushNow(); }
     return ok;
   }
- 
+
   async function loadOwner() {
     const r = await api({ accion: 'cargar', clave });
     if (!r.ok) throw new Error(r.error || 'Error');
@@ -559,7 +566,7 @@
     if (view !== 'all' && !pages.some(p => p.id === view)) view = 'all';
     render();
   }
- 
+
   function rememberedClave() {
     try { return localStorage.getItem(KEY_CLAVE) || sessionStorage.getItem(KEY_CLAVE) || ''; } catch (e) { return ''; }
   }
@@ -567,7 +574,7 @@
     ls.del(KEY_CLAVE); clave = ''; items = []; pages = [];
     location.href = location.pathname;
   }
- 
+
   /* ---------------- utilidades ---------------- */
   function platformOf(url) {
     try {
@@ -608,7 +615,7 @@
   const baseUrl = () => location.origin + location.pathname;
   function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('es-UY', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
   function rosterOf(pg) { return (Array.isArray(pg.roster) ? pg.roster : String(pg.roster || '').split(/\r?\n/)).map(x => String(x).trim()).filter(Boolean); }
- 
+
   /* Convierte un link (o un código <iframe>) en una dirección que se pueda incrustar */
   function embedUrl(raw) {
     let u = String(raw || '').trim(); if (!u) return '';
@@ -652,15 +659,28 @@
     $('#dlgEmbed').showModal();
   }
   $('#dlgEmbed').addEventListener('close', () => { $('#emFrame').src = 'about:blank'; });
+
+  /* Consigna + contenidos incrustados del pizarrón, ya abiertos.
+     Se dibujan una sola vez (fuera de la parte que se actualiza sola) para que un video no se reinicie. */
+  function pzStaticHTML(prompt, media, owner) {
+    return `<div class="pz-consigna"><b>Consigna</b>${prompt ? linkify(prompt) : (owner ? '<i>Sin consigna: agregarla en «editar página».</i>' : '')}</div>` +
+      media.map(it => {
+        const src = embedUrl(embedOf(it));
+        const video = /youtube-nocookie\.com|player\.vimeo\.com/.test(src);
+        return `<figure class="pz-media"><figcaption>${esc(it.name)}</figcaption>
+          <div class="frame${video ? ' video' : ''}"><iframe src="${esc(src)}" title="${esc(it.name)}" loading="lazy"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></figure>`;
+      }).join('');
+  }
   const editable = () => mode === 'local' || mode === 'owner';
- 
+
   let tt;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
   async function copy(text) {
     try { await navigator.clipboard.writeText(text); toast('Link copiado'); }
     catch (e) { prompt('Copiar este link:', text); }
   }
- 
+
   /* ---------------- render ---------------- */
   function noteHTML(it) {
     const p = platformOf(it.url);
@@ -684,7 +704,7 @@
     return `<section class="group" style="--hl:${hl}"><h2>${esc(title)}<span class="count">(${list.length})</span></h2>
       <div class="notes">${list.map(noteHTML).join('')}</div></section>`;
   }
- 
+
   function currentList() {
     const q = ($('#q')?.value || '').trim().toLowerCase();
     let list = items;
@@ -695,7 +715,7 @@
     return list;
   }
   function baseList() { return editable() && view !== 'all' ? items.filter(i => i.pages.includes(view)) : items; }
- 
+
   function renderNotes() {
     const list = currentList();
     const byName = (a, b) => a.name.localeCompare(b.name, 'es');
@@ -717,7 +737,7 @@
     }
     $('#board').innerHTML = html;
   }
- 
+
   function renderTagCloud() {
     const counts = {};
     baseList().forEach(i => i.tags.forEach(t => counts[t] = (counts[t] || 0) + 1));
@@ -736,7 +756,7 @@
       `<button class="chip" data-plat="${k}" aria-pressed="${platform === k}">${k === 'all' ? 'Todas' : PLAT[k]} · ${counts[k]}</button>`).join('');
   }
   function refresh() { if (!$('#board')) return; renderTagCloud(); renderFilters(); renderNotes(); }
- 
+
   function toolbarHTML(withActions) {
     return `
       <div class="toolbar">
@@ -758,7 +778,7 @@
       <div class="tagcloud" id="tagcloud"></div>
       <div id="board"></div>`;
   }
- 
+
   function render() {
     stopPz();
     if (mode === 'index') return renderIndex();
@@ -794,7 +814,7 @@
         : `<div class="notice">La planilla está vacía. Para cargar tus notas, tocá «Restaurar» y elegí el archivo <b>notas-iniciales.json</b>.</div>`) : '';
     const isPz = pg && pg.type === 'pizarron';
     const isLk = !!(pg && pg.locked);
-    app.innerHTML = tabs + migrate + head + (isLk ? '<div id="incWrap"></div>' : '') + (isPz ? '<div id="pzWrap"></div><h2 class="mat">Materiales</h2>' : '') + toolbarHTML(true) +
+    app.innerHTML = tabs + migrate + head + (isLk ? '<div id="incWrap"></div>' : '') + (isPz ? `<div class="pz" id="pzStatic">${pzStaticHTML(pg.prompt, items.filter(i => i.pages.includes(pg.id) && embedOf(i)), true)}</div><div id="pzWrap"></div><h2 class="mat">Materiales</h2>` : '') + toolbarHTML(true) +
       `<footer class="foot"><span>${mode === 'owner' ? 'Conectado a Google Sheets' : 'Guardado solo en este navegador'}</span>
        ${mode === 'owner' ? '<button class="linkbtn" id="logoutBtn">Salir</button>' : ''}</footer>`;
     refresh();
@@ -806,7 +826,7 @@
       if (mode === 'owner') pzTimer = setInterval(() => tick(true), 15000);
     }
   }
- 
+
   function renderIndex() {
     $('#title').firstChild.textContent = 'Cuaderno de recursos';
     $('#subtitle').textContent = AUTORA ? `de ${AUTORA}` : 'páginas compartidas';
@@ -814,14 +834,15 @@
       <p class="empty">Para ver una página compartida hace falta su link.</p>
       <footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
   }
- 
+
   function renderPublic() {
     $('#title').firstChild.textContent = pubPage.title;
     $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
     document.title = pubPage.title + ' · Cuaderno de recursos';
     if (pubPage.locked && !guardsOn) return renderGate();
     const isPz = pubPage.type === 'pizarron';
-    app.innerHTML = (isPz ? '<div id="pzWrap"></div>' : '') +
+    if (isPz && !pzMedia) { pzMedia = items.filter(i => embedOf(i)); items = items.filter(i => !embedOf(i)); }
+    app.innerHTML = (isPz ? `<div class="pz" id="pzStatic">${pzStaticHTML(pubPage.prompt, pzMedia, false)}</div><div id="pzWrap"></div>` : '') +
       (isPz && items.length ? '<h2 class="mat">Materiales</h2>' : '') +
       (!isPz || items.length ? toolbarHTML(false) : '') +
       (guardsOn ? '' : `<footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`);
@@ -829,7 +850,7 @@
     if (isPz) renderPzPublic();
     if (isPz || pubPage.locked) pzTimer = setInterval(pollPublic, 20000);
   }
- 
+
   /* ---------------- eventos ---------------- */
   app.addEventListener('click', e => {
     const t = e.target;
@@ -911,7 +932,7 @@
     b.closest('dialog').close();
     if (isPopup && b.closest('#dlg')) window.close();
   }));
- 
+
   /* ---------------- pizarrón: vista docente ---------------- */
   let pzTimer = null, pzList = [], pzFor = null;
   function stopPz() { clearInterval(pzTimer); pzTimer = null; }
@@ -932,7 +953,6 @@
     const answered = new Set(list.map(r => r.estudiante));
     const missing = roster.filter(n => !answered.has(n));
     wrap.innerHTML = `<section class="pz">
-      <div class="pz-consigna"><b>Consigna</b>${pg.prompt ? linkify(pg.prompt) : '<i>Sin consigna: agregarla en «editar página».</i>'}</div>
       ${mode === 'local' ? '<div class="notice">El pizarrón necesita la planilla conectada para recibir respuestas.</div>' : ''}
       <div class="pz-ctrl">
         <button class="pill ${pg.open ? 'on' : ''}" id="pzOpen" title="Abrir o cerrar la recepción de respuestas">${pg.open ? '✅ Recibiendo respuestas' : '⛔ No recibe respuestas'}</button>
@@ -979,9 +999,9 @@
       setStatus(res.ok ? 'Nota guardada ✓' : (res.error || 'No se pudo guardar'), res.ok ? 'ok' : 'err');
     } catch (err) { setStatus('Sin conexión: la nota no se guardó', 'err'); }
   });
- 
+
   /* ---------------- pizarrón: vista estudiante ---------------- */
-  let mine = null, myFeedback = null, pubResp = [];
+  let mine = null, myFeedback = null, pubResp = [], pzMedia = null;
   const pzKey = () => 'cuaderno-pz-' + pubPage.slug;
   function renderPzPublic(msg) {
     const wrap = $('#pzWrap'); if (!wrap) return;
@@ -1008,7 +1028,6 @@
     const fb = mine && myFeedback && (myFeedback.nota || myFeedback.comentario)
       ? `<div class="feedback"><b>Devolución${myFeedback.nota ? ' · Nota: ' + esc(myFeedback.nota) : ''}</b>${myFeedback.comentario ? '\n' + esc(myFeedback.comentario) : ''}</div>` : '';
     wrap.innerHTML = `<section class="pz">
-      <div class="pz-consigna"><b>Consigna</b>${linkify(pg.prompt || '')}</div>
       <p class="pz-count">${pg.revealed ? 'Respuestas de todo el grupo' + (mine ? ' (la tuya está marcada)' : '') + ':'
         : `<b>${pg.respondieron || 0}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} ya respondieron. Las respuestas de los demás se van a ver cuando se habiliten.`}</p>
       ${fb}${form}${wall}</section>`;
@@ -1054,7 +1073,7 @@
       } else { say(r.error || 'No se pudo enviar'); $('#pzSend').disabled = false; }
     } catch (e) { say('Sin conexión: no se envió. Probar de nuevo.'); $('#pzSend').disabled = false; }
   }
- 
+
   /* ---------------- modo bloqueado: vista docente ---------------- */
   let incList = [], incFor = null;
   async function loadIncidents(pageId, quiet) {
@@ -1083,7 +1102,7 @@
       </tbody></table></div>` : '<p>Todavía no hay registros.</p>'}
     </details>`;
   }
- 
+
   /* ---------------- modo bloqueado: vista estudiante ---------------- */
   let lockName = '', guardsOn = false, lockedNow = false, guardsArmed = false;
   const lkKey = () => 'cuaderno-lock-' + pubPage.slug;
@@ -1193,7 +1212,7 @@
   }
   document.addEventListener('click', e => { if (e.target.closest('#lkUnlock')) tryUnlock(); });
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'lkCode') tryUnlock(); });
- 
+
   /* ---------------- diálogo de nota ---------------- */
   let editing = null, dlgMode = 'one', chosenColor = 'yellow';
   function colorPicker(el, current, onPick) {
@@ -1206,7 +1225,7 @@
     $('#oneFields').hidden = m !== 'one'; $('#manyFields').hidden = m !== 'many'; $('#favWrap').hidden = m !== 'one';
   }
   $('#modes').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
- 
+
   function renderTagSuggest() {
     const cur = new Set(parseTags($('#fTags').value));
     const all = {}; items.forEach(i => i.tags.forEach(t => all[t] = (all[t] || 0) + 1));
@@ -1219,7 +1238,7 @@
     $('#fTags').value = cur.join(', ') + ', '; renderTagSuggest(); $('#fTags').focus();
   });
   $('#fTags').addEventListener('input', renderTagSuggest);
- 
+
   function openNoteDialog(it, prefill) {
     editing = it || null;
     $('#dlgTitle').textContent = it ? 'Editar nota' : (prefill ? 'Guardar en el cuaderno' : 'Nueva nota');
@@ -1281,13 +1300,13 @@
       else { await persist(); setTimeout(() => window.close(), 700); }
     } else persist();
   });
- 
+
   function showNote(it) {
     if (!it) return;
     $('#nvTitle').textContent = it.name; $('#nvBody').innerHTML = linkify(it.note);
     $('#nvOpen').href = it.url; $('#dlgNote').showModal();
   }
- 
+
   /* ---------------- diálogo de página ---------------- */
   let editingPage = null, pageColor = 'yellow';
   function openPageDialog(pg) {
@@ -1338,7 +1357,7 @@
     pages = pages.filter(p => p.id !== id); items.forEach(i => i.pages = i.pages.filter(x => x !== id));
     view = 'all'; $('#dlgPage').close(); persist(); render(); toast('Página borrada');
   });
- 
+
   /* ---------------- entrar ---------------- */
   let afterLogin = null;
   function openLogin(then) { afterLogin = then || null; $('#lErr').textContent = ''; $('#lClave').value = ''; $('#dlgLogin').showModal(); $('#lClave').focus(); }
@@ -1354,7 +1373,7 @@
       afterLogin && afterLogin();
     } catch (err) { $('#lErr').textContent = err.message === 'Clave incorrecta' ? 'Clave incorrecta' : 'No se pudo conectar: ' + err.message; }
   });
- 
+
   /* ---------------- bookmarklet ---------------- */
   function openBookmarklet() {
     const code = `javascript:(function(){var w=window,d=document,s='';try{s=String(w.getSelection()).trim().slice(0,1500)}catch(e){}w.open('${baseUrl()}?add='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(d.title)+'&s='+encodeURIComponent(s),'cuaderno','width=620,height=780,scrollbars=yes')})();`;
@@ -1365,7 +1384,7 @@
     $('#dlgBm').showModal();
   }
   $('#bmLink').addEventListener('click', e => { e.preventDefault(); toast('Arrastralo a la barra de marcadores'); });
- 
+
   /* ---------------- exportar / restaurar ---------------- */
   function exportData() {
     const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), pages, items }, null, 2)], { type: 'application/json' });
@@ -1386,7 +1405,7 @@
     } catch (err) { toast('Ese archivo no es una copia válida'); }
     e.target.value = '';
   });
- 
+
   /* ---------------- inicio ---------------- */
   function handleAdd() {
     if (!addReq) return;
@@ -1395,7 +1414,7 @@
     else openNoteDialog(null, { url: addReq.url, name: addReq.title.slice(0, 90), note: addReq.sel ? `«${addReq.sel}»` : '' });
     if (!isPopup) history.replaceState(null, '', location.pathname);
   }
- 
+
   async function start() {
     $('#today').textContent = new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' });
     if (!API_URL) {
@@ -1427,4 +1446,3 @@
 </script>
 </body>
 </html>
- 
