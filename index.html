@@ -223,6 +223,22 @@
   .feedback { background: #e9f4ff; border-left: 4px solid var(--ink-blue); padding: 8px 12px; margin-top: 12px; font-family: var(--hand); font-size: 1.15rem; white-space: pre-wrap; }
   .pagetype { display: flex; gap: 4px 16px; flex-wrap: wrap; }
   h2.mat { font-family: var(--script); font-size: 1.9rem; margin: 26px 0 0; }
+  /* modo bloqueado */
+  .lock-gate { max-width: 600px; margin: 30px auto; background: #fff; border: 2px solid var(--ink-blue); border-radius: 8px; padding: 18px 22px; font-family: var(--hand); font-size: 1.15rem; }
+  .lock-gate h2 { font-family: var(--script); font-size: 2.1rem; margin: 0 0 6px; color: var(--ink-blue); }
+  .lock-gate ul { margin: 6px 0 14px; padding-left: 22px; line-height: 1.5; }
+  .lock-gate select { font-family: var(--hand); font-size: 1.15rem; padding: 6px 8px; border: 1.5px solid #c9c3b0; border-radius: 4px; background: #fff; width: 100%; max-width: 380px; }
+  .lock-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(31,42,68,.97); display: grid; place-items: center; padding: 20px; }
+  .lock-box { background: #fffdf3; color: var(--ink); max-width: 440px; width: 100%; border-radius: 8px; padding: 22px; text-align: center; font-family: var(--hand); font-size: 1.15rem; }
+  .lock-box h2 { font-family: var(--script); font-size: 2.3rem; margin: 0 0 6px; color: var(--err); }
+  .lock-box input { text-align: center; font-size: 1.6rem; letter-spacing: 6px; margin: 10px 0; }
+  .badge-lock { font-family: var(--hand); font-size: 1.05rem; background: #fdecec; border: 1.5px solid #e9a9ae; color: var(--err); border-radius: 999px; padding: 3px 12px; }
+  .inc { margin: 12px 0; background: #fff; border: 1.5px solid var(--line); border-radius: 6px; padding: 10px 14px; font-family: var(--hand); }
+  .inc summary { cursor: pointer; font-size: 1.15rem; }
+  .inc table { border-collapse: collapse; width: 100%; font-size: 1rem; margin-top: 8px; }
+  .inc td, .inc th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+  .inc tr.salida td { color: var(--err); }
+  .inc .tablewrap { max-height: 320px; overflow: auto; }
   [hidden] { display: none !important; }
  
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
@@ -322,8 +338,6 @@
     <div id="pzFields" hidden>
       <label for="pPrompt">Consigna</label>
       <textarea id="pPrompt" placeholder="Por ejemplo: ¿Qué diferencia hay entre un array y un ArrayList? Dar un ejemplo."></textarea>
-      <label for="pRoster">Lista del grupo (un nombre por línea)</label>
-      <textarea id="pRoster" placeholder="Ana Pérez&#10;Bruno Silva&#10;Carla Gómez"></textarea>
       <label class="check"><input type="checkbox" id="pAnon"> Al mostrar las respuestas, que los compañeros las vean sin nombre</label>
       <p class="hint">Un pizarrón siempre es una página compartida. Las respuestas empiezan ocultas: cada estudiante ve solo la suya hasta que se muestren a todos.</p>
     </div>
@@ -333,6 +347,16 @@
     <label class="check"><input type="radio" name="pVis" value="publica"> 🌐 Compartida: cualquiera con el link</label>
     </div>
     <label class="check" id="pNewLinkWrap" hidden><input type="checkbox" id="pNewLink"> Generar un link nuevo (el anterior deja de funcionar)</label>
+    <label class="check"><input type="checkbox" id="pLocked"> 🔒 Modo bloqueado: pantalla completa, recursos solo dentro de la página; si se sale, se bloquea hasta un código</label>
+    <div id="lockFields" hidden>
+      <label for="pCode">Código de desbloqueo</label>
+      <input type="text" id="pCode" maxlength="12" autocomplete="off" style="max-width:180px">
+      <p class="hint">Lo escribe la docente en la computadora del estudiante para que pueda seguir. Los estudiantes nunca lo reciben.</p>
+    </div>
+    <div id="rosterWrap" hidden>
+      <label for="pRoster">Lista del grupo (un nombre por línea)</label>
+      <textarea id="pRoster" placeholder="Ana Pérez&#10;Bruno Silva&#10;Carla Gómez"></textarea>
+    </div>
     <label>Color del separador</label>
     <div class="colors" id="pColors"></div>
     <div class="dlg-actions">
@@ -366,7 +390,7 @@
       <button type="button" class="btn small" data-close>Cerrar</button>
     </div>
   </div>
-  <div class="embed-body"><iframe id="emFrame" class="embed-frame" title="Contenido incrustado" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+  <div class="embed-body"><p class="hint" id="emHint" hidden>Si el contenido no se ve, avisar a la docente.</p><iframe id="emFrame" class="embed-frame" title="Contenido incrustado" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
 </dialog>
  
 <!-- Entrar -->
@@ -460,7 +484,8 @@
     return { id: p.id || uid(), title: p.title || 'Sin título', slug: p.slug || slugify(p.title || 'pagina'),
       visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow',
       type: p.type === 'pizarron' ? 'pizarron' : 'recursos', prompt: p.prompt || '', roster: p.roster || '',
-      open: p.open !== false, revealed: !!p.revealed, anonymous: !!p.anonymous, feedback: !!p.feedback };
+      open: p.open !== false, revealed: !!p.revealed, anonymous: !!p.anonymous, feedback: !!p.feedback,
+      locked: !!p.locked, code: p.code == null ? '' : String(p.code) };
   }
   function fromSeed(r, t) { const [url, name, icon, cat, desc, color, fav] = r; return normItem({ url, name, icon, cat, desc, color, fav, added: t }); }
   function urlKey(u) { return String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, ''); }
@@ -623,6 +648,7 @@
     $('#emTitle').textContent = it.name;
     $('#emFrame').src = src;
     $('#emOpen').href = /^https?:/i.test(raw) ? raw : src;
+    $('#emOpen').hidden = guardsOn; $('#emHint').hidden = !guardsOn;
     $('#dlgEmbed').showModal();
   }
   $('#dlgEmbed').addEventListener('close', () => { $('#emFrame').src = 'about:blank'; });
@@ -753,7 +779,8 @@
       const pub = pg.visibility === 'publica';
       head = `<div class="page-head">
         <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : ''}${esc(pg.title)}</h2>
-        ${pg.type === 'pizarron' ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
+        ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span>` : ''}
+        ${pg.type === 'pizarron' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
         ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}" target="_blank" rel="noopener">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
         ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
@@ -766,14 +793,17 @@
         ? `<div class="notice">La planilla está vacía. <button class="btn small" id="migrateBtn">Subir las ${localCount} notas de este navegador</button></div>`
         : `<div class="notice">La planilla está vacía. Para cargar tus notas, tocá «Restaurar» y elegí el archivo <b>notas-iniciales.json</b>.</div>`) : '';
     const isPz = pg && pg.type === 'pizarron';
-    app.innerHTML = tabs + migrate + head + (isPz ? '<div id="pzWrap"></div><h2 class="mat">Materiales</h2>' : '') + toolbarHTML(true) +
+    const isLk = !!(pg && pg.locked);
+    app.innerHTML = tabs + migrate + head + (isLk ? '<div id="incWrap"></div>' : '') + (isPz ? '<div id="pzWrap"></div><h2 class="mat">Materiales</h2>' : '') + toolbarHTML(true) +
       `<footer class="foot"><span>${mode === 'owner' ? 'Conectado a Google Sheets' : 'Guardado solo en este navegador'}</span>
        ${mode === 'owner' ? '<button class="linkbtn" id="logoutBtn">Salir</button>' : ''}</footer>`;
     refresh();
-    if (isPz) {
-      renderPzOwner(pg);
-      loadResponses(pg.id);
-      if (mode === 'owner') pzTimer = setInterval(() => loadResponses(pg.id, true), 15000);
+    if (isPz) renderPzOwner(pg);
+    if (isLk) renderIncidents(pg);
+    if (isPz || isLk) {
+      const tick = quiet => { if (isPz) loadResponses(pg.id, quiet); if (isLk) loadIncidents(pg.id, quiet); };
+      tick(false);
+      if (mode === 'owner') pzTimer = setInterval(() => tick(true), 15000);
     }
   }
  
@@ -789,13 +819,15 @@
     $('#title').firstChild.textContent = pubPage.title;
     $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
     document.title = pubPage.title + ' · Cuaderno de recursos';
+    if (pubPage.locked && !guardsOn) return renderGate();
     const isPz = pubPage.type === 'pizarron';
     app.innerHTML = (isPz ? '<div id="pzWrap"></div>' : '') +
       (isPz && items.length ? '<h2 class="mat">Materiales</h2>' : '') +
       (!isPz || items.length ? toolbarHTML(false) : '') +
-      `<footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`;
+      (guardsOn ? '' : `<footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`);
     refresh();
-    if (isPz) { renderPzPublic(); pzTimer = setInterval(pollPublic, 20000); }
+    if (isPz) renderPzPublic();
+    if (isPz || pubPage.locked) pzTimer = setInterval(pollPublic, 20000);
   }
  
   /* ---------------- eventos ---------------- */
@@ -833,6 +865,7 @@
     }
     if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}?p=${encodeURIComponent(pg.slug)}`); return; }
     if (t.closest('#loginBtn')) return openLogin();
+    if (t.closest('#lkStart')) return lockStart();
     // pizarrón
     if (t.closest('#pzSend')) return pzSend();
     if (t.closest('#pzNotMe')) { if (confirm('¿Cambiar de nombre en este dispositivo?')) { ls.del(pzKey()); mine = null; myFeedback = null; renderPzPublic(); } return; }
@@ -926,9 +959,10 @@
     const roster = rosterOf(pg), by = {};
     pzList.forEach(r => by[r.estudiante] = r);
     const names = [...roster, ...pzList.map(r => r.estudiante).filter(n => !roster.includes(n))];
-    const rows = [['Estudiante', 'Respuesta', 'Enviada', 'Editada', 'Nota', 'Devolución']].concat(names.map(n => {
+    const sal = pg.locked && incFor === pg.id ? salidasPor() : null;
+    const rows = [['Estudiante', 'Respuesta', 'Enviada', 'Editada', 'Nota', 'Devolución'].concat(sal ? ['Salidas (modo bloqueado)'] : [])].concat(names.map(n => {
       const r = by[n] || {};
-      return [n, r.texto || '', fmtDate(r.creado), fmtDate(r.editado), r.nota || '', r.comentario || ''];
+      return [n, r.texto || '', fmtDate(r.creado), fmtDate(r.editado), r.nota || '', r.comentario || ''].concat(sal ? [sal[n] || 0] : []);
     }));
     const txt = '﻿' + rows.map(r => r.map(v => { v = String(v ?? ''); return /[";\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
     const a = document.createElement('a');
@@ -958,7 +992,8 @@
     let form = '';
     if (pg.open && !pg.revealed) {
       form = `<div class="pz-form">
-        ${mine ? `<p class="pz-msg">Respondiendo como <b>${esc(mine.estudiante)}</b> · <button class="linkbtn" id="pzNotMe">no soy yo</button></p>`
+        ${mine ? `<p class="pz-msg">Respondiendo como <b>${esc(mine.estudiante)}</b>${guardsOn ? '' : ' · <button class="linkbtn" id="pzNotMe">no soy yo</button>'}</p>`
+               : guardsOn && lockName ? `<p class="pz-msg">Respondiendo como <b>${esc(lockName)}</b></p><input type="hidden" id="pzName" value="${esc(lockName)}">`
                : `<label for="pzName">Elegir tu nombre</label><select id="pzName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>`}
         <label for="pzText">${mine ? 'Tu respuesta (se puede corregir hasta que se muestren todas)' : 'Tu respuesta'}</label>
         <textarea id="pzText" maxlength="3000">${esc(draft ?? (mine && mine.texto) ?? '')}</textarea>
@@ -993,6 +1028,8 @@
       const r = await api({ accion: 'publico', p: pubPage.slug });
       if (!r.ok) return;
       Object.assign(pubPage, r.pagina); pubResp = r.respuestas || [];
+      if (guardsOn && !pubPage.locked) { releaseLock(); render(); return; } // la docente desactivó el modo bloqueado
+      if (pubPage.type !== 'pizarron') return;
       await loadMine();
       renderPzPublic();
     } catch (e) {}
@@ -1003,7 +1040,7 @@
     const say = (text, ok) => { $('#pzMsg').textContent = text; $('#pzMsg').className = 'pz-msg ' + (ok ? 'ok' : 'err'); };
     if (!name) return say('Falta elegir tu nombre de la lista.');
     if (!texto) return say('La respuesta está vacía.');
-    if (!mine && !confirm(`¿Enviar la respuesta como «${name}»?`)) return;
+    if (!mine && !guardsOn && !confirm(`¿Enviar la respuesta como «${name}»?`)) return;
     $('#pzSend').disabled = true; say('Enviando…', true);
     try {
       const r = await api({ accion: 'responder', p: pubPage.slug, estudiante: name, texto, token: mine ? mine.token : '' });
@@ -1017,6 +1054,145 @@
       } else { say(r.error || 'No se pudo enviar'); $('#pzSend').disabled = false; }
     } catch (e) { say('Sin conexión: no se envió. Probar de nuevo.'); $('#pzSend').disabled = false; }
   }
+ 
+  /* ---------------- modo bloqueado: vista docente ---------------- */
+  let incList = [], incFor = null;
+  async function loadIncidents(pageId, quiet) {
+    if (mode !== 'owner') return;
+    try {
+      const r = await api({ accion: 'incidentes', clave, pagina: pageId });
+      if (r.ok) { incList = r.incidentes || []; incFor = pageId; const pg = pages.find(p => p.id === pageId); if (pg && view === pageId) renderIncidents(pg); }
+      else if (!quiet) toast(r.error || 'No se pudo traer el registro');
+    } catch (e) { if (!quiet) toast('No se pudo traer el registro'); }
+  }
+  function salidasPor() {
+    const c = {}; incList.filter(i => i.tipo === 'salida').forEach(i => c[i.estudiante] = (c[i.estudiante] || 0) + 1); return c;
+  }
+  function renderIncidents(pg) {
+    const w = $('#incWrap'); if (!w) return;
+    const list = incFor === pg.id ? incList : [];
+    const wasOpen = !!(w.querySelector('details') || {}).open;
+    const c = incFor === pg.id ? salidasPor() : {};
+    const resumen = Object.entries(c).sort((a, b) => b[1] - a[1]).map(([n, k]) => `${esc(n || 'sin nombre')} ${k}`).join(' · ');
+    const total = list.filter(i => i.tipo === 'salida').length;
+    const label = { inicio: () => 'Entró', desbloqueo: () => 'Desbloqueado con código', salida: i => 'Salió' + (i.detalle ? ': ' + esc(i.detalle) : '') };
+    w.innerHTML = `<details class="inc"${wasOpen ? ' open' : ''}>
+      <summary>🔒 Registro del modo bloqueado: <b>${total}</b> salida${total === 1 ? '' : 's'}${resumen ? ' · ' + resumen : ''}</summary>
+      ${list.length ? `<div class="tablewrap"><table><thead><tr><th>Hora</th><th>Estudiante</th><th>Qué pasó</th></tr></thead><tbody>
+        ${list.slice().reverse().map(i => `<tr class="${esc(i.tipo)}"><td>${fmtDate(i.fecha)}</td><td>${esc(i.estudiante || '—')}</td><td>${(label[i.tipo] || (() => esc(i.tipo)))(i)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<p>Todavía no hay registros.</p>'}
+    </details>`;
+  }
+ 
+  /* ---------------- modo bloqueado: vista estudiante ---------------- */
+  let lockName = '', guardsOn = false, lockedNow = false, guardsArmed = false;
+  const lkKey = () => 'cuaderno-lock-' + pubPage.slug;
+  const fsSupported = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+  const inFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  function goFs() {
+    const el = document.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen;
+    try { const r = f && f.call(el); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function report(tipo, detalle) {
+    const body = { accion: 'incidente', p: pubPage.slug, estudiante: lockName, tipo, detalle: detalle || '' };
+    if (document.visibilityState === 'hidden' && navigator.sendBeacon) {
+      try { navigator.sendBeacon(API_URL, new Blob([JSON.stringify(body)], { type: 'text/plain' })); return; } catch (e) {}
+    }
+    api(body).catch(() => {});
+  }
+  function renderGate() {
+    const st = ls.json(lkKey(), {}), roster = pubPage.roster || [];
+    app.innerHTML = `<div class="lock-gate">
+      <h2>🔒 Página en modo bloqueado</h2>
+      <ul>
+        <li>Se trabaja en pantalla completa.</li>
+        <li>Los recursos se abren dentro de esta página.</li>
+        <li>Si se sale de la pantalla completa o se cambia de ventana, la página se bloquea y queda registrado. Para seguir hace falta el código de la docente.</li>
+      </ul>
+      ${st.name ? `<p>Entrando como <b>${esc(st.name)}</b></p>`
+        : roster.length ? `<label for="lkName">Elegir tu nombre</label><select id="lkName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>` : ''}
+      <div class="dlg-actions"><div class="right"><button class="btn" id="lkStart">Comenzar</button></div></div>
+      <div class="pz-msg err" id="lkMsg"></div>
+    </div>`;
+  }
+  function lockStart() {
+    const st = ls.json(lkKey(), {});
+    const name = st.name || ($('#lkName') ? $('#lkName').value : '');
+    if ((pubPage.roster || []).length && !name) { $('#lkMsg').textContent = 'Falta elegir tu nombre.'; return; }
+    lockName = name;
+    goFs();
+    guardsOn = true; armGuards();
+    ls.set(lkKey(), JSON.stringify({ name, locked: !!st.locked }));
+    render();
+    if (st.locked) showLock('', false);   // ya estaba bloqueada antes de recargar
+    else if (!st.name) report('inicio', '');
+  }
+  function armGuards() {
+    if (guardsArmed) return; guardsArmed = true;
+    const onFs = () => { if (guardsOn && fsSupported() && !inFs()) showLock('salió de la pantalla completa'); };
+    document.addEventListener('fullscreenchange', onFs);
+    document.addEventListener('webkitfullscreenchange', onFs);
+    document.addEventListener('visibilitychange', () => { if (guardsOn && document.hidden) showLock('cambió de pestaña, minimizó o recargó'); });
+    window.addEventListener('blur', () => {
+      if (!guardsOn) return;
+      setTimeout(() => {
+        const ae = document.activeElement;
+        if (ae && ae.tagName === 'IFRAME') return;           // está usando un recurso incrustado
+        if (!document.hasFocus()) showLock('cambió de ventana');
+      }, 200);
+    });
+    // todo enlace se abre adentro de la página
+    document.addEventListener('click', e => {
+      if (!guardsOn) return;
+      const a = e.target.closest('a[href]'); if (!a || a.closest('#lockOverlay')) return;
+      const href = a.getAttribute('href') || '';
+      if (!href || href.startsWith('#') || /^javascript:/i.test(href)) return;
+      e.preventDefault(); e.stopPropagation();
+      const note = a.closest('.note');
+      const it = note ? items.find(i => i.id === note.dataset.id) : null;
+      openEmbed(it ? { name: it.name, embed: embedOf(it) || it.url, url: it.url } : { name: a.textContent.trim() || 'Recurso', embed: a.href, url: a.href });
+    }, true);
+    document.addEventListener('contextmenu', e => { if (guardsOn) e.preventDefault(); });
+  }
+  function showLock(detalle, doReport = true) {
+    if (lockedNow) return;
+    lockedNow = true;
+    const st = ls.json(lkKey(), {}); st.locked = true; ls.set(lkKey(), JSON.stringify(st));
+    if (doReport) report('salida', detalle);
+    try { if ($('#dlgEmbed').open) $('#dlgEmbed').close(); } catch (e) {}
+    const o = document.createElement('div');
+    o.className = 'lock-overlay'; o.id = 'lockOverlay';
+    o.innerHTML = `<div class="lock-box" role="alertdialog" aria-labelledby="lkTitle">
+      <h2 id="lkTitle">Página bloqueada</h2>
+      <p>${detalle ? 'Motivo: ' + esc(detalle) + '. ' : ''}Quedó registrado (${new Date().toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}).</p>
+      <p>Para seguir, la docente tiene que escribir el código.</p>
+      <input type="password" id="lkCode" inputmode="numeric" autocomplete="off" aria-label="Código de desbloqueo">
+      <div><button class="btn" id="lkUnlock">Desbloquear</button></div>
+      <div class="pz-msg err" id="lkErr"></div>
+    </div>`;
+    document.body.appendChild(o);
+    setTimeout(() => { const c = $('#lkCode'); if (c) c.focus(); }, 50);
+  }
+  async function tryUnlock() {
+    const code = $('#lkCode').value.trim(); if (!code) return;
+    $('#lkErr').textContent = 'Verificando…';
+    try {
+      const r = await api({ accion: 'desbloquear', p: pubPage.slug, estudiante: lockName, codigo: code });
+      if (r.ok) {
+        goFs();
+        lockedNow = false;
+        const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
+        $('#lockOverlay').remove();
+      } else { $('#lkErr').textContent = r.error || 'Código incorrecto'; $('#lkCode').select(); }
+    } catch (e) { $('#lkErr').textContent = 'Sin conexión. Probar de nuevo.'; }
+  }
+  function releaseLock() {
+    guardsOn = false; lockedNow = false;
+    const o = $('#lockOverlay'); if (o) o.remove();
+    const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
+  }
+  document.addEventListener('click', e => { if (e.target.closest('#lkUnlock')) tryUnlock(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'lkCode') tryUnlock(); });
  
   /* ---------------- diálogo de nota ---------------- */
   let editing = null, dlgMode = 'one', chosenColor = 'yellow';
@@ -1065,7 +1241,11 @@
     $('#dlg').showModal();
     (prefill ? $('#fName') : $('#fUrl')).focus();
   }
-  $('#fUrl').addEventListener('blur', () => { if (!$('#fName').value.trim() && $('#fUrl').value.trim()) $('#fName').value = guessName(normUrl($('#fUrl').value)); });
+  $('#fUrl').addEventListener('blur', () => {
+    if (!$('#fName').value.trim() && $('#fUrl').value.trim()) { $('#fName').value = guessName(normUrl($('#fUrl').value)); $('#fName').dataset.auto = '1'; }
+  });
+  // el nombre sugerido queda seleccionado: al escribir se reemplaza
+  $('#fName').addEventListener('focus', e => { if (e.target.dataset.auto === '1') { e.target.select(); delete e.target.dataset.auto; } });
   $('#delBtn').addEventListener('click', () => {
     if (!editing || !confirm(`¿Despegar «${editing.name}» del cuaderno?`)) return;
     items = items.filter(i => i !== editing); persist(); $('#dlg').close(); render(); toast('Nota despegada');
@@ -1117,6 +1297,7 @@
     document.querySelector(`input[name=pVis][value=${pg?.visibility || 'privada'}]`).checked = true;
     document.querySelector(`input[name=pType][value=${pg?.type || 'recursos'}]`).checked = true;
     $('#pPrompt').value = pg?.prompt || ''; $('#pRoster').value = pg?.roster || ''; $('#pAnon').checked = !!pg?.anonymous;
+    $('#pLocked').checked = !!pg?.locked; $('#pCode').value = pg?.code || String(1000 + Math.floor(Math.random() * 9000));
     syncPageType();
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
     colorPicker($('#pColors'), pageColor, c => pageColor = c);
@@ -1126,19 +1307,22 @@
   }
   function syncPageType() {
     const pz = document.querySelector('input[name=pType]:checked').value === 'pizarron';
-    $('#pzFields').hidden = !pz; $('#visWrap').hidden = pz;
+    const lk = $('#pLocked').checked;
+    $('#pzFields').hidden = !pz; $('#visWrap').hidden = pz || lk;
+    $('#lockFields').hidden = !lk; $('#rosterWrap').hidden = !(pz || lk);
   }
   document.querySelectorAll('input[name=pType]').forEach(r => r.addEventListener('change', syncPageType));
+  $('#pLocked').addEventListener('change', syncPageType);
   $('#formPage').addEventListener('submit', e => {
     e.preventDefault();
     const title = $('#pTitle').value.trim(); if (!title) return;
     const type = document.querySelector('input[name=pType]:checked').value;
     const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, type,
-      visibility: type === 'pizarron' ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
-    if (type === 'pizarron') Object.assign(data, {
-      prompt: $('#pPrompt').value.trim(),
-      roster: $('#pRoster').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean).join('\n'),
-      anonymous: $('#pAnon').checked });
+      locked: $('#pLocked').checked,
+      visibility: type === 'pizarron' || $('#pLocked').checked ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
+    if (data.locked) data.code = $('#pCode').value.trim() || String(1000 + Math.floor(Math.random() * 9000));
+    if (type === 'pizarron' || data.locked) data.roster = $('#pRoster').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean).join('\n');
+    if (type === 'pizarron') Object.assign(data, { prompt: $('#pPrompt').value.trim(), anonymous: $('#pAnon').checked });
     if (editingPage) {
       Object.assign(editingPage, data);
       if ($('#pNewLink').checked) editingPage.slug = slugify(title);
@@ -1243,3 +1427,4 @@
 </script>
 </body>
 </html>
+ 
