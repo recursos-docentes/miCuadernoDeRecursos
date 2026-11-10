@@ -1,0 +1,612 @@
+/* Actividades interactivas del Cuaderno de recursos (estilo Wordwall).
+   Todas las plantillas usan el mismo contenido: una lista de pares { a, b }.
+   Uso: Actividades.play(elemento, { template, pairs, onResult(puntaje, total, segundos, detalle), canReplay }) */
+(function () {
+  const TEMPLATES = {
+    unir:       { icon: '🔗', name: 'Unir con flechas', cols: ['Concepto', 'Definición'], scored: true,
+                  help: 'Tocar un concepto y después su definición para unirlos. Al terminar, «Comprobar».' },
+    memotest:   { icon: '🃏', name: 'Memotest', cols: ['Carta A', 'Carta B (su pareja)'], scored: true,
+                  help: 'Dar vuelta dos cartas por vez y encontrar todas las parejas.' },
+    crucigrama: { icon: '✏️', name: 'Crucigrama', cols: ['Palabra', 'Pista'], scored: true,
+                  help: 'Completar el crucigrama con las pistas. Al terminar, «Comprobar».' },
+    sopa:       { icon: '🔎', name: 'Sopa de letras', cols: ['Palabra', 'Pista (opcional)'], scored: true,
+                  help: 'Encontrar las palabras: tocar la primera letra y después la última.' },
+    ahorcado:   { icon: '🪢', name: 'Ahorcado', cols: ['Palabra', 'Pista'], scored: true,
+                  help: 'Adivinar cada palabra antes de cometer 6 errores.' },
+    topo:       { icon: '🔨', name: 'Atrapa el topo', cols: ['Respuesta', 'Pregunta o pista'], scored: true,
+                  help: 'Leer la pista y golpear el topo que tiene la respuesta correcta.' },
+    globos:     { icon: '🎈', name: 'Explotar globos', cols: ['Respuesta', 'Pregunta o pista'], scored: true,
+                  help: 'Leer la pista y explotar el globo con la respuesta correcta.' },
+    tarjetas:   { icon: '🗂️', name: 'Tarjetas', cols: ['Frente', 'Dorso'], scored: true,
+                  help: 'Pensar la respuesta, dar vuelta la tarjeta y marcar si se sabía.' },
+    ruleta:     { icon: '🎡', name: 'Ruleta', cols: ['Opción', 'Respuesta (opcional)'], scored: false,
+                  help: 'Girar la ruleta. Ideal para el proyector: preguntas o estudiantes al azar.' },
+    caja:       { icon: '🎁', name: 'Abrir la caja', cols: ['Pregunta o desafío', 'Respuesta (opcional)'], scored: false,
+                  help: 'Elegir una caja y abrirla para ver qué hay adentro.' }
+  };
+ 
+  /* ---------- utilidades ---------- */
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const rnd = n => Math.floor(Math.random() * n);
+  // Palabra para crucigrama/sopa/ahorcado: mayúsculas, sin tildes ni espacios (la Ñ se respeta)
+  const word = s => String(s || '').toUpperCase().replace(/Ñ/g, '\u0001').normalize('NFD')
+    .replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'Ñ').replace(/[^A-ZÑ0-9]/g, '');
+  const LETTERS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
+ 
+  function parse(text) {
+    return String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+      const i = l.indexOf('|');
+      return i < 0 ? { a: l, b: '' } : { a: l.slice(0, i).trim(), b: l.slice(i + 1).trim() };
+    }).filter(p => p.a);
+  }
+  const format = pairs => (pairs || []).map(p => p.b ? `${p.a} | ${p.b}` : p.a).join('\n');
+ 
+  /* ---------- estilos (una sola vez) ---------- */
+  const CSS = `
+  .act { font-family: var(--hand, 'Patrick Hand', cursive); color: var(--ink, #1f2a44); }
+  .act-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
+  .act-head b { font-family: var(--script, cursive); font-size: 1.8rem; color: var(--ink-blue, #1d4ea0); }
+  .act-head span { color: var(--ink-soft, #5b6478); font-size: 1.05rem; }
+  .act-stage { position: relative; background: #fff; border: 2px solid var(--ink-blue, #1d4ea0); border-radius: 10px; padding: 16px; min-height: 260px; box-shadow: 3px 4px 0 rgba(29,78,160,.12); }
+  .act-btn { font-family: inherit; font-size: 1.1rem; border: 0; border-radius: 6px; padding: 7px 16px; background: var(--ink-blue, #1d4ea0); color: #fff; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.15); }
+  .act-btn.alt { background: #eef1f6; color: var(--ink, #1f2a44); }
+  .act-btn:disabled { opacity: .5; cursor: default; }
+  .act-bar { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .act-info { text-align: center; font-size: 1.15rem; color: var(--ink-soft, #5b6478); margin: 6px 0; }
+  .act-prompt { text-align: center; font-size: 1.5rem; margin: 4px 0 12px; min-height: 2em; }
+  .act-end { position: absolute; inset: 0; background: rgba(255,253,243,.97); display: grid; place-items: center; text-align: center; border-radius: 8px; z-index: 5; }
+  .act-end h3 { font-family: var(--script, cursive); font-size: 2.6rem; margin: 0; color: var(--ink-blue, #1d4ea0); }
+  .act-end .big { font-size: 2rem; margin: 6px 0 12px; }
+  .ok { --st: #2f6f4f; } .bad { --st: #a3222c; }
+  /* unir */
+  .act-unir { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 90px; }
+  .act-unir .col { display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 1; }
+  .act-chip { font-family: inherit; font-size: 1.1rem; text-align: left; background: #fffbe0; border: 2px solid #e2d48a; border-radius: 8px; padding: 8px 12px; cursor: pointer; color: inherit; }
+  .act-chip.sel { border-color: var(--ink-blue, #1d4ea0); background: #e8f0ff; }
+  .act-chip.ok { border-color: var(--st); background: #e3f3ea; } .act-chip.bad { border-color: var(--st); background: #fdecec; }
+  .act-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible; }
+  /* memotest */
+  .act-memo { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .act-card { perspective: 600px; height: 100px; cursor: pointer; border: 0; background: none; padding: 0; font: inherit; }
+  .act-card .in { position: relative; width: 100%; height: 100%; transition: transform .35s; transform-style: preserve-3d; }
+  .act-card.open .in, .act-card.done .in { transform: rotateY(180deg); }
+  .act-card .f, .act-card .bk { position: absolute; inset: 0; border-radius: 8px; display: grid; place-items: center; padding: 6px; backface-visibility: hidden; font-size: 1.05rem; text-align: center; overflow: hidden; }
+  .act-card .f { background: repeating-linear-gradient(45deg, #1d4ea0 0 10px, #2a5fb8 10px 20px); color: #fff; font-size: 1.8rem; }
+  .act-card .bk { background: #fffbe0; border: 2px solid #e2d48a; transform: rotateY(180deg); }
+  .act-card.done .bk { background: #e3f3ea; border-color: #9cc9ae; }
+  /* crucigrama */
+  .act-cw { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .act-cw table { border-collapse: collapse; }
+  .act-cw td { width: 32px; height: 32px; padding: 0; position: relative; }
+  .act-cw td.l { border: 1.5px solid #1f2a44; background: #fff; }
+  .act-cw td input { width: 100%; height: 100%; border: 0; text-align: center; font: 700 1.1rem system-ui, sans-serif; text-transform: uppercase; background: transparent; padding: 0; color: #1f2a44; }
+  .act-cw td input:focus { background: #e8f0ff; outline: none; }
+  .act-cw td.ok { background: #e3f3ea; } .act-cw td.bad { background: #fdecec; }
+  .act-cw td .n { position: absolute; top: 0; left: 2px; font: 9px system-ui, sans-serif; color: #5b6478; pointer-events: none; }
+  .act-cw .clues { flex: 1; min-width: 220px; font-size: 1.05rem; }
+  .act-cw .clues h4 { margin: 0 0 4px; font-family: var(--script, cursive); font-size: 1.4rem; color: var(--ink-blue, #1d4ea0); }
+  .act-cw .clues ol { margin: 0 0 10px; padding-left: 0; list-style: none; }
+  .act-cw .clues li.ok { color: #2f6f4f; text-decoration: line-through; }
+  /* sopa */
+  .act-ws { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .act-ws .grid { display: grid; gap: 2px; user-select: none; }
+  .act-ws .grid button { width: 30px; height: 30px; border: 0; border-radius: 4px; background: #f4f6fa; font: 700 1rem system-ui, sans-serif; color: #1f2a44; cursor: pointer; padding: 0; }
+  .act-ws .grid button.start { background: #ffd66b; } .act-ws .grid button.found { background: #bfe6c9; }
+  .act-ws ul { list-style: none; padding: 0; margin: 0; font-size: 1.15rem; min-width: 160px; }
+  .act-ws li.ok { color: #2f6f4f; text-decoration: line-through; }
+  /* ahorcado */
+  .act-hm { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .act-hm .word { font: 700 1.8rem system-ui, sans-serif; letter-spacing: 8px; text-align: center; margin: 8px 0; word-break: break-all; }
+  .act-keys { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-width: 520px; margin: 0 auto; }
+  .act-keys button { width: 36px; height: 38px; font: 700 1rem system-ui, sans-serif; border: 1.5px solid #c9c3b0; background: #fff; border-radius: 6px; cursor: pointer; }
+  .act-keys button.hit { background: #e3f3ea; border-color: #9cc9ae; } .act-keys button.miss { background: #fdecec; border-color: #e9a9ae; }
+  /* topo y globos */
+  .act-field { position: relative; height: 340px; border-radius: 8px; overflow: hidden; }
+  .act-field.topo { background: linear-gradient(#bfe6ff 0 30%, #9ccc65 30%); display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; padding: 40px 10px 10px; gap: 10px; }
+  .act-hole { position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
+  .act-hole::after { content: ""; position: absolute; bottom: 0; width: 80%; height: 24px; background: #5d4037; border-radius: 50%; }
+  .act-mole { position: relative; z-index: 1; margin-bottom: 10px; background: #8d6e63; color: #fff; border: 0; border-radius: 40px 40px 10px 10px; padding: 14px 10px 10px; min-width: 90px; max-width: 95%; font: 1rem var(--hand, cursive); cursor: pointer; transform: translateY(110%); transition: transform .2s; }
+  .act-mole::before { content: "👀"; display: block; font-size: 1.1rem; }
+  .act-mole.up { transform: translateY(0); }
+  .act-field.globos { background: linear-gradient(#cfeaff, #fff); }
+  .act-balloon { position: absolute; bottom: -120px; width: 104px; min-height: 96px; border-radius: 50% 50% 46% 46%; border: 0; color: #1f2a44; font: 1rem var(--hand, cursive); padding: 10px 8px; cursor: pointer; display: grid; place-items: center; text-align: center; animation: act-rise linear forwards; box-shadow: inset -8px -10px 0 rgba(0,0,0,.08); }
+  .act-balloon::after { content: ""; position: absolute; bottom: -26px; left: 50%; width: 1px; height: 26px; background: #888; }
+  @keyframes act-rise { to { transform: translateY(-480px); } }
+  .act-pop { animation: act-pop .25s forwards !important; }
+  @keyframes act-pop { to { transform: scale(1.6); opacity: 0; } }
+  .act-shake { animation: act-shake .3s; }
+  @keyframes act-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .act-score { position: absolute; top: 8px; right: 12px; z-index: 3; background: rgba(255,255,255,.85); border-radius: 999px; padding: 2px 12px; font-size: 1.1rem; }
+  /* tarjetas */
+  .act-flash { perspective: 900px; max-width: 520px; height: 240px; margin: 0 auto; cursor: pointer; }
+  .act-flash .in { position: relative; width: 100%; height: 100%; transition: transform .45s; transform-style: preserve-3d; }
+  .act-flash.flip .in { transform: rotateY(180deg); }
+  .act-flash .f, .act-flash .bk { position: absolute; inset: 0; border-radius: 12px; display: grid; place-items: center; padding: 20px; text-align: center; font-size: 1.5rem; backface-visibility: hidden; box-shadow: 2px 6px 14px rgba(0,0,0,.15); overflow: auto; }
+  .act-flash .f { background: #fff1a8; } .act-flash .bk { background: #cfeaff; transform: rotateY(180deg); }
+  /* ruleta */
+  .act-wheel { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .act-wheel .wrap { position: relative; width: min(380px, 80vw); }
+  .act-wheel canvas { width: 100%; height: auto; display: block; }
+  .act-wheel .pin { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid #a3222c; }
+  .act-wheel .res { min-width: 220px; max-width: 360px; text-align: center; font-size: 1.4rem; }
+  /* caja */
+  .act-boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
+  .act-box { height: 86px; border: 0; border-radius: 10px; font: 700 1.8rem var(--script, cursive); color: #fff; cursor: pointer; background: linear-gradient(135deg, #e85d75, #c2185b); box-shadow: 0 4px 0 rgba(0,0,0,.2); position: relative; }
+  .act-box::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 10px; transform: translateX(-50%); background: #ffd54f; }
+  .act-box span { position: relative; }
+  .act-box.used { background: #cfd5df; box-shadow: none; } .act-box.used::before { display: none; }
+  .act-reveal { margin-top: 14px; text-align: center; font-size: 1.5rem; background: #fffbe0; border: 2px dashed #e2d48a; border-radius: 10px; padding: 14px; }
+  .act-reveal .ans { color: var(--ink-blue, #1d4ea0); margin-top: 8px; }
+  @media (max-width: 600px) { .act-unir { gap: 10px 40px; } .act-ws .grid button { width: 24px; height: 24px; font-size: .85rem; } .act-cw td { width: 26px; height: 26px; } }
+  `;
+  function injectCss() {
+    if (document.getElementById('act-css')) return;
+    const st = document.createElement('style'); st.id = 'act-css'; st.textContent = CSS; document.head.appendChild(st);
+  }
+ 
+  /* ---------- 1. Unir con flechas ---------- */
+  function unir(root, pairs, done, ctx) {
+    const n = pairs.length, rightOrder = shuffle(pairs.map((_, i) => i));
+    const COLORS = ['#1d4ea0', '#c2185b', '#2f6f4f', '#e67e22', '#6a1b9a', '#00838f', '#795548', '#5d6d7e'];
+    root.innerHTML = `<div class="act-unir"><svg class="act-lines"></svg>
+      <div class="col">${pairs.map((p, i) => `<button class="act-chip" data-l="${i}">${esc(p.a)}</button>`).join('')}</div>
+      <div class="col">${rightOrder.map(i => `<button class="act-chip" data-r="${i}">${esc(pairs[i].b)}</button>`).join('')}</div></div>
+      <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+    const box = root.querySelector('.act-unir'), svg = root.querySelector('svg');
+    const links = {}; let selL = null, selR = null, checked = false;
+    function draw() {
+      const b = box.getBoundingClientRect();
+      svg.innerHTML = Object.entries(links).map(([l, r], k) => {
+        const L = box.querySelector(`[data-l="${l}"]`).getBoundingClientRect(), R = box.querySelector(`[data-r="${r}"]`).getBoundingClientRect();
+        const x1 = L.right - b.left, y1 = L.top + L.height / 2 - b.top, x2 = R.left - b.left, y2 = R.top + R.height / 2 - b.top;
+        const col = checked ? (Number(l) === Number(r) ? '#2f6f4f' : '#a3222c') : COLORS[l % COLORS.length];
+        return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="${x1}" cy="${y1}" r="5" fill="${col}"/><circle cx="${x2}" cy="${y2}" r="5" fill="${col}"/>`;
+      }).join('');
+    }
+    function link(l, r) {
+      for (const k in links) if (links[k] === r) delete links[k];
+      links[l] = r; selL = selR = null;
+      box.querySelectorAll('.sel').forEach(e => e.classList.remove('sel'));
+      draw();
+    }
+    root.addEventListener('click', e => {
+      if (checked) return;
+      const l = e.target.closest('[data-l]'), r = e.target.closest('[data-r]');
+      if (l) { box.querySelectorAll('[data-l].sel').forEach(x => x.classList.remove('sel')); selL = Number(l.dataset.l); l.classList.add('sel'); if (selR != null) link(selL, selR); }
+      if (r) { box.querySelectorAll('[data-r].sel').forEach(x => x.classList.remove('sel')); selR = Number(r.dataset.r); r.classList.add('sel'); if (selL != null) link(selL, selR); }
+      if (e.target.closest('[data-check]')) {
+        checked = true; let ok = 0;
+        pairs.forEach((_, i) => {
+          const good = links[i] === i; if (good) ok++;
+          box.querySelector(`[data-l="${i}"]`).classList.add(good ? 'ok' : 'bad');
+        });
+        draw();
+        ctx.later(() => done(ok, n, ''), 1400);
+      }
+    });
+    ctx.on(window, 'resize', draw);
+  }
+ 
+  /* ---------- 2. Memotest ---------- */
+  function memotest(root, pairs, done, ctx) {
+    const n = pairs.length;
+    const cards = shuffle(pairs.flatMap((p, i) => [{ i, t: p.a }, { i, t: p.b || p.a }]));
+    root.innerHTML = `<div class="act-info">Intentos: <b data-tries>0</b> · Parejas: <b data-found>0</b> de ${n}</div>
+      <div class="act-memo">${cards.map((c, k) => `<button class="act-card" data-k="${k}"><div class="in"><div class="f">?</div><div class="bk">${esc(c.t)}</div></div></button>`).join('')}</div>`;
+    let open = [], tries = 0, found = 0, busy = false;
+    root.addEventListener('click', e => {
+      const el = e.target.closest('.act-card'); if (!el || busy || el.classList.contains('open') || el.classList.contains('done')) return;
+      el.classList.add('open'); open.push(el);
+      if (open.length < 2) return;
+      tries++; root.querySelector('[data-tries]').textContent = tries;
+      const [x, y] = open, cx = cards[x.dataset.k], cy = cards[y.dataset.k];
+      if (cx.i === cy.i) {
+        x.classList.add('done'); y.classList.add('done'); open = []; found++;
+        root.querySelector('[data-found]').textContent = found;
+        if (found === n) ctx.later(() => done(Math.round(n * n / tries), n, `${tries} intentos`), 700);
+      } else {
+        busy = true;
+        ctx.later(() => { x.classList.remove('open'); y.classList.remove('open'); open = []; busy = false; }, 900);
+      }
+    });
+  }
+ 
+  /* ---------- 3. Crucigrama ---------- */
+  function layoutCrossword(list) {
+    const words = list.map((p, k) => ({ w: word(p.a), clue: p.b || p.a, k })).filter(x => x.w.length > 1)
+      .sort((a, b) => b.w.length - a.w.length);
+    const grid = new Map(), placed = [];
+    const key = (r, c) => r + ',' + c, get = (r, c) => grid.get(key(r, c));
+    function fits(w, r, c, dir) {
+      const dr = dir === 'v' ? 1 : 0, dc = dir === 'h' ? 1 : 0;
+      if (get(r - dr, c - dc) || get(r + dr * w.length, c + dc * w.length)) return -1;
+      let inter = 0;
+      for (let i = 0; i < w.length; i++) {
+        const rr = r + dr * i, cc = c + dc * i, cur = get(rr, cc);
+        if (cur) { if (cur !== w[i]) return -1; inter++; }
+        else if (get(rr + dc, cc + dr) || get(rr - dc, cc - dr)) return -1; // vecinos paralelos
+      }
+      return inter;
+    }
+    function put(x, r, c, dir) {
+      for (let i = 0; i < x.w.length; i++) grid.set(key(r + (dir === 'v' ? i : 0), c + (dir === 'h' ? i : 0)), x.w[i]);
+      placed.push({ ...x, r, c, dir });
+    }
+    words.forEach((x, idx) => {
+      if (!idx) return put(x, 0, 0, 'h');
+      let best = null;
+      for (const p of placed) for (let i = 0; i < p.w.length; i++) for (let j = 0; j < x.w.length; j++) {
+        if (p.w[i] !== x.w[j]) continue;
+        const dir = p.dir === 'h' ? 'v' : 'h';
+        const r = p.dir === 'h' ? p.r - j : p.r + i, c = p.dir === 'h' ? p.c + i : p.c - j;
+        const s = fits(x.w, r, c, dir);
+        if (s > 0 && (!best || s > best.s)) best = { r, c, dir, s };
+      }
+      if (best) put(x, best.r, best.c, best.dir);
+      else { // sin cruce posible: se ubica suelta debajo
+        const maxR = Math.max(...[...grid.keys()].map(k => Number(k.split(',')[0])));
+        const minC = Math.min(...[...grid.keys()].map(k => Number(k.split(',')[1])));
+        put(x, maxR + 2, minC, 'h');
+      }
+    });
+    const rs = [...grid.keys()].map(k => Number(k.split(',')[0])), cs = [...grid.keys()].map(k => Number(k.split(',')[1]));
+    const r0 = Math.min(...rs), c0 = Math.min(...cs);
+    placed.forEach(p => { p.r -= r0; p.c -= c0; });
+    const rows = Math.max(...rs) - r0 + 1, cols = Math.max(...cs) - c0 + 1;
+    const starts = [...new Set(placed.map(p => p.r * 1000 + p.c))].sort((a, b) => a - b);
+    placed.forEach(p => { p.num = starts.indexOf(p.r * 1000 + p.c) + 1; });
+    return { placed, rows, cols };
+  }
+  function crucigrama(root, pairs, done, ctx) {
+    const { placed, rows, cols } = layoutCrossword(pairs);
+    if (!placed.length) { root.innerHTML = '<p class="act-info">Hacen falta palabras de 2 letras o más.</p>'; return; }
+    const cell = {}, nums = {};
+    placed.forEach(p => {
+      nums[p.r + ',' + p.c] = p.num;
+      for (let i = 0; i < p.w.length; i++) cell[(p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0))] = p.w[i];
+    });
+    let html = '<table aria-label="Crucigrama">';
+    for (let r = 0; r < rows; r++) {
+      html += '<tr>';
+      for (let c = 0; c < cols; c++) {
+        const k = r + ',' + c;
+        html += cell[k] ? `<td class="l" data-c="${k}">${nums[k] ? `<span class="n">${nums[k]}</span>` : ''}<input maxlength="1" data-c="${k}" aria-label="Casilla"></td>` : '<td></td>';
+      }
+      html += '</tr>';
+    }
+    html += '</table>';
+    const clue = d => placed.filter(p => p.dir === d).sort((a, b) => a.num - b.num)
+      .map(p => `<li data-w="${p.k}"><b>${p.num}.</b> ${esc(p.clue)} <small>(${p.w.length})</small></li>`).join('');
+    root.innerHTML = `<div class="act-cw"><div style="overflow:auto;max-width:100%">${html}</div>
+      <div class="clues"><h4>Horizontales</h4><ol>${clue('h')}</ol><h4>Verticales</h4><ol>${clue('v')}</ol></div></div>
+      <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+    let dir = 'h';
+    root.addEventListener('focusin', e => { const inp = e.target.closest('input[data-c]'); if (inp) inp.select(); });
+    root.addEventListener('input', e => {
+      const inp = e.target.closest('input[data-c]'); if (!inp) return;
+      inp.value = word(inp.value).slice(-1);
+      if (!inp.value) return;
+      const [r, c] = inp.dataset.c.split(',').map(Number);
+      const nextH = root.querySelector(`input[data-c="${r},${c + 1}"]`), nextV = root.querySelector(`input[data-c="${r + 1},${c}"]`);
+      if (dir === 'h' && !nextH && nextV) dir = 'v'; else if (dir === 'v' && !nextV && nextH) dir = 'h';
+      const nx = dir === 'h' ? nextH : nextV; if (nx) nx.focus();
+    });
+    root.addEventListener('keydown', e => {
+      const inp = e.target.closest('input[data-c]'); if (!inp) return;
+      const [r, c] = inp.dataset.c.split(',').map(Number);
+      const mv = { ArrowRight: [0, 1, 'h'], ArrowLeft: [0, -1, 'h'], ArrowDown: [1, 0, 'v'], ArrowUp: [-1, 0, 'v'] }[e.key];
+      if (mv) { const t = root.querySelector(`input[data-c="${r + mv[0]},${c + mv[1]}"]`); if (t) { dir = mv[2]; t.focus(); e.preventDefault(); } }
+      if (e.key === 'Backspace' && !inp.value) { const t = root.querySelector(dir === 'h' ? `input[data-c="${r},${c - 1}"]` : `input[data-c="${r - 1},${c}"]`); if (t) { t.focus(); e.preventDefault(); } }
+    });
+    function check() {
+      let ok = 0;
+      root.querySelectorAll('td.l').forEach(td => td.classList.remove('ok', 'bad'));
+      placed.forEach(p => {
+        const ks = Array.from(p.w, (_, i) => (p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0)));
+        const good = ks.every((k, i) => root.querySelector(`input[data-c="${k}"]`).value === p.w[i]);
+        if (good) ok++;
+        root.querySelector(`li[data-w="${p.k}"]`).classList.toggle('ok', good);
+        ks.forEach(k => { const td = root.querySelector(`td[data-c="${k}"]`); if (good) { td.classList.remove('bad'); td.classList.add('ok'); } else if (!td.classList.contains('ok')) td.classList.add('bad'); });
+      });
+      if (ok === placed.length) ctx.later(() => done(ok, placed.length, ''), 900);
+      else root.querySelector('.act-bar').innerHTML = `<span class="act-info">${ok} de ${placed.length} correctas.</span>
+        <button class="act-btn alt" data-check>Comprobar de nuevo</button><button class="act-btn" data-finish>Terminar</button>`;
+    }
+    root.addEventListener('click', e => {
+      if (e.target.closest('[data-check]')) check();
+      if (e.target.closest('[data-finish]')) done(root.querySelectorAll('.clues li.ok').length, placed.length, '');
+    });
+  }
+ 
+  /* ---------- 4. Sopa de letras ---------- */
+  function sopa(root, pairs, done, ctx) {
+    const list = pairs.map(p => ({ w: word(p.a), label: p.b || p.a })).filter(x => x.w.length > 1).slice(0, 18);
+    if (!list.length) { root.innerHTML = '<p class="act-info">Hacen falta palabras de 2 letras o más.</p>'; return; }
+    const longest = Math.max(...list.map(x => x.w.length)), letters = list.reduce((s, x) => s + x.w.length, 0);
+    const N = Math.min(16, Math.max(8, longest + 1, Math.ceil(Math.sqrt(letters * 2.3))));
+    const dirs = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
+    const g = Array.from({ length: N }, () => Array(N).fill(''));
+    const placed = [];
+    list.sort((a, b) => b.w.length - a.w.length).forEach(x => {
+      for (let t = 0; t < 400; t++) {
+        const [dr, dc] = dirs[t < 200 ? rnd(4) : rnd(8)], r = rnd(N), c = rnd(N);
+        const er = r + dr * (x.w.length - 1), ec = c + dc * (x.w.length - 1);
+        if (er < 0 || er >= N || ec < 0 || ec >= N) continue;
+        let ok = true;
+        for (let i = 0; i < x.w.length; i++) { const v = g[r + dr * i][c + dc * i]; if (v && v !== x.w[i]) { ok = false; break; } }
+        if (!ok) continue;
+        for (let i = 0; i < x.w.length; i++) g[r + dr * i][c + dc * i] = x.w[i];
+        placed.push({ ...x, r, c, dr, dc, found: false }); return;
+      }
+    });
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!g[r][c]) g[r][c] = LETTERS[rnd(26)];
+    root.innerHTML = `<div class="act-ws"><div class="grid" style="grid-template-columns:repeat(${N},auto)">
+      ${g.map((row, r) => row.map((ch, c) => `<button data-rc="${r},${c}">${ch}</button>`).join('')).join('')}</div>
+      <ul>${placed.map((p, k) => `<li data-k="${k}">${esc(p.label)}</li>`).join('')}</ul></div>
+      <div class="act-bar"><span class="act-info"><b data-f>0</b> de ${placed.length}</span><button class="act-btn alt" data-finish>Terminar</button></div>`;
+    let start = null, found = 0;
+    const btn = (r, c) => root.querySelector(`[data-rc="${r},${c}"]`);
+    root.addEventListener('click', e => {
+      if (e.target.closest('[data-finish]')) return done(found, placed.length, '');
+      const b = e.target.closest('[data-rc]'); if (!b) return;
+      const [r, c] = b.dataset.rc.split(',').map(Number);
+      if (!start) { start = [r, c]; b.classList.add('start'); return; }
+      btn(...start).classList.remove('start');
+      const [r0, c0] = start; start = null;
+      const dr = Math.sign(r - r0), dc = Math.sign(c - c0), len = Math.max(Math.abs(r - r0), Math.abs(c - c0)) + 1;
+      if (!(r0 === r || c0 === c || Math.abs(r - r0) === Math.abs(c - c0))) return;
+      const p = placed.find(p => !p.found && p.w.length === len && (
+        (p.r === r0 && p.c === c0 && p.dr === dr && p.dc === dc) ||
+        (p.r === r && p.c === c && p.dr === -dr && p.dc === -dc)));
+      if (!p) { b.classList.add('act-shake'); ctx.later(() => b.classList.remove('act-shake'), 300); return; }
+      p.found = true; found++;
+      for (let i = 0; i < len; i++) btn(r0 + dr * i, c0 + dc * i).classList.add('found');
+      root.querySelector(`li[data-k="${placed.indexOf(p)}"]`).classList.add('ok');
+      root.querySelector('[data-f]').textContent = found;
+      if (found === placed.length) ctx.later(() => done(found, placed.length, ''), 700);
+    });
+  }
+ 
+  /* ---------- 5. Ahorcado ---------- */
+  function ahorcado(root, pairs, done, ctx) {
+    const list = shuffle(pairs.map(p => ({ w: word(p.a), clue: p.b })).filter(x => x.w));
+    let idx = 0, ok = 0, guessed, errors;
+    const parts = [
+      '<circle cx="140" cy="60" r="16"/>', '<line x1="140" y1="76" x2="140" y2="126"/>',
+      '<line x1="140" y1="90" x2="118" y2="110"/>', '<line x1="140" y1="90" x2="162" y2="110"/>',
+      '<line x1="140" y1="126" x2="122" y2="156"/>', '<line x1="140" y1="126" x2="158" y2="156"/>'];
+    function round() {
+      if (idx >= list.length) return done(ok, list.length, '');
+      guessed = new Set(); errors = 0; paint();
+    }
+    function paint() {
+      const x = list[idx];
+      const shown = [...x.w].map(ch => /[0-9]/.test(ch) || guessed.has(ch) ? ch : '_').join('');
+      root.innerHTML = `<div class="act-info">Palabra ${idx + 1} de ${list.length}</div>
+        <div class="act-prompt">${x.clue ? esc(x.clue) : '&nbsp;'}</div>
+        <div class="act-hm"><svg width="200" height="180" viewBox="0 0 200 180" stroke="#1f2a44" stroke-width="4" fill="none" stroke-linecap="round">
+          <line x1="20" y1="170" x2="120" y2="170"/><line x1="60" y1="170" x2="60" y2="20"/><line x1="60" y1="20" x2="140" y2="20"/><line x1="140" y1="20" x2="140" y2="44"/>
+          ${parts.slice(0, errors).join('')}</svg>
+          <div><div class="word">${shown}</div><div class="act-info">Errores: ${errors} de 6</div></div></div>
+        <div class="act-keys">${[...LETTERS].map(L => `<button data-k="${L}" class="${guessed.has(L) ? (x.w.includes(L) ? 'hit' : 'miss') : ''}" ${guessed.has(L) ? 'disabled' : ''}>${L}</button>`).join('')}</div>`;
+      if (!shown.includes('_')) { ok++; idx++; ctx.later(round, 900); disable(); }
+      else if (errors >= 6) {
+        root.querySelector('.word').textContent = x.w; root.querySelector('.word').style.color = '#a3222c';
+        idx++; ctx.later(round, 1600); disable();
+      }
+    }
+    const disable = () => root.querySelectorAll('.act-keys button').forEach(b => b.disabled = true);
+    root.addEventListener('click', e => {
+      const b = e.target.closest('[data-k]'); if (!b || b.disabled) return;
+      guessed.add(b.dataset.k); if (!list[idx].w.includes(b.dataset.k)) errors++;
+      paint();
+    });
+    ctx.on(document, 'keydown', e => {
+      const L = e.key && e.key.toUpperCase();
+      if (L && L.length === 1 && LETTERS.includes(L) && root.isConnected) { const b = root.querySelector(`[data-k="${L}"]`); if (b && !b.disabled) b.click(); }
+    });
+    round();
+  }
+ 
+  /* ---------- 6 y 7. Atrapa el topo / Explotar globos ---------- */
+  function arcade(root, pairs, done, ctx, kind) {
+    const rounds = shuffle(pairs.filter(p => p.a)), all = pairs.map(p => p.a);
+    const COLORS = ['#ffd3e2', '#cfeaff', '#d6f0bf', '#ffdcb0', '#e3d8ff', '#fff1a8'];
+    let idx = -1, ok = 0, misses = 0, roundTimer = null;
+    root.innerHTML = `<div class="act-prompt" data-prompt></div>
+      <div class="act-field ${kind}"><div class="act-score">✔ <b data-ok>0</b> · ronda <b data-r>1</b>/${rounds.length}</div>
+      ${kind === 'topo' ? Array.from({ length: 6 }, (_, i) => `<div class="act-hole" data-h="${i}"></div>`).join('') : ''}</div>`;
+    const field = root.querySelector('.act-field');
+    function options() {
+      const correct = rounds[idx].a;
+      return shuffle([correct, ...shuffle(all.filter(x => x !== correct)).slice(0, 4)]);
+    }
+    function next() {
+      clearTimeout(roundTimer); idx++;
+      field.querySelectorAll('.act-mole, .act-balloon').forEach(e => e.remove());
+      if (idx >= rounds.length) return done(ok, rounds.length, misses ? `${misses} toques equivocados` : '');
+      root.querySelector('[data-prompt]').textContent = rounds[idx].b || rounds[idx].a;
+      root.querySelector('[data-r]').textContent = idx + 1;
+      const opts = options(); let k = 0, sinceCorrect = 0;
+      const spawn = () => {
+        if (!root.isConnected) return;
+        let t = opts[k++ % opts.length];
+        if (t === rounds[idx].a) sinceCorrect = 0; else if (++sinceCorrect >= 3) { t = rounds[idx].a; sinceCorrect = 0; }
+        kind === 'topo' ? mole(t) : balloon(t);
+      };
+      spawn(); ctx.every(spawn, kind === 'topo' ? 900 : 1100, 'spawn');
+      roundTimer = ctx.later(() => next(), 12000);
+    }
+    function hit(el, text) {
+      if (text === rounds[idx].a) {
+        ok++; root.querySelector('[data-ok]').textContent = ok;
+        el.classList.add('act-pop'); ctx.stop('spawn'); ctx.later(next, 450);
+      } else { misses++; el.classList.add('act-shake'); ctx.later(() => el.classList.remove('act-shake'), 300); }
+    }
+    function mole(text) {
+      const free = [...field.querySelectorAll('.act-hole')].filter(h => !h.firstElementChild);
+      if (!free.length) return;
+      const h = free[rnd(free.length)], m = document.createElement('button');
+      m.className = 'act-mole'; m.textContent = text; h.appendChild(m);
+      requestAnimationFrame(() => m.classList.add('up'));
+      m.onclick = () => hit(m, text);
+      ctx.later(() => { m.classList.remove('up'); ctx.later(() => m.remove(), 220); }, 1700);
+    }
+    function balloon(text) {
+      const b = document.createElement('button');
+      b.className = 'act-balloon'; b.textContent = text;
+      b.style.left = (5 + rnd(75)) + '%'; b.style.background = COLORS[rnd(COLORS.length)];
+      b.style.animationDuration = (5 + Math.random() * 2) + 's';
+      b.onclick = () => hit(b, text);
+      b.addEventListener('animationend', ev => { if (ev.animationName === 'act-rise') b.remove(); });
+      field.appendChild(b);
+    }
+    next();
+  }
+ 
+  /* ---------- 8. Tarjetas ---------- */
+  function tarjetas(root, pairs, done) {
+    const list = shuffle(pairs); let idx = 0, known = 0;
+    function show() {
+      if (idx >= list.length) return done(known, list.length, '');
+      const p = list[idx];
+      root.innerHTML = `<div class="act-info">Tarjeta ${idx + 1} de ${list.length} · Sabidas: ${known}</div>
+        <div class="act-flash" data-flip><div class="in"><div class="f">${esc(p.a)}</div><div class="bk">${esc(p.b || '—')}</div></div></div>
+        <div class="act-bar"><span class="act-info" data-hint>Tocar la tarjeta para darla vuelta</span>
+        <button class="act-btn alt" data-no hidden>No la sabía</button><button class="act-btn" data-yes hidden>¡La sabía!</button></div>`;
+    }
+    root.addEventListener('click', e => {
+      if (e.target.closest('[data-flip]')) {
+        root.querySelector('.act-flash').classList.toggle('flip');
+        root.querySelectorAll('[data-no],[data-yes]').forEach(b => b.hidden = false);
+        const h = root.querySelector('[data-hint]'); if (h) h.hidden = true;
+      }
+      if (e.target.closest('[data-yes]')) { known++; idx++; show(); }
+      if (e.target.closest('[data-no]')) { idx++; show(); }
+    });
+    show();
+  }
+ 
+  /* ---------- 9. Ruleta ---------- */
+  function ruleta(root, pairs, done, ctx) {
+    let list = pairs.slice(), angle = 0, spinning = false, last = -1;
+    const COLORS = ['#ffd3e2', '#cfeaff', '#d6f0bf', '#ffdcb0', '#e3d8ff', '#fff1a8'];
+    root.innerHTML = `<div class="act-wheel"><div class="wrap"><div class="pin"></div><canvas width="760" height="760"></canvas></div>
+      <div class="res"><div data-res class="act-prompt">Girar la ruleta</div><div data-ans class="act-info"></div>
+      <div class="act-bar"><button class="act-btn" data-spin>Girar</button><button class="act-btn alt" data-show hidden>Ver respuesta</button>
+      <button class="act-btn alt" data-remove hidden>Quitar de la ruleta</button></div></div></div>`;
+    const cv = root.querySelector('canvas'), g = cv.getContext('2d');
+    function draw() {
+      const n = list.length, R = 370, step = 2 * Math.PI / Math.max(n, 1);
+      g.clearRect(0, 0, 760, 760); g.save(); g.translate(380, 380); g.rotate(angle);
+      list.forEach((p, i) => {
+        g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R, i * step, (i + 1) * step); g.closePath();
+        g.fillStyle = COLORS[i % COLORS.length]; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 4; g.stroke();
+        g.save(); g.rotate(i * step + step / 2); g.textAlign = 'right'; g.fillStyle = '#1f2a44';
+        g.font = `${n > 16 ? 22 : 28}px "Patrick Hand", sans-serif`;
+        const t = p.a.length > 22 ? p.a.slice(0, 21) + '…' : p.a; g.fillText(t, R - 18, 9); g.restore();
+      });
+      g.restore();
+      g.beginPath(); g.arc(380, 380, 30, 0, 2 * Math.PI); g.fillStyle = '#1d4ea0'; g.fill();
+    }
+    draw();
+    root.addEventListener('click', e => {
+      if (e.target.closest('[data-spin]') && !spinning && list.length) {
+        spinning = true; root.querySelector('[data-ans]').textContent = '';
+        root.querySelectorAll('[data-show],[data-remove]').forEach(b => b.hidden = true);
+        const start = angle, total = 6 * Math.PI + Math.random() * 2 * Math.PI, t0 = performance.now(), dur = 3800;
+        const anim = now => {
+          const k = Math.min(1, (now - t0) / dur), ease = 1 - Math.pow(1 - k, 3);
+          angle = start + total * ease; draw();
+          if (k < 1) return requestAnimationFrame(anim);
+          spinning = false;
+          const n = list.length, step = 2 * Math.PI / n;
+          const a = ((-Math.PI / 2 - angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+          last = Math.floor(a / step) % n;
+          root.querySelector('[data-res]').textContent = list[last].a;
+          root.querySelector('[data-show]').hidden = !list[last].b;
+          root.querySelector('[data-remove]').hidden = false;
+        };
+        requestAnimationFrame(anim);
+      }
+      if (e.target.closest('[data-show]') && last >= 0) root.querySelector('[data-ans]').textContent = list[last].b;
+      if (e.target.closest('[data-remove]') && last >= 0) {
+        list.splice(last, 1); last = -1; draw();
+        root.querySelector('[data-res]').textContent = list.length ? 'Girar la ruleta' : '¡No quedan opciones!';
+        root.querySelectorAll('[data-show],[data-remove]').forEach(b => b.hidden = true);
+        root.querySelector('[data-ans]').textContent = '';
+      }
+    });
+  }
+ 
+  /* ---------- 10. Abrir la caja ---------- */
+  function caja(root, pairs) {
+    const list = shuffle(pairs);
+    root.innerHTML = `<div class="act-boxes">${list.map((_, i) => `<button class="act-box" data-i="${i}"><span>${i + 1}</span></button>`).join('')}</div>
+      <div class="act-reveal" data-rev hidden></div>`;
+    root.addEventListener('click', e => {
+      const b = e.target.closest('.act-box');
+      if (b) {
+        b.classList.add('used'); const p = list[b.dataset.i];
+        const rev = root.querySelector('[data-rev]'); rev.hidden = false;
+        rev.innerHTML = `<div>${esc(p.a)}</div>${p.b ? `<div class="act-bar"><button class="act-btn alt" data-ans>Ver respuesta</button></div><div class="ans" hidden>${esc(p.b)}</div>` : ''}`;
+        rev.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+      if (e.target.closest('[data-ans]')) { root.querySelector('.act-reveal .ans').hidden = false; e.target.closest('.act-bar').remove(); }
+    });
+  }
+ 
+  const IMPL = { unir, memotest, crucigrama, sopa, ahorcado, tarjetas, ruleta, caja,
+                 topo: (r, p, d, c) => arcade(r, p, d, c, 'topo'), globos: (r, p, d, c) => arcade(r, p, d, c, 'globos') };
+ 
+  /* ---------- reproductor común ---------- */
+  function play(el, opts) {
+    injectCss();
+    const t = TEMPLATES[opts.template] || TEMPLATES.unir, key = TEMPLATES[opts.template] ? opts.template : 'unir';
+    const pairs = (opts.pairs || []).filter(p => p && p.a);
+    let ctx = null;
+    function makeCtx() {
+      const timers = [], named = {}, offs = [];
+      return {
+        later(fn, ms) { const id = setTimeout(fn, ms); timers.push(id); return id; },
+        every(fn, ms, name) { const id = setInterval(fn, ms); timers.push(id); if (name) { clearInterval(named[name]); named[name] = id; } return id; },
+        stop(name) { clearInterval(named[name]); },
+        on(target, ev, fn) { target.addEventListener(ev, fn); offs.push(() => target.removeEventListener(ev, fn)); },
+        clear() { timers.forEach(id => { clearTimeout(id); clearInterval(id); }); offs.forEach(f => f()); }
+      };
+    }
+    function start() {
+      if (ctx) ctx.clear();
+      ctx = makeCtx();
+      el.innerHTML = `<div class="act"><div class="act-head"><b>${t.icon} ${esc(t.name)}</b><span>${esc(t.help)}</span></div><div class="act-stage"></div></div>`;
+      const stage = el.querySelector('.act-stage');
+      const minimo = key === 'memotest' || key === 'unir' ? 2 : 1;
+      if (pairs.length < minimo) { stage.innerHTML = '<p class="act-info">Esta actividad todavía no tiene contenido.</p>'; return; }
+      const t0 = Date.now();
+      const finish = (score, total, detail) => {
+        const secs = Math.round((Date.now() - t0) / 1000);
+        ctx.clear();
+        const end = document.createElement('div'); end.className = 'act-end';
+        end.innerHTML = `<div><h3>¡Terminado!</h3><div class="big">${score} de ${total}</div>
+          <div class="act-info">${detail ? esc(detail) + ' · ' : ''}${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} min</div>
+          <div class="act-info" data-saved></div>
+          <div class="act-bar">${opts.canReplay === false ? '' : '<button class="act-btn" data-again>Jugar de nuevo</button>'}</div></div>`;
+        stage.appendChild(end);
+        end.addEventListener('click', e => { if (e.target.closest('[data-again]')) start(); });
+        if (opts.onResult) {
+          Promise.resolve(opts.onResult(score, total, secs, detail)).then(msg => {
+            if (msg) { const s = end.querySelector('[data-saved]'); if (s) s.textContent = msg; }
+          }).catch(() => {});
+        }
+      };
+      IMPL[key](stage, key === 'ruleta' || key === 'caja' ? pairs : pairs.slice(0, 40), finish, ctx);
+    }
+    start();
+    return { restart: start, destroy() { if (ctx) ctx.clear(); el.innerHTML = ''; } };
+  }
+ 
+  window.Actividades = { TEMPLATES, play, parse, format };
+})();
+ 
