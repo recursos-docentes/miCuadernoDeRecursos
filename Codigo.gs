@@ -9,19 +9,22 @@
  * Configuración: Configuración del proyecto ⚙ → Propiedades de la secuencia
  * de comandos → agregar la propiedad  CLAVE  con la clave que se quiera usar.
  */
- 
+
 const HOJA_MARCADORES = 'Marcadores';
 const HOJA_PAGINAS = 'Paginas';
 const HOJA_RESPUESTAS = 'Respuestas';
- 
+const HOJA_INCIDENTES = 'Incidentes';
+
 const COLS_M = ['id', 'url', 'nombre', 'icono', 'categoria', 'descripcion', 'nota', 'notaPrivada',
                 'etiquetas', 'color', 'favorita', 'paginas', 'agregado', 'incrustar'];
 const COLS_P = ['id', 'titulo', 'slug', 'visibilidad', 'descripcion', 'color', 'orden',
-                'tipo', 'consigna', 'lista', 'abierto', 'revelado', 'anonimo', 'devolucion'];
+                'tipo', 'consigna', 'lista', 'abierto', 'revelado', 'anonimo', 'devolucion',
+                'bloqueado', 'codigo'];
 const COLS_R = ['id', 'pagina', 'estudiante', 'texto', 'creado', 'editado', 'nota', 'comentario', 'token'];
- 
+const COLS_I = ['id', 'pagina', 'estudiante', 'tipo', 'detalle', 'fecha'];
+
 const MAX_TEXTO = 3000;
- 
+
 /* ---------- entrada ---------- */
 function doGet(e) { return responder(manejar((e && e.parameter) || {})); }
 function doPost(e) {
@@ -32,7 +35,7 @@ function doPost(e) {
 function responder(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
- 
+
 function manejar(d) {
   try {
     switch (d.accion) {
@@ -40,6 +43,8 @@ function manejar(d) {
       case 'publico':     return publico(d.p);
       case 'responder':   return responderPizarron(d);
       case 'mirespuesta': return miRespuesta(d);
+      case 'incidente':   return registrarIncidente(d);
+      case 'desbloquear': return desbloquear(d);
       // con clave
       case 'verificar':   verificar(d.clave); return { ok: true };
       case 'cargar':      verificar(d.clave); return Object.assign({ ok: true }, leerTodo());
@@ -47,13 +52,14 @@ function manejar(d) {
       case 'respuestas':  verificar(d.clave); return { ok: true, respuestas: respuestasDe(d.pagina) };
       case 'calificar':   verificar(d.clave); return calificar(d);
       case 'borrarRespuesta': verificar(d.clave); return borrarRespuesta(d);
+      case 'incidentes':  verificar(d.clave); return { ok: true, incidentes: incidentesDe(d.pagina) };
       default:            return { ok: false, error: 'Acción desconocida' };
     }
   } catch (err) {
     return { ok: false, error: String(err && err.message || err) };
   }
 }
- 
+
 function verificar(clave) {
   const real = PropertiesService.getScriptProperties().getProperty('CLAVE');
   if (!real) throw new Error('Falta configurar la propiedad CLAVE en Apps Script');
@@ -62,7 +68,7 @@ function verificar(clave) {
     throw new Error('Clave incorrecta');
   }
 }
- 
+
 /* ---------- hojas ---------- */
 function hoja(nombre, cols) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -79,7 +85,7 @@ function hoja(nombre, cols) {
   }
   return h;
 }
- 
+
 function leerFilas(nombre, cols) {
   const valores = hoja(nombre, cols).getDataRange().getValues();
   const cab = valores.shift() || [];
@@ -91,19 +97,19 @@ function leerFilas(nombre, cols) {
     })
     .filter(o => String(o.id) !== '');
 }
- 
+
 function escribirFila(nombre, cols, fila, obj) {
   const h = hoja(nombre, cols);
   const cab = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
   const valores = cab.map(c => (c in obj ? obj[c] : ''));
   h.getRange(fila, 1, 1, valores.length).setValues([valores]);
 }
- 
+
 const lista = v => String(v || '').split(',').map(x => x.trim()).filter(String);
 const lineas = v => String(v || '').split(/\r?\n/).map(x => x.trim()).filter(String);
 const bool = v => v === true || String(v).toUpperCase() === 'TRUE' || v === 1 || v === '1';
 const boolDef = (v, def) => (v === '' || v == null ? def : bool(v));
- 
+
 function aMarcador(f) {
   return {
     id: String(f.id), url: String(f.url), name: String(f.nombre), icon: String(f.icono),
@@ -121,7 +127,8 @@ function aPagina(f) {
     type: String(f.tipo) === 'pizarron' ? 'pizarron' : 'recursos',
     prompt: String(f.consigna || ''), roster: String(f.lista || ''),
     open: boolDef(f.abierto, true), revealed: bool(f.revelado),
-    anonymous: bool(f.anonimo), feedback: bool(f.devolucion)
+    anonymous: bool(f.anonimo), feedback: bool(f.devolucion),
+    locked: bool(f.bloqueado), code: String(f.codigo || '')
   };
 }
 function aRespuesta(f) {
@@ -131,7 +138,7 @@ function aRespuesta(f) {
     nota: String(f.nota), comentario: String(f.comentario)
   };
 }
- 
+
 function leerTodo() {
   const rev = Number(PropertiesService.getScriptProperties().getProperty('REV') || 0);
   return {
@@ -140,7 +147,7 @@ function leerTodo() {
     paginas: leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina).sort((a, b) => a.order - b.order)
   };
 }
- 
+
 function paginaPublica(slug) {
   if (!slug) throw new Error('Falta el link de la página');
   const pag = leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina)
@@ -148,12 +155,12 @@ function paginaPublica(slug) {
   if (!pag) throw new Error('Esta página no existe o no es pública');
   return pag;
 }
- 
+
 /* ---------- vista pública (sin clave) ---------- */
 function publico(slug) {
   // Nunca se entrega la lista de páginas: cada una se ve solo con su link.
   const pag = paginaPublica(slug);
- 
+
   const marcadores = leerFilas(HOJA_MARCADORES, COLS_M).map(aMarcador)
     .filter(m => m.pages.indexOf(pag.id) >= 0)
     .map(m => ({
@@ -161,10 +168,13 @@ function publico(slug) {
       note: m.notePrivate ? '' : m.note, tags: m.tags, color: m.color, fav: m.fav,
       added: m.added, embed: m.embed
     }));
- 
-  const pagina = { title: pag.title, slug: pag.slug, desc: pag.desc, color: pag.color, type: pag.type };
+
+  const pagina = { title: pag.title, slug: pag.slug, desc: pag.desc, color: pag.color, type: pag.type,
+                   locked: pag.locked };
+  // el código de desbloqueo nunca sale del servidor
+  if (pag.locked) pagina.roster = lineas(pag.roster);
   const salida = { ok: true, pagina: pagina, marcadores: marcadores };
- 
+
   if (pag.type === 'pizarron') {
     const resp = leerFilas(HOJA_RESPUESTAS, COLS_R).map(aRespuesta).filter(r => r.pagina === pag.id);
     Object.assign(pagina, {
@@ -181,7 +191,7 @@ function publico(slug) {
   }
   return salida;
 }
- 
+
 /* ---------- pizarrón: estudiantes (sin clave) ---------- */
 function responderPizarron(d) {
   const lock = LockService.getScriptLock();
@@ -191,7 +201,7 @@ function responderPizarron(d) {
     if (pag.type !== 'pizarron') throw new Error('Esta página no es un pizarrón');
     if (pag.revealed) throw new Error('Las respuestas ya se mostraron: no se pueden enviar ni cambiar');
     if (!pag.open) throw new Error('El pizarrón no está recibiendo respuestas');
- 
+
     const estudiante = String(d.estudiante || '').trim();
     const roster = lineas(pag.roster);
     if (!estudiante) throw new Error('Falta elegir el nombre');
@@ -199,11 +209,11 @@ function responderPizarron(d) {
     const texto = String(d.texto || '').trim();
     if (!texto) throw new Error('La respuesta está vacía');
     if (texto.length > MAX_TEXTO) throw new Error('La respuesta es demasiado larga (máximo ' + MAX_TEXTO + ' caracteres)');
- 
+
     const filas = leerFilas(HOJA_RESPUESTAS, COLS_R);
     const previa = filas.find(f => String(f.pagina) === pag.id && String(f.estudiante) === estudiante);
     const ahora = Date.now();
- 
+
     if (previa) {
       if (!d.token || String(d.token) !== String(previa.token)) {
         throw new Error('Ya hay una respuesta con ese nombre enviada desde otro dispositivo. Avisale a la docente.');
@@ -223,7 +233,7 @@ function responderPizarron(d) {
     lock.releaseLock();
   }
 }
- 
+
 function miRespuesta(d) {
   const pag = paginaPublica(d.p);
   const f = leerFilas(HOJA_RESPUESTAS, COLS_R)
@@ -233,14 +243,14 @@ function miRespuesta(d) {
   return { ok: true, id: r.id, texto: r.texto,
            nota: pag.feedback ? r.nota : '', comentario: pag.feedback ? r.comentario : '' };
 }
- 
+
 /* ---------- pizarrón: docente (con clave) ---------- */
 function respuestasDe(paginaId) {
   return leerFilas(HOJA_RESPUESTAS, COLS_R).map(aRespuesta)
     .filter(r => r.pagina === String(paginaId))
     .sort((a, b) => a.creado - b.creado);
 }
- 
+
 function calificar(d) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -255,7 +265,7 @@ function calificar(d) {
     lock.releaseLock();
   }
 }
- 
+
 function borrarRespuesta(d) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -268,13 +278,47 @@ function borrarRespuesta(d) {
     lock.releaseLock();
   }
 }
- 
+
+/* ---------- modo bloqueado ---------- */
+function registrarIncidente(d) {
+  const pag = paginaPublica(d.p);
+  if (!pag.locked) return { ok: true };
+  const tipos = ['inicio', 'salida', 'desbloqueo'];
+  const tipo = tipos.indexOf(d.tipo) >= 0 ? d.tipo : 'salida';
+  const estudiante = String(d.estudiante || '').trim().slice(0, 80);
+  hoja(HOJA_INCIDENTES, COLS_I).appendRow([Utilities.getUuid().slice(0, 8), pag.id, seguro(estudiante), tipo,
+    seguro(String(d.detalle || '').slice(0, 120)), Date.now()]);
+  return { ok: true };
+}
+
+function desbloquear(d) {
+  const pag = paginaPublica(d.p);
+  if (!pag.locked) return { ok: true };
+  // la planilla puede guardar «0482» como el número 482: se comparan normalizados
+  const norm = v => { const t = String(v == null ? '' : v).trim(); return /^\d+$/.test(t) ? String(Number(t)) : t; };
+  if (!pag.code || norm(d.codigo) !== norm(pag.code)) {
+    Utilities.sleep(800);
+    throw new Error('Código incorrecto');
+  }
+  hoja(HOJA_INCIDENTES, COLS_I).appendRow([Utilities.getUuid().slice(0, 8), pag.id,
+    seguro(String(d.estudiante || '').slice(0, 80)), 'desbloqueo', '', Date.now()]);
+  return { ok: true };
+}
+
+function incidentesDe(paginaId) {
+  return leerFilas(HOJA_INCIDENTES, COLS_I)
+    .filter(f => String(f.pagina) === String(paginaId))
+    .map(f => ({ id: String(f.id), estudiante: String(f.estudiante), tipo: String(f.tipo),
+                 detalle: String(f.detalle), fecha: Number(f.fecha) || 0 }))
+    .sort((a, b) => a.fecha - b.fecha);
+}
+
 /* ---------- guardado del cuaderno (con clave) ---------- */
 function seguro(v) { // evita que un texto se interprete como fórmula
   const s = String(v == null ? '' : v);
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
- 
+
 function escribir(nombre, cols, filas) {
   const h = hoja(nombre, cols);
   h.getRange(1, 1, 1, cols.length).setValues([cols]);
@@ -282,7 +326,7 @@ function escribir(nombre, cols, filas) {
   if (ultima > 1) h.getRange(2, 1, ultima - 1, Math.max(h.getLastColumn(), cols.length)).clearContent();
   if (filas.length) h.getRange(2, 1, filas.length, cols.length).setValues(filas);
 }
- 
+
 function guardar(d) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -290,10 +334,10 @@ function guardar(d) {
     const props = PropertiesService.getScriptProperties();
     const rev = Number(props.getProperty('REV') || 0);
     if (!d.forzar && Number(d.rev) !== rev) return { ok: false, conflicto: true, rev: rev };
- 
+
     const marcadores = Array.isArray(d.marcadores) ? d.marcadores : [];
     const paginas = Array.isArray(d.paginas) ? d.paginas : [];
- 
+
     escribir(HOJA_MARCADORES, COLS_M, marcadores.map(m => [
       seguro(m.id), seguro(m.url), seguro(m.name), seguro(m.icon), seguro(m.cat), seguro(m.desc),
       seguro(m.note), !!m.notePrivate, seguro((m.tags || []).join(', ')), seguro(m.color),
@@ -303,13 +347,13 @@ function guardar(d) {
       seguro(p.id), seguro(p.title), seguro(p.slug), p.visibility === 'publica' ? 'publica' : 'privada',
       seguro(p.desc), seguro(p.color), i,
       p.type === 'pizarron' ? 'pizarron' : 'recursos', seguro(p.prompt), seguro(p.roster),
-      p.open !== false, !!p.revealed, !!p.anonymous, !!p.feedback
+      p.open !== false, !!p.revealed, !!p.anonymous, !!p.feedback,
+      !!p.locked, /^\d+$/.test(String(p.code || '')) ? "'" + p.code : seguro(p.code) // texto, para no perder ceros
     ]));
- 
+
     props.setProperty('REV', String(rev + 1));
     return { ok: true, rev: rev + 1 };
   } finally {
     lock.releaseLock();
   }
 }
- 
