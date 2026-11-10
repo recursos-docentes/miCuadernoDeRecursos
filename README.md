@@ -114,6 +114,18 @@ Las actividades también se pueden usar con el **modo bloqueado**.
  
 Límite: en los juegos, las respuestas están en la página (como en Wordwall), así que alguien con conocimientos podría verlas con F12. Para una evaluación seria conviene un pizarrón o el escrito digital.
  
+## Pasar notas al Portafolio de Clase
+ 
+En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar al Portafolio**.
+ 
+1. Se elige el **grupo del Portafolio** (se propone el que más se parece al grupo del cuaderno, y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase: cuenta como horas dictadas para las faltas, así que solo conviene si ese día hubo clase.
+2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el resumen del Portafolio las promedia juntas.
+3. Se revisa la tabla: cada estudiante del cuaderno con su nota y con quién se empareja en el Portafolio (se emparejan solos por nombre; «Ana» encuentra a «Ana Pérez» si es la única). Las notas se pueden corregir.
+4. **Pasar notas**. Se guardan como una columna de nota de ese día en la clase elegida, sin tocar asistencia ni lo demás.
+En las actividades la nota es proporcional de 1 a 10 (4 de 4 → 10, 2 de 4 → 6; se puede elegir el mejor intento o el último). En los pizarrones se pasa la nota que se puso en cada respuesta.
+ 
+La conexión usa la misma URL y clave que el Portafolio. Si el Portafolio ya está conectado en ese navegador, no hay que hacer nada; si no, se pide una vez.
+ 
 ## Modo bloqueado
  
 En «editar página», marcar **🔒 Modo bloqueado** (sirve para páginas de recursos y para pizarrones). Se completa la lista del grupo y un código de desbloqueo (se propone uno al azar). La página pasa a ser compartida.
