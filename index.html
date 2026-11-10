@@ -263,18 +263,20 @@
   .res-wrap { margin-top: 18px; background: #fff; border: 1.5px solid var(--line); border-radius: 6px; padding: 10px 14px; }
   .res-wrap h3 { font-family: var(--script); font-size: 1.6rem; margin: 0 0 6px; }
   /* índice con pestañas al costado, como un cuaderno */
-  @media (min-width: 701px) { body { padding-right: 52px; } }
-  .idx { position: absolute; top: 120px; right: -40px; display: flex; flex-direction: column; gap: 3px; z-index: 3; }
-  .idx button { writing-mode: vertical-rl; font-family: var(--hand); font-size: 1.02rem; width: 40px; max-height: 220px; padding: 10px 6px;
+  @media (min-width: 701px) { body { padding-right: 106px; } }
+  .idx { position: absolute; top: 120px; right: -96px; display: flex; flex-direction: column; gap: 3px; z-index: 3; }
+  .idx button { font-family: var(--hand); font-size: .98rem; line-height: 1.15; width: 96px; padding: 7px 8px 7px 10px; text-align: left;
     border: 1px solid rgba(0,0,0,.14); border-left: 0; border-radius: 0 9px 9px 0; background: var(--c, #f4f6fa); color: var(--ink);
-    cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 2px 1px 3px rgba(0,0,0,.08); transition: transform .12s; }
+    cursor: pointer; display: block; overflow-wrap: anywhere;
+    box-shadow: 2px 1px 3px rgba(0,0,0,.08); transition: transform .12s; }
+  .idx button .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .idx button:hover { transform: translateX(3px); }
   .idx button[aria-current="true"] { transform: translateX(7px); font-weight: 700; box-shadow: 3px 2px 7px rgba(0,0,0,.2); }
   .idx .home { background: var(--ink-blue); color: #fff; }
-  .idx .add { background: var(--paper); border-style: dashed; color: var(--ink-soft); writing-mode: horizontal-tb; padding: 4px 0; }
+  .idx .add { background: var(--paper); border-style: dashed; color: var(--ink-soft); text-align: center; padding: 3px 0; }
   @media (max-width: 700px) {
     .idx { position: static; flex-direction: row; overflow-x: auto; margin: 12px 0 0; padding-bottom: 2px; }
-    .idx button { writing-mode: horizontal-tb; width: auto; max-height: none; border: 1px solid rgba(0,0,0,.14); border-radius: 9px; padding: 4px 10px; flex: none; }
+    .idx button { width: auto; max-width: 140px; border: 1px solid rgba(0,0,0,.14); border-radius: 9px; padding: 4px 10px; flex: none; }
     .idx button:hover, .idx button[aria-current="true"] { transform: none; }
     .idx button[aria-current="true"] { outline: 2px solid var(--ink-blue); }
   }
@@ -911,7 +913,7 @@
     const hasNone = pages.some(p => !secOf(p));
     const idx = `<nav class="idx" aria-label="Índice del cuaderno">
       <button class="home" data-sec="__index" aria-current="${view === 'index'}" title="Índice">Índice</button>
-      ${sections.map(s => `<button data-sec="${esc(s.id)}" aria-current="${view !== 'index' && view !== 'all' && curSec === s.id}" style="--c:var(--n-${esc(s.color)})" title="${esc(s.name)}">${esc(s.name)}</button>`).join('')}
+      ${sections.map(s => `<button data-sec="${esc(s.id)}" aria-current="${view !== 'index' && view !== 'all' && curSec === s.id}" style="--c:var(--n-${esc(s.color)})" title="${esc(s.name)}"><span class="t">${esc(s.name)}</span></button>`).join('')}
       ${hasNone && sections.length ? `<button data-sec="" aria-current="${view !== 'index' && view !== 'all' && curSec === ''}" title="Páginas sin grupo">Sin grupo</button>` : ''}
       <button class="add" id="newSec" title="Nuevo grupo" aria-label="Nuevo grupo">+</button>
     </nav>`;
