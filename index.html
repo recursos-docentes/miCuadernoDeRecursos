@@ -649,7 +649,12 @@
         (h === 'docs.google.com' && /^\/(forms\/d\/e|document\/d|spreadsheets\/d|presentation\/d)\//.test(x.pathname));
     } catch (e) { return false; }
   }
-  function embedOf(it) { return (it.embed && it.embed.trim()) || (autoEmbedOk(it.url) ? it.url : ''); }
+  function looksLikeLink(v) { v = String(v || '').trim(); return /<iframe/i.test(v) || /^(https?:\/\/)?[\w-]+(\.[\w-]+)+([/?#]\S*)?$/i.test(v); }
+  function embedOf(it) {
+    const e = String(it.embed || '').trim();
+    if (e && looksLikeLink(e) && embedUrl(e)) return e;
+    return autoEmbedOk(it.url) ? it.url : '';
+  }
   function openEmbed(it) {
     const raw = embedOf(it), src = embedUrl(raw); if (!src) return;
     $('#emTitle').textContent = it.name;
@@ -1287,6 +1292,11 @@
     } else {
       const raw = $('#fUrl').value.trim();
       if (!raw) { toast('Falta la dirección'); $('#fUrl').focus(); return; }
+      const emb = $('#fEmbed').value.trim();
+      if (emb && !looksLikeLink(emb)) {
+        toast('«Contenido para incrustar» tiene que ser un link o un código <iframe>. Para texto, usar «Anotaciones».');
+        $('#fEmbed').focus(); return;
+      }
       const url = normUrl(raw);
       const data = { url, name: $('#fName').value.trim() || guessName(url), icon: $('#fIcon').value.trim(),
         desc: $('#fDesc').value.trim(), embed: $('#fEmbed').value.trim(), note: $('#fNote').value.trim(), notePrivate: $('#fNotePriv').checked,
