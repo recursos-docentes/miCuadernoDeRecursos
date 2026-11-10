@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -253,6 +253,15 @@
   .vthumb:hover .vplay { transform: scale(1.1); }
   .vthumb iframe { width: 100%; height: 100%; border: 0; display: block; }
   .note.playing { transform: none; }
+  /* actividades */
+  #dlgPage select { font-family: var(--ui); font-size: .95rem; padding: 8px 10px; border: 1.5px solid #c9c3b0; border-radius: 4px; background: #fff; width: 100%; }
+  .act-switch { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; align-items: center; }
+  .act-switch .lbl { font-family: var(--hand); color: var(--ink-soft); margin-right: 4px; }
+  #actPlay { margin-top: 10px; }
+  .res-table { width: 100%; border-collapse: collapse; font-family: var(--hand); font-size: 1.05rem; background: #fff; }
+  .res-table th, .res-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+  .res-wrap { margin-top: 18px; background: #fff; border: 1.5px solid var(--line); border-radius: 6px; padding: 10px 14px; }
+  .res-wrap h3 { font-family: var(--script); font-size: 1.6rem; margin: 0 0 6px; }
   [hidden] { display: none !important; }
 
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
@@ -348,10 +357,24 @@
     <div class="pagetype">
       <label class="check"><input type="radio" name="pType" value="recursos" checked> 📚 Recursos</label>
       <label class="check"><input type="radio" name="pType" value="pizarron"> 🧑‍🏫 Pizarrón (los estudiantes responden)</label>
+      <label class="check"><input type="radio" name="pType" value="actividad"> 🎮 Actividad (juegos estilo Wordwall)</label>
     </div>
-    <div id="pzFields" hidden>
+    <div id="promptWrap" hidden>
       <label for="pPrompt">Consigna</label>
       <textarea id="pPrompt" placeholder="Por ejemplo: ¿Qué diferencia hay entre un array y un ArrayList? Dar un ejemplo."></textarea>
+    </div>
+    <div id="actFields" hidden>
+      <label for="pTpl">Plantilla</label>
+      <select id="pTpl"></select>
+      <label for="pPairs">Contenido: un par por línea, separado por «|»</label>
+      <textarea id="pPairs" style="min-height:170px" placeholder="clase | Molde para crear objetos&#10;objeto | Instancia de una clase&#10;herencia | Mecanismo para reutilizar una clase"></textarea>
+      <p class="hint" id="pPairsHint"></p>
+      <label>Resultados</label>
+      <label class="check"><input type="radio" name="pActMode" value="practica" checked> Práctica libre: sin nombres, se puede repetir</label>
+      <label class="check"><input type="radio" name="pActMode" value="registro"> Con registro: eligen su nombre y se guarda el puntaje</label>
+      <label class="check" id="pSingleWrap"><input type="checkbox" id="pSingle"> Un solo intento por estudiante</label>
+    </div>
+    <div id="pzFields" hidden>
       <label class="check"><input type="checkbox" id="pAnon"> Al mostrar las respuestas, que los compañeros las vean sin nombre</label>
       <p class="hint">Un pizarrón siempre es una página compartida. Las respuestas empiezan ocultas: cada estudiante ve solo la suya hasta que se muestren a todos.</p>
     </div>
@@ -445,6 +468,7 @@
 
 <!-- La configuración (URL de Apps Script y nombre) está en config.js -->
 <script src="config.js"></script>
+<script src="actividades.js"></script>
 <script>
 (() => {
   const CFG = window.CUADERNO_CONFIG || {};
@@ -497,7 +521,8 @@
   function normPage(p) {
     return { id: p.id || uid(), title: p.title || 'Sin título', slug: p.slug || slugify(p.title || 'pagina'),
       visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow',
-      type: p.type === 'pizarron' ? 'pizarron' : 'recursos', prompt: p.prompt || '', roster: p.roster || '',
+      type: ['pizarron', 'actividad'].includes(p.type) ? p.type : 'recursos', prompt: p.prompt || '', roster: p.roster || '',
+      template: p.template || 'unir', pairs: Array.isArray(p.pairs) ? p.pairs : [], actMode: p.actMode === 'registro' ? 'registro' : 'practica', single: !!p.single,
       open: p.open !== false, revealed: !!p.revealed, anonymous: !!p.anonymous, feedback: !!p.feedback,
       locked: !!p.locked, code: p.code == null ? '' : String(p.code) };
   }
@@ -835,9 +860,9 @@
     if (pg) {
       const pub = pg.visibility === 'publica';
       head = `<div class="page-head">
-        <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : ''}${esc(pg.title)}</h2>
+        <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : pg.type === 'actividad' ? '🎮 ' : ''}${esc(pg.title)}</h2>
         ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span>` : ''}
-        ${pg.type === 'pizarron' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
+        ${pg.type !== 'recursos' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
         ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}" target="_blank" rel="noopener">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
         ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
@@ -850,15 +875,25 @@
         ? `<div class="notice">La planilla está vacía. <button class="btn small" id="migrateBtn">Subir las ${localCount} notas de este navegador</button></div>`
         : `<div class="notice">La planilla está vacía. Para cargar tus notas, tocá «Restaurar» y elegí el archivo <b>notas-iniciales.json</b>.</div>`) : '';
     const isPz = pg && pg.type === 'pizarron';
-    const isLk = !!(pg && pg.locked);
-    app.innerHTML = tabs + migrate + head + (isLk ? '<div id="incWrap"></div>' : '') + (isPz ? `<div class="pz" id="pzStatic">${pzStaticHTML(pg.prompt, items.filter(i => i.pages.includes(pg.id) && embedOf(i)), true)}</div><div id="pzWrap"></div><h2 class="mat">Materiales</h2>` : '') + toolbarHTML(true) +
+    const isLk = !!(pg && pg.locked), isAct = !!(pg && pg.type === 'actividad');
+    const T = window.Actividades ? Actividades.TEMPLATES : {};
+    const actBlock = isAct ? `<div class="pz">${pg.prompt ? `<div class="pz-consigna"><b>Consigna</b>${linkify(pg.prompt)}</div>` : ''}
+      <div class="act-switch"><span class="lbl">Plantilla:</span>${Object.entries(T).map(([k, t]) =>
+        `<button class="chip" data-tpl="${k}" aria-pressed="${pg.template === k}">${t.icon} ${esc(t.name)}</button>`).join('')}
+        <button class="linkbtn" id="editPage2">editar contenido</button></div>
+      <div id="actPlay"></div><div id="resWrap"></div></div><h2 class="mat">Materiales</h2>` : '';
+    app.innerHTML = tabs + migrate + head + (isLk ? '<div id="incWrap"></div>' : '') + actBlock + (isPz ? `<div class="pz" id="pzStatic">${pzStaticHTML(pg.prompt, items.filter(i => i.pages.includes(pg.id) && embedOf(i)), true)}</div><div id="pzWrap"></div><h2 class="mat">Materiales</h2>` : '') + toolbarHTML(true) +
       `<footer class="foot"><span>${mode === 'owner' ? 'Conectado a Google Sheets' : 'Guardado solo en este navegador'}</span>
        ${mode === 'owner' ? '<button class="linkbtn" id="logoutBtn">Salir</button>' : ''}</footer>`;
     refresh();
     if (isPz) renderPzOwner(pg);
     if (isLk) renderIncidents(pg);
-    if (isPz || isLk) {
-      const tick = quiet => { if (isPz) loadResponses(pg.id, quiet); if (isLk) loadIncidents(pg.id, quiet); };
+    if (isAct) {
+      if (window.Actividades) Actividades.play($('#actPlay'), { template: pg.template, pairs: pg.pairs, onResult: () => 'Vista previa de la docente: no se registra.' });
+      renderResults(pg);
+    }
+    if (isPz || isLk || (isAct && pg.actMode === 'registro')) {
+      const tick = quiet => { if (isPz) loadResponses(pg.id, quiet); if (isLk) loadIncidents(pg.id, quiet); if (isAct) loadResults(pg.id, quiet); };
       tick(false);
       if (mode === 'owner') pzTimer = setInterval(() => tick(true), 15000);
     }
@@ -877,6 +912,7 @@
     $('#subtitle').textContent = pubPage.desc || (AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos');
     document.title = pubPage.title + ' · Cuaderno de recursos';
     if (pubPage.locked && !guardsOn) return renderGate();
+    if (pubPage.type === 'actividad') return renderActPublic();
     const isPz = pubPage.type === 'pizarron';
     if (isPz && !pzMedia) { pzMedia = items.filter(i => embedOf(i)); items = items.filter(i => !embedOf(i)); }
     app.innerHTML = (isPz ? `<div class="pz" id="pzStatic">${pzStaticHTML(pubPage.prompt, pzMedia, false)}</div><div id="pzWrap"></div>` : '') +
@@ -926,6 +962,27 @@
     if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}?p=${encodeURIComponent(pg.slug)}`); return; }
     if (t.closest('#loginBtn')) return openLogin();
     if (t.closest('#lkStart')) return lockStart();
+    // actividades
+    if (t.closest('#actGo')) {
+      const n = $('#actName').value; if (!n) { $('#actMsg').textContent = 'Falta elegir tu nombre.'; return; }
+      actName = n; ls.set(actKey(), JSON.stringify({ name: n })); return renderActPublic();
+    }
+    if (t.closest('#actNotMe')) { if (confirm('¿Cambiar de nombre en este dispositivo?')) { ls.del(actKey()); actName = ''; renderActPublic(); } return; }
+    const pga = pages.find(p => p.id === view);
+    if (pga && pga.type === 'actividad') {
+      const tp = t.closest('[data-tpl]');
+      if (tp) { pga.template = tp.dataset.tpl; persist(); render(); return; }
+      if (t.closest('#editPage2')) return openPageDialog(pga);
+      if (t.closest('#resCsv')) return downloadResultsCsv(pga);
+      if (t.closest('#resRefresh')) { loadResults(pga.id); return; }
+      const rr = t.closest('[data-resreset]');
+      if (rr) {
+        const n = rr.dataset.resreset, ids = resList.filter(r => r.estudiante === n).map(r => r.id);
+        if (!confirm(`¿Borrar los ${ids.length} resultados de ${n}? Va a poder jugar de nuevo.`)) return;
+        (async () => { for (const id of ids) await api({ accion: 'borrarResultado', clave, id }).catch(() => {}); loadResults(pga.id); toast('Resultados borrados'); })();
+        return;
+      }
+    }
     // pizarrón
     if (t.closest('#pzSend')) return pzSend();
     if (t.closest('#pzNotMe')) { if (confirm('¿Cambiar de nombre en este dispositivo?')) { ls.del(pzKey()); mine = null; myFeedback = null; renderPzPublic(); } return; }
@@ -1112,6 +1169,77 @@
         renderPzPublic({ text: nueva ? '¡Respuesta enviada! ✓' : 'Cambios guardados ✓', ok: true });
       } else { say(r.error || 'No se pudo enviar'); $('#pzSend').disabled = false; }
     } catch (e) { say('Sin conexión: no se envió. Probar de nuevo.'); $('#pzSend').disabled = false; }
+  }
+
+  /* ---------------- actividades: vista docente ---------------- */
+  let resList = [], resFor = null;
+  async function loadResults(pageId, quiet) {
+    if (mode !== 'owner') return;
+    try {
+      const r = await api({ accion: 'resultados', clave, pagina: pageId });
+      if (r.ok) { resList = r.resultados || []; resFor = pageId; const pg = pages.find(p => p.id === pageId); if (pg && view === pageId) renderResults(pg); }
+      else if (!quiet) toast(r.error || 'No se pudieron traer los resultados');
+    } catch (e) { if (!quiet) toast('No se pudieron traer los resultados'); }
+  }
+  const pct = r => r.total ? Math.round(100 * r.puntaje / r.total) : 0;
+  const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  function renderResults(pg) {
+    const w = $('#resWrap'); if (!w) return;
+    if (pg.actMode !== 'registro') {
+      w.innerHTML = `<p class="pz-count">Modo práctica: no se registran resultados. Para registrarlos, elegir «Con registro» en «editar contenido».</p>`; return;
+    }
+    const list = resFor === pg.id ? resList : [], roster = rosterOf(pg), by = {};
+    list.forEach(r => (by[r.estudiante] = by[r.estudiante] || []).push(r));
+    const names = [...roster, ...Object.keys(by).filter(n => !roster.includes(n))];
+    const missing = roster.filter(n => !by[n]);
+    w.innerHTML = `<div class="res-wrap"><h3>Resultados</h3>
+      <p class="pz-count"><b>${Object.keys(by).length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} jugaron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
+      <div style="overflow:auto"><table class="res-table"><thead><tr><th>Estudiante</th><th>Mejor</th><th>Último</th><th>Intentos</th><th>Tiempo (último)</th><th></th></tr></thead><tbody>
+      ${names.map(n => { const rs = by[n] || [], best = rs.slice().sort((a, b) => pct(b) - pct(a))[0], last = rs[rs.length - 1];
+        return `<tr><td>${esc(n)}</td><td>${best ? `${best.puntaje}/${best.total} (${pct(best)}%)` : '—'}</td><td>${last ? `${last.puntaje}/${last.total}` : '—'}</td>
+          <td>${rs.length || ''}</td><td>${last ? mmss(last.segundos) + (last.detalle ? ' · ' + esc(last.detalle) : '') : ''}</td>
+          <td>${rs.length ? `<button class="linkbtn" data-resreset="${esc(n)}">reiniciar</button>` : ''}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="act-switch"><button class="btn small" id="resCsv">Descargar CSV</button><button class="linkbtn" id="resRefresh">actualizar</button></div></div>`;
+  }
+  function downloadResultsCsv(pg) {
+    const T = window.Actividades ? Actividades.TEMPLATES : {};
+    const rows = [['Estudiante', 'Plantilla', 'Puntaje', 'Total', 'Porcentaje', 'Tiempo', 'Detalle', 'Fecha']].concat(
+      (resFor === pg.id ? resList : []).map(r => [r.estudiante, (T[r.plantilla] || {}).name || r.plantilla, r.puntaje, r.total, pct(r) + '%', mmss(r.segundos), r.detalle, fmtDate(r.fecha)]));
+    const txt = '﻿' + rows.map(r => r.map(v => { v = String(v ?? ''); return /[";\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));
+    a.download = `${pg.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-')}-resultados-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  /* ---------------- actividades: vista estudiante ---------------- */
+  let actName = '';
+  const actKey = () => 'cuaderno-act-' + pubPage.slug;
+  function renderActPublic() {
+    const A = pubPage.activity || {}, reg = A.mode === 'registro';
+    if (guardsOn && lockName) actName = lockName;
+    else if (!actName) actName = (ls.json(actKey(), {}) || {}).name || '';
+    const roster = pubPage.roster || [];
+    const needName = reg && !actName && roster.length;
+    app.innerHTML = `<div class="pz">${pubPage.prompt ? `<div class="pz-consigna"><b>Consigna</b>${linkify(pubPage.prompt)}</div>` : ''}
+      ${needName ? `<div class="pz-form"><label for="actName">Elegir tu nombre</label><select id="actName"><option value="">—</option>${roster.map(n => `<option>${esc(n)}</option>`).join('')}</select>
+        <div class="dlg-actions"><div class="right"><button class="btn" id="actGo">Empezar</button></div></div><div class="pz-msg err" id="actMsg"></div></div>`
+        : `${reg ? `<p class="pz-count">Jugando como <b>${esc(actName)}</b>${guardsOn ? '' : ' · <button class="linkbtn" id="actNotMe">no soy yo</button>'}${A.single ? ' · un solo intento' : ''}</p>` : ''}<div id="actPlay"></div>`}
+      </div>` + (items.length ? '<h2 class="mat">Materiales</h2>' + toolbarHTML(false) : '') +
+      (guardsOn ? '' : `<footer class="foot"><span></span><button class="linkbtn" id="loginBtn">Entrar</button></footer>`);
+    if (items.length) refresh();
+    if (needName || !window.Actividades) return;
+    Actividades.play($('#actPlay'), {
+      template: A.template, pairs: A.pairs || [], canReplay: !(reg && A.single),
+      onResult: async (puntaje, total, segundos, detalle) => {
+        if (!reg) return '';
+        try {
+          const r = await api({ accion: 'resultado', p: pubPage.slug, estudiante: actName, plantilla: A.template, puntaje, total, segundos, detalle });
+          return r.ok ? 'Resultado guardado ✓' : 'No se guardó: ' + (r.error || 'error');
+        } catch (e) { return 'Sin conexión: el resultado no se guardó.'; }
+      }
+    });
   }
 
   /* ---------------- modo bloqueado: vista docente ---------------- */
@@ -1361,6 +1489,11 @@
     document.querySelector(`input[name=pVis][value=${pg?.visibility || 'privada'}]`).checked = true;
     document.querySelector(`input[name=pType][value=${pg?.type || 'recursos'}]`).checked = true;
     $('#pPrompt').value = pg?.prompt || ''; $('#pRoster').value = pg?.roster || ''; $('#pAnon').checked = !!pg?.anonymous;
+    if (window.Actividades && !$('#pTpl').options.length) $('#pTpl').innerHTML = Object.entries(Actividades.TEMPLATES).map(([k, t]) => `<option value="${k}">${t.icon} ${t.name}</option>`).join('');
+    $('#pTpl').value = pg?.template || 'unir';
+    $('#pPairs').value = window.Actividades ? Actividades.format(pg?.pairs || []) : '';
+    document.querySelector(`input[name=pActMode][value=${pg?.actMode || 'practica'}]`).checked = true;
+    $('#pSingle').checked = !!pg?.single;
     $('#pLocked').checked = !!pg?.locked; $('#pCode').value = pg?.code || String(1000 + Math.floor(Math.random() * 9000));
     syncPageType();
     pageColor = pg?.color || COLORS[pages.length % COLORS.length];
@@ -1371,10 +1504,16 @@
   }
   function syncPageType() {
     const pz = document.querySelector('input[name=pType]:checked').value === 'pizarron';
-    const lk = $('#pLocked').checked;
-    $('#pzFields').hidden = !pz; $('#visWrap').hidden = pz || lk;
-    $('#lockFields').hidden = !lk; $('#rosterWrap').hidden = !(pz || lk);
+    const lk = $('#pLocked').checked, act = document.querySelector('input[name=pType]:checked').value === 'actividad';
+    const reg = act && document.querySelector('input[name=pActMode]:checked').value === 'registro';
+    $('#pzFields').hidden = !pz; $('#visWrap').hidden = pz || lk || act;
+    $('#promptWrap').hidden = !(pz || act); $('#actFields').hidden = !act; $('#pSingleWrap').hidden = !reg;
+    $('#lockFields').hidden = !lk; $('#rosterWrap').hidden = !(pz || lk || reg);
+    const t = window.Actividades && Actividades.TEMPLATES[$('#pTpl').value];
+    if (t) $('#pPairsHint').textContent = `Para «${t.name}»: ${t.cols[0]} | ${t.cols[1]}. Con la misma lista se puede cambiar de plantilla en cualquier momento.`;
   }
+  document.querySelectorAll('input[name=pActMode]').forEach(r => r.addEventListener('change', syncPageType));
+  $('#pTpl').addEventListener('change', syncPageType);
   document.querySelectorAll('input[name=pType]').forEach(r => r.addEventListener('change', syncPageType));
   $('#pLocked').addEventListener('change', syncPageType);
   $('#formPage').addEventListener('submit', e => {
@@ -1383,7 +1522,13 @@
     const type = document.querySelector('input[name=pType]:checked').value;
     const data = { title, desc: $('#pDesc').value.trim(), color: pageColor, type,
       locked: $('#pLocked').checked,
-      visibility: type === 'pizarron' || $('#pLocked').checked ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
+      visibility: type !== 'recursos' || $('#pLocked').checked ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
+    if (type === 'actividad') {
+      Object.assign(data, { prompt: $('#pPrompt').value.trim(), template: $('#pTpl').value,
+        pairs: window.Actividades ? Actividades.parse($('#pPairs').value) : [],
+        actMode: document.querySelector('input[name=pActMode]:checked').value, single: $('#pSingle').checked });
+      if (data.actMode === 'registro') data.roster = $('#pRoster').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean).join('\n');
+    }
     if (data.locked) data.code = $('#pCode').value.trim() || String(1000 + Math.floor(Math.random() * 9000));
     if (type === 'pizarron' || data.locked) data.roster = $('#pRoster').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean).join('\n');
     if (type === 'pizarron') Object.assign(data, { prompt: $('#pPrompt').value.trim(), anonymous: $('#pAnon').checked });
