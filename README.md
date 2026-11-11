@@ -71,6 +71,7 @@ El cuaderno abre en el **Índice**: todos los grupos con sus páginas, como el �
 - 🔒 Privada (solo con la clave) o 🌐 Compartida (cualquiera con el link). Pizarrones y actividades son siempre compartidas.
 - **Copiar link** da el link para los estudiantes, con un final al azar para que no se pueda adivinar. «editar página» → «Generar un link nuevo» corta el link anterior.
 - **ver como visitante** abre la página como la ve un estudiante, empezando de cero (sin nombre ni bloqueo guardados de pruebas anteriores).
+- Las páginas de los estudiantes no muestran el link «Entrar»: la docente entra desde la dirección principal del cuaderno.
 ## Pizarrón
  
 1. Tipo **🧑‍🏫 Pizarrón**, con una consigna. Los videos y contenidos incrustados de la página aparecen abiertos debajo de la consigna.
@@ -103,7 +104,9 @@ La misma lista sirve para todas las plantillas; se cambia de plantilla con un cl
  
 Una **ruleta sin contenido** gira con los nombres de la lista del grupo.
  
-**Resultados**: «Práctica libre» no guarda nada. «Con registro» pide elegir el nombre y guarda puntaje, tiempo y fecha; se puede limitar a **un solo intento**. Vista docente: mejor resultado, último, intentos, quién falta, «reiniciar», «Descargar CSV» y «📒 Pasar al Portafolio». Lo que juega la docente en su vista es una vista previa y no se registra.
+**Resultados**: «Práctica libre» no guarda nada. «Con registro» pide elegir el nombre y guarda puntaje, tiempo y fecha; se puede limitar a **un solo intento**.
+ 
+**Tiempo límite** (opcional, en minutos): se ve un reloj; al terminarse, el juego se cierra y se guarda lo hecho hasta ese momento. En el memotest y la sopa de letras también hay un botón **Terminar** que guarda lo hecho (en el memotest, el puntaje descuenta los intentos de más: 10 parejas en 10 intentos = 10; en 20 intentos = 5). Vista docente: mejor resultado, último, intentos, quién falta, «reiniciar», «Descargar CSV» y «📒 Pasar al Portafolio». Lo que juega la docente en su vista es una vista previa y no se registra.
  
 ## Modo bloqueado
  
@@ -144,3 +147,4 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 - En los juegos, las respuestas están dentro de la página (como en Wordwall): con F12 se podrían ver. Para evaluar en serio, mejor un pizarrón o el escrito digital.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla. En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
+ 
