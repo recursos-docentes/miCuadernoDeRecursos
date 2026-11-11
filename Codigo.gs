@@ -49,6 +49,7 @@ function manejar(d) {
       case 'mirespuesta': return miRespuesta(d);
       case 'incidente':   return registrarIncidente(d);
       case 'desbloquear': return desbloquear(d);
+      case 'estadoBloqueo': return estadoBloqueo(d);
       case 'resultado':   return guardarResultado(d);
       // con clave
       case 'verificar':   verificar(d.clave); return { ok: true };
@@ -58,6 +59,7 @@ function manejar(d) {
       case 'calificar':   verificar(d.clave); return calificar(d);
       case 'borrarRespuesta': verificar(d.clave); return borrarRespuesta(d);
       case 'incidentes':  verificar(d.clave); return { ok: true, incidentes: incidentesDe(d.pagina) };
+      case 'desbloquearDesde': verificar(d.clave); return desbloquearDesde(d);
       case 'resultados':  verificar(d.clave); return { ok: true, resultados: resultadosDe(d.pagina) };
       case 'borrarResultado': verificar(d.clave); return borrarFila(HOJA_RESULTADOS, COLS_A, d.id);
       default:            return { ok: false, error: 'Acción desconocida' };
@@ -328,7 +330,7 @@ function borrarRespuesta(d) {
 function registrarIncidente(d) {
   const pag = paginaPublica(d.p);
   if (!pag.locked) return { ok: true };
-  const tipos = ['inicio', 'salida', 'desbloqueo'];
+  const tipos = ['inicio', 'salida'];   // un desbloqueo nunca se registra desde la computadora del estudiante
   const tipo = tipos.indexOf(d.tipo) >= 0 ? d.tipo : 'salida';
   const estudiante = String(d.estudiante || '').trim().slice(0, 80);
   hoja(HOJA_INCIDENTES, COLS_I).appendRow([Utilities.getUuid().slice(0, 8), pag.id, seguro(estudiante), tipo,
@@ -346,8 +348,28 @@ function desbloquear(d) {
     throw new Error('Código incorrecto');
   }
   hoja(HOJA_INCIDENTES, COLS_I).appendRow([Utilities.getUuid().slice(0, 8), pag.id,
-    seguro(String(d.estudiante || '').slice(0, 80)), 'desbloqueo', '', Date.now()]);
+    seguro(String(d.estudiante || '').slice(0, 80)), 'desbloqueo', 'con código', Date.now()]);
   return { ok: true };
+}
+ 
+/* La docente desbloquea a un estudiante desde su propia vista: no hace falta escribir nada en la computadora del estudiante */
+function desbloquearDesde(d) {
+  const pag = leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina).find(p => p.id === String(d.pagina));
+  if (!pag) throw new Error('No se encontró la página');
+  hoja(HOJA_INCIDENTES, COLS_I).appendRow([Utilities.getUuid().slice(0, 8), pag.id,
+    seguro(limpiarNombre(d.estudiante).slice(0, 80)), 'desbloqueo', 'desde la vista docente', Date.now()]);
+  return { ok: true };
+}
+ 
+/* La página bloqueada del estudiante pregunta si ya la desbloquearon (el último evento posterior a su última salida) */
+function estadoBloqueo(d) {
+  const pag = paginaPublica(d.p);
+  if (!pag.locked) return { ok: true, desbloqueado: true };
+  const evs = leerFilas(HOJA_INCIDENTES, COLS_I)
+    .filter(f => String(f.pagina) === pag.id && canon(f.estudiante) === canon(d.estudiante) && (f.tipo === 'salida' || f.tipo === 'desbloqueo'))
+    .sort((a, b) => Number(a.fecha) - Number(b.fecha));
+  const ult = evs[evs.length - 1];
+  return { ok: true, desbloqueado: !!ult && ult.tipo === 'desbloqueo' };
 }
  
 function incidentesDe(paginaId) {
