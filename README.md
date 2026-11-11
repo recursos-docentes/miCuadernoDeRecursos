@@ -170,6 +170,12 @@ En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar 
 - Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
 - La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
 
+## Pasar notas al Portafolio Docente de ANEP
+
+En los resultados de una actividad o de un pizarrón: **📋 Copiar para ANEP** copia nombre, nota y un comentario. Después, en el Portafolio de ANEP, se abre la evaluación grupal (o el cierre del período) y se toca el marcador **📋 Pegar notas**, que completa los casilleros emparejando los nombres. **No guarda**: se revisa y se aprieta «Guardar» en el Portafolio.
+
+El marcador se instala una sola vez desde [anep.html](https://recursos-docentes.github.io/miCuadernoDeRecursos/anep.html) (arrastrándolo a la barra de marcadores). También sirve con lo copiado desde la Libreta de clase (pestaña Resumen) o desde dos columnas de cualquier planilla. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
+
 ## Hojas de la planilla
 
 | Hoja | Qué guarda |
