@@ -29,7 +29,10 @@
     clasificar: { icon: '📦', name: 'Clasificar en grupos', cols: ['Elemento', 'Grupo'], scored: true,
                   help: 'Tocar un elemento y después el grupo donde va (o arrastrarlo). Al terminar, «Comprobar».' },
     vf:         { icon: '✔️', name: 'Verdadero o falso', cols: ['Afirmación', 'V o F'], scored: true,
-                  help: 'Responder cada afirmación antes de que se acabe su tiempo (también con las teclas V y F).' }
+                  help: 'Responder cada afirmación antes de que se acabe su tiempo (también con las teclas V y F).' },
+    diagrama:   { icon: '🏷️', name: 'Diagrama etiquetado', cols: ['Etiqueta', 'posición'], scored: true,
+                  help: 'Tocar una etiqueta y después el punto de la imagen donde va (o arrastrarla). Al terminar, «Comprobar».',
+                  hint: 'Para «Diagrama etiquetado»: una línea «#imagen | link de la imagen» y después una etiqueta por renglón. Con «📍 Ubicar etiquetas» se marca dónde va cada una sobre la imagen.' }
   };
  
   /* ---------- utilidades ---------- */
@@ -50,6 +53,21 @@
       const i = l.indexOf('|');
       return i < 0 ? { a: l, b: '' } : { a: l.slice(0, i).trim(), b: l.slice(i + 1).trim() };
     }).filter(p => p.a);
+  }
+  /* Link de imagen: los de Google Drive se convierten a un link que se puede mostrar */
+  function imgUrl(raw) {
+    const u = String(raw || '').trim(); if (!u) return '';
+    const id = (u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/) || [])[1];
+    return id ? 'https://lh3.googleusercontent.com/d/' + id : u;
+  }
+  /* Diagrama: { img, labels: [{ t, x, y }] } a partir de los pares */
+  function diagramOf(pairs) {
+    const img = imgUrl(((pairs || []).find(p => String(p.a).trim().toLowerCase() === '#imagen') || {}).b);
+    const labels = (pairs || []).filter(p => p.a && String(p.a).trim()[0] !== '#').map(p => {
+      const m = String(p.b || '').match(/(-?\d+(?:[.,]\d+)?)\s*[;, ]\s*(-?\d+(?:[.,]\d+)?)/);
+      return { t: String(p.a).trim(), x: m ? +m[1].replace(',', '.') : null, y: m ? +m[2].replace(',', '.') : null };
+    });
+    return { img, labels };
   }
   const format = pairs => (pairs || []).map(p => p.b ? `${p.a} | ${p.b}` : p.a).join('\n');
  
@@ -179,6 +197,19 @@
   .act-vf .btns { display: flex; gap: 14px; justify-content: center; }
   .act-vf .btns button { font: 700 1.3rem var(--hand, cursive); border: 0; border-radius: 10px; padding: 14px 26px; cursor: pointer; color: #fff; }
   .act-vf .btns [data-v="1"] { background: #2f6f4f; } .act-vf .btns [data-v="0"] { background: #a3222c; }
+  /* diagrama etiquetado */
+  .act-dg .pic { position: relative; max-width: 900px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid #d5dce8; background: #fff; }
+  .act-dg .pic img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+  .act-dg .pin { position: absolute; transform: translate(-50%, -50%); border: 2px solid #1d4ea0; background: #fff; color: #1d4ea0; border-radius: 999px;
+    min-width: 30px; height: 30px; padding: 0 8px; font: 700 .95rem system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); white-space: nowrap; }
+  .act-dg .pin.filled { background: #fff7d6; color: #1f2a44; font: 1rem var(--hand, cursive); border-color: #c9a227; }
+  .act-dg .pin.over { outline: 3px dashed #1d4ea0; }
+  .act-dg .pin.ok { background: #e3f3ea; border-color: #2f6f4f; } .act-dg .pin.bad { background: #fdecec; border-color: #a3222c; }
+  .act-dg .pin .fix { display: block; font-size: .75rem; color: #2f6f4f; }
+  .act-dg .bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0 0; min-height: 40px; }
+  .act-dg .bank:empty::before { content: "Todas las etiquetas ubicadas"; color: #8a93a6; }
+  .act-dg .lab { font-family: inherit; font-size: 1.05rem; background: #fff; border: 2px solid #c9d1de; border-radius: 999px; padding: 4px 12px; cursor: grab; color: inherit; }
+  .act-dg .lab.sel { border-color: #1d4ea0; background: #e8f0ff; }
   @media (max-width: 600px) { .act-unir { gap: 10px 40px; } .act-ws .grid button { width: 24px; height: 24px; font-size: .85rem; } .act-cw td { width: 26px; height: 26px; } }
   `;
   function injectCss() {
@@ -735,7 +766,62 @@
     next();
   }
  
-  const IMPL = { unir, memotest, crucigrama, sopa, ahorcado, tarjetas, ruleta, caja, ordenar, clasificar, vf,
+  /* ---------- 14. Diagrama etiquetado ---------- */
+  function diagrama(root, pairs, done, ctx) {
+    const d = diagramOf(pairs), pins = d.labels.filter(l => l.x != null && l.y != null);
+    if (!d.img || pins.length < 2) { root.innerHTML = '<p class="act-info">Falta la imagen o ubicar al menos dos etiquetas (en «editar contenido» → «📍 Ubicar etiquetas»).</p>'; return; }
+    const bankOrder = shuffle(pins.map((_, i) => i));
+    const at = {};          // pin -> índice de etiqueta
+    let sel = null, checked = false, dragI = null;
+    const where = i => Object.keys(at).find(k => at[k] === i);
+    function paint() {
+      root.innerHTML = `<div class="act-dg"><div class="pic"><img src="${esc(d.img)}" alt="Diagrama" draggable="false">
+        ${pins.map((p, k) => `<button type="button" class="pin${at[k] != null ? ' filled' : ''}" data-pin="${k}" style="left:${p.x}%;top:${p.y}%"
+          aria-label="Punto ${k + 1}${at[k] != null ? ': ' + esc(pins[at[k]].t) : ''}">${at[k] != null ? esc(pins[at[k]].t) : k + 1}</button>`).join('')}</div>
+        <div class="bank">${bankOrder.filter(i => where(i) == null).map(i => `<button type="button" class="lab${sel === i ? ' sel' : ''}" draggable="true" data-lab="${i}">${esc(pins[i].t)}</button>`).join('')}</div></div>
+        <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+    }
+    function put(i, k) {
+      if (checked) return;
+      const prev = where(i); if (prev != null) delete at[prev];
+      at[k] = i; sel = null; paint();
+    }
+    function check(wait) {
+      if (checked) return; checked = true; let ok = 0;
+      pins.forEach((p, k) => {
+        const good = at[k] != null && pins[at[k]].t === p.t; if (good) ok++;   // compara el texto: etiquetas repetidas valen igual
+        const el = root.querySelector(`[data-pin="${k}"]`);
+        el.classList.add(good ? 'ok' : 'bad');
+        if (!good) el.innerHTML = (at[k] != null ? esc(pins[at[k]].t) : '—') + `<span class="fix">${esc(p.t)}</span>`;
+      });
+      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${ok} de ${pins.length} bien ubicadas</span>`;
+      ctx.later(() => done(ok, pins.length, ''), wait);
+    }
+    ctx.onTimeout = () => check(0);
+    root.addEventListener('click', e => {
+      if (e.target.closest('[data-check]')) {
+        const faltan = pins.length - Object.keys(at).length;
+        if (faltan && !confirm(`Faltan ubicar ${faltan} etiquetas. ¿Comprobar igual?`)) return;
+        return check(2200);
+      }
+      if (checked) return;
+      const l = e.target.closest('[data-lab]');
+      if (l) { sel = sel === +l.dataset.lab ? null : +l.dataset.lab; paint(); return; }
+      const p = e.target.closest('[data-pin]');
+      if (p) {
+        const k = +p.dataset.pin;
+        if (sel != null) put(sel, k);
+        else if (at[k] != null) { delete at[k]; paint(); }   // tocar una etiqueta ya puesta la devuelve
+      }
+    });
+    root.addEventListener('dragstart', e => { const l = e.target.closest('[data-lab]'); if (!l) return; dragI = +l.dataset.lab; try { e.dataTransfer.setData('text/plain', String(dragI)); } catch (err) {} });
+    root.addEventListener('dragover', e => { const p = e.target.closest('[data-pin]'); if (!p) return; e.preventDefault(); root.querySelectorAll('.over').forEach(x => x.classList.remove('over')); p.classList.add('over'); });
+    root.addEventListener('drop', e => { const p = e.target.closest('[data-pin]'); if (!p || dragI == null) return; e.preventDefault(); const i = dragI; dragI = null; put(i, +p.dataset.pin); });
+    root.addEventListener('dragend', () => root.querySelectorAll('.over').forEach(x => x.classList.remove('over')));
+    paint();
+  }
+ 
+  const IMPL = { unir, memotest, crucigrama, sopa, ahorcado, tarjetas, ruleta, caja, ordenar, clasificar, vf, diagrama,
                  topo: (r, p, d, c) => arcade(r, p, d, c, 'topo'), globos: (r, p, d, c) => arcade(r, p, d, c, 'globos') };
  
   /* ---------- reproductor común ---------- */
@@ -797,6 +883,5 @@
     return { restart: start, destroy() { if (ctx) ctx.clear(); el.innerHTML = ''; } };
   }
  
-  window.Actividades = { TEMPLATES, play, parse, format };
+  window.Actividades = { TEMPLATES, play, parse, format, imgUrl, diagramOf };
 })();
- 
