@@ -308,6 +308,7 @@
   #dlgPorta select { font-family: var(--ui); font-size: .95rem; padding: 7px 9px; border: 1.5px solid #c9c3b0; border-radius: 4px; background: #fff; width: 100%; }
   #dlgPorta .scroll { max-height: 42vh; overflow: auto; margin-top: 8px; border: 1px solid var(--line); border-radius: 4px; }
   .warn { color: var(--err); font-family: var(--hand); font-size: 1.02rem; margin: 6px 0 0; }
+  .noverif { color: #b45309; cursor: help; }
   .locked-now { margin: 10px 0; background: #fdecec; border: 1.5px solid #e9a9ae; border-radius: 6px; padding: 8px 12px; font-family: var(--hand); font-size: 1.1rem; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
   .locked-now b { color: var(--err); }
   /* editor del diagrama */
@@ -434,6 +435,7 @@
       <label class="check"><input type="radio" name="pActMode" value="practica" checked> Práctica libre: sin nombres, se puede repetir</label>
       <label class="check"><input type="radio" name="pActMode" value="registro"> Con registro: eligen su nombre y se guarda el puntaje</label>
       <label class="check" id="pSingleWrap"><input type="checkbox" id="pSingle"> Un solo intento por estudiante</label>
+      <p class="hint" id="pVerifHint"></p>
       <label for="pTime">Tiempo límite en minutos (opcional)</label>
       <input type="number" id="pTime" min="0" max="180" step="1" placeholder="sin límite" style="max-width:140px">
       <p class="hint">Al terminarse el tiempo, el juego se cierra y se guarda lo hecho. No se aplica a la ruleta ni a abrir la caja.</p>
@@ -517,7 +519,7 @@
       </div>
       <div class="row" style="grid-template-columns:1fr auto">
         <div><label for="poCol">Nombre de la columna de nota</label><input type="text" id="poCol" list="poCols" autocomplete="off"><datalist id="poCols"></datalist></div>
-        <div id="poPickWrap"><label for="poPick">Intento</label><select id="poPick"><option value="best">El mejor</option><option value="last">El último</option></select></div>
+        <div id="poPickWrap"><label for="poPick">Intento</label><select id="poPick"><option value="best">El mejor</option><option value="first">El primero</option><option value="last">El último</option></select></div>
       </div>
       <p class="hint">Si el nombre coincide con otra columna (por ejemplo «Escrito»), el resumen del Portafolio las promedia juntas.</p>
       <div class="scroll"><table class="porta-table"><thead><tr><th>En el cuaderno</th><th>Resultado</th><th>Nota</th><th>En el Portafolio</th></tr></thead><tbody id="poRows"></tbody></table></div>
@@ -1447,16 +1449,18 @@
       <p class="pz-count"><b>${Object.keys(by).length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} jugaron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
       <div style="overflow:auto"><table class="res-table"><thead><tr><th>Estudiante</th><th>Mejor</th><th>Último</th><th>Intentos</th><th>Tiempo (último)</th><th></th></tr></thead><tbody>
       ${names.map(n => { const rs = by[n] || [], best = rs.slice().sort((a, b) => pct(b) - pct(a))[0], last = rs[rs.length - 1];
-        return `<tr><td>${esc(n)}</td><td>${best ? `${best.puntaje}/${best.total} (${pct(best)}%)` : '—'}</td><td>${last ? `${last.puntaje}/${last.total}` : '—'}</td>
+        const nv = r => r && !r.verificado ? ' <span class="noverif" title="Puntaje calculado en el navegador del estudiante: se puede falsificar">⚠</span>' : '';
+        return `<tr><td>${esc(n)}</td><td>${best ? `${best.puntaje}/${best.total} (${pct(best)}%)${nv(best)}` : '—'}</td><td>${last ? `${last.puntaje}/${last.total}${nv(last)}` : '—'}</td>
           <td>${rs.length || ''}</td><td>${last ? mmss(last.segundos) + (last.detalle ? ' · ' + esc(last.detalle) : '') : ''}</td>
           <td>${rs.length ? `<button class="linkbtn" data-resreset="${esc(n)}">reiniciar</button>` : ''}</td></tr>`; }).join('')}
       </tbody></table></div>
+      ${list.some(r => !r.verificado) ? `<p class="hint">⚠ = puntaje calculado en el navegador del estudiante, que se puede falsificar${(window.Actividades && Actividades.VERIFICABLES.includes(pg.template)) ? ' (resultados guardados antes de la corrección en el servidor)' : '. Esta plantilla no se puede corregir en el servidor: usarla para practicar, no para notas'}.</p>` : ''}
       <div class="act-switch"><button class="btn small" id="resCsv">Descargar CSV</button><button class="btn small" id="resPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button><button class="linkbtn" id="resRefresh">actualizar</button></div></div>`;
   }
   function downloadResultsCsv(pg) {
     const T = window.Actividades ? Actividades.TEMPLATES : {};
-    const rows = [['Estudiante', 'Plantilla', 'Puntaje', 'Total', 'Porcentaje', 'Tiempo', 'Detalle', 'Fecha']].concat(
-      (resFor === pg.id ? resList : []).map(r => [r.estudiante, (T[r.plantilla] || {}).name || r.plantilla, r.puntaje, r.total, pct(r) + '%', mmss(r.segundos), r.detalle, fmtDate(r.fecha)]));
+    const rows = [['Estudiante', 'Plantilla', 'Puntaje', 'Total', 'Porcentaje', 'Tiempo', 'Detalle', 'Fecha', 'Corregido en el servidor']].concat(
+      (resFor === pg.id ? resList : []).map(r => [r.estudiante, (T[r.plantilla] || {}).name || r.plantilla, r.puntaje, r.total, pct(r) + '%', mmss(r.segundos), r.detalle, fmtDate(r.fecha), r.verificado ? 'sí' : 'no']));
     const txt = '﻿' + rows.map(r => r.map(v => { v = String(v ?? ''); return /[";\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));
@@ -1483,6 +1487,9 @@
     if (needName || !window.Actividades) return;
     Actividades.play($('#actPlay'), {
       template: A.template, pairs: A.pairs || [], canReplay: !(reg && A.single), timeLimit: A.timeLimit || 0,
+      // con registro, las plantillas verificables las corrige el servidor (las soluciones no llegan a la página)
+      vista: A.vista || null,
+      corregir: A.vista ? (respuestas, segundos) => api({ accion: 'corregir', p: pubPage.slug, estudiante: actName, respuestas, segundos }) : null,
       onResult: async (puntaje, total, segundos, detalle) => {
         if (!reg) return '';
         try {
@@ -1851,6 +1858,12 @@
     const t = window.Actividades && Actividades.TEMPLATES[$('#pTpl').value];
     if (t) $('#pPairsHint').textContent = (t.hint || `Para «${t.name}»: ${t.cols[0]} | ${t.cols[1]}. Con la misma lista se puede cambiar de plantilla en cualquier momento.`) +
       ($('#pTpl').value === 'ruleta' ? ' Si se deja vacío, la ruleta gira con los nombres del grupo.' : '');
+    const vh = $('#pVerifHint'), verif = window.Actividades && Actividades.VERIFICABLES.includes($('#pTpl').value);
+    vh.hidden = !reg;
+    vh.className = 'hint' + (verif ? '' : ' warn');
+    vh.textContent = !reg ? '' : verif
+      ? '🔒 Se corrige en el servidor: las soluciones no llegan a la página y el puntaje no se puede falsificar. Para una nota, conviene «un solo intento».'
+      : '⚠ Esta plantilla se corrige en el navegador del estudiante: el puntaje se puede falsificar. Sirve para practicar; para notas, usar Unir, Clasificar, Verdadero o falso, Ordenar líneas, Diagrama o Crucigrama.';
   }
   document.querySelectorAll('input[name=pActMode]').forEach(r => r.addEventListener('change', syncPageType));
   $('#pTpl').addEventListener('change', syncPageType);
@@ -1929,8 +1942,8 @@
     (resFor === pg.id ? resList : []).forEach(r => (by[r.estudiante] = by[r.estudiante] || []).push(r));
     const pick = $('#poPick') ? $('#poPick').value : 'best';
     return Object.entries(by).map(([n, rs]) => {
-      const r = pick === 'last' ? rs[rs.length - 1] : rs.slice().sort((a, b) => pct(b) - pct(a))[0];
-      return { nombre: n, resultado: `${r.puntaje}/${r.total}`, nota: String(toNota(r.puntaje, r.total)) };
+      const r = pick === 'last' ? rs[rs.length - 1] : pick === 'first' ? rs[0] : rs.slice().sort((a, b) => pct(b) - pct(a))[0];
+      return { nombre: n, resultado: `${r.puntaje}/${r.total}${r.verificado ? '' : ' ⚠ no verificado'}`, nota: String(toNota(r.puntaje, r.total)) };
     });
   }
   function matchStudent(name, est) {

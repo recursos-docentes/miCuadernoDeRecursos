@@ -136,6 +136,12 @@ Una **ruleta sin contenido** gira con los nombres de la lista del grupo.
 
 **Resultados**: «Práctica libre» no guarda nada. «Con registro» pide elegir el nombre y guarda puntaje, tiempo y fecha; se puede limitar a **un solo intento**.
 
+**Corrección en el servidor (🔒)**: con registro, **Unir, Clasificar, Verdadero o falso, Ordenar líneas, Diagrama etiquetado y Crucigrama** se corrigen en el Apps Script. La página del estudiante recibe los elementos mezclados, sin las soluciones (con F12 no se ven), y el puntaje lo calcula el servidor (no se puede falsificar).
+- Con registro no hay pistas durante el juego: en Verdadero o falso no se ve el acierto al momento, en Ordenar líneas se entregan todos los ejercicios juntos, y el crucigrama se entrega una vez. En práctica libre todo sigue igual que antes.
+- La respuesta correcta (por ejemplo, la etiqueta que iba en el diagrama) solo se muestra si la actividad es de **un solo intento**; si se permiten varios, solo se marca qué estuvo bien y qué no. **Para una nota, usar un solo intento.**
+- Las otras plantillas (memotest, sopa, ahorcado, topo, globos, tarjetas) necesitan las respuestas en la página para funcionar: con registro se pueden usar, pero su puntaje se marca con ⚠ («no verificado») en los resultados y al pasar al Portafolio. Sirven para practicar, no para notas. El editor lo avisa al elegir la plantilla.
+- Los resultados guardados antes de esta versión también aparecen con ⚠.
+
 **Tiempo límite** (opcional, en minutos): se ve un reloj; al terminarse, el juego se cierra y se guarda lo hecho hasta ese momento. En el memotest y la sopa de letras también hay un botón **Terminar** que guarda lo hecho (en el memotest, el puntaje descuenta los intentos de más: 10 parejas en 10 intentos = 10; en 20 intentos = 5). Vista docente: mejor resultado, último, intentos, quién falta, «reiniciar», «Descargar CSV» y «📒 Pasar al Portafolio». Lo que juega la docente en su vista es una vista previa y no se registra.
 
 ## Modo bloqueado
@@ -159,7 +165,7 @@ En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar 
 3. Revisar la tabla: nota de cada estudiante y con quién se empareja en el Portafolio (se emparejan solos por nombre, sin importar mayúsculas, tildes ni el orden nombre/apellido). Las notas se pueden corregir.
 4. **Pasar notas**: se guardan como columna de nota de ese día, sin tocar asistencia ni lo demás.
 
-- Actividades: nota proporcional de 1 a 10 (mejor intento o último). Pizarrones: la nota puesta en cada respuesta.
+- Actividades: nota proporcional de 1 a 10 (el mejor intento, el primero o el último). Si el puntaje no fue corregido en el servidor, la tabla lo marca «⚠ no verificado». Pizarrones: la nota puesta en cada respuesta.
 - En la página queda escrito **cuándo se pasó a la libreta**, a qué grupo, clase y columna, y cuántas notas.
 - Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
 - La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
@@ -180,6 +186,7 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 ## Límites
 
 - Los estudiantes no tienen usuario y contraseña: alguien podría elegir el nombre de un compañero que todavía no respondió. Si pasa, se borra esa respuesta y se avisa al grupo. Una respuesta ya enviada no se puede cambiar desde otro dispositivo.
-- En los juegos, las respuestas están dentro de la página (como en Wordwall): con F12 se podrían ver. Para evaluar en serio, mejor un pizarrón o el escrito digital.
+- En práctica libre, y en memotest, sopa, ahorcado, topo, globos y tarjetas aun con registro, las respuestas están dentro de la página: con F12 se podrían ver. Para notas, usar las plantillas que se corrigen en el servidor (🔒) con un solo intento.
+- Cualquiera puede elegir de la lista el nombre de un compañero. Con un solo intento eso le «gasta» el intento, pero queda registrado con la hora y se nota enseguida.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
