@@ -1,91 +1,86 @@
 # Cuaderno de recursos
  
-Marcadores con etiquetas, anotaciones y páginas que se pueden compartir o dejar privadas.
+Cuaderno digital para docentes: marcadores con etiquetas y anotaciones, páginas privadas o compartidas, pizarrones donde responden los estudiantes, actividades estilo Wordwall, modo bloqueado para trabajar en clase y paso de notas a la libreta (Portafolio de Clase).
  
 **Dirección del cuaderno:** https://recursos-docentes.github.io/miCuadernoDeRecursos/
  
-Las páginas compartidas usan esa misma dirección con `?p=` y el nombre de la página al final (por ejemplo `…/miCuadernoDeRecursos/?p=grupo-a-9d9f3`).
+Las páginas compartidas usan esa misma dirección con `?p=` y el nombre de la página al final (por ejemplo `…/miCuadernoDeRecursos/?p=grupo-a-9d9f3`). La dirección principal no muestra ninguna lista: cada página se ve solo con su link.
  
-| Archivo | Para qué |
-|---|---|
-| `index.html` | La página (va al repo de GitHub) |
-| `config.js` | La URL de Apps Script y el nombre (va al repo, junto a `index.html`) |
-| `actividades.js` | Los juegos de las páginas de actividad (va al repo, junto a `index.html`) |
-| `Codigo.gs` | El servidor (va en Apps Script, dentro de una planilla de Google) |
+## Archivos
+ 
+| Archivo | Dónde va | Para qué |
+|---|---|---|
+| `index.html` | repo de GitHub | La página |
+| `actividades.js` | repo de GitHub, junto a `index.html` | Los juegos de las páginas de actividad |
+| `config.js` | repo de GitHub, junto a `index.html` | La URL de Apps Script y el nombre de la autora |
+| `Codigo.gs` | Apps Script, dentro de una planilla de Google | El servidor |
  
 Sin conectar la planilla, el cuaderno funciona igual, pero todo queda guardado **solo en ese navegador** y no se pueden compartir páginas.
  
-## 1. Crear la planilla y el servidor
+## Instalación
+ 
+### 1. Planilla y servidor
  
 1. Crear una planilla nueva en Google Sheets (por ejemplo «Cuaderno de recursos»).
-2. **Extensiones → Apps Script**. Borrar lo que hay y pegar todo `Codigo.gs`. Guardar.
-3. **Configuración del proyecto** (ícono ⚙) → **Propiedades de la secuencia de comandos** → **Agregar propiedad**:
-   - Propiedad: `CLAVE`
-   - Valor: la clave para entrar al cuaderno
-4. **Implementar → Nueva implementación** → tipo **Aplicación web**:
-   - Ejecutar como: **Yo**
-   - Quién tiene acceso: **Cualquier usuario**
-5. Autorizar los permisos y copiar la **URL de la aplicación web** (termina en `/exec`).
-«Cualquier usuario» es necesario para que las páginas compartidas se vean sin cuenta de Google. La planilla en sí sigue siendo privada: el servidor solo entrega las páginas marcadas como compartidas, y para todo lo demás exige la clave.
+2. **Extensiones → Apps Script**. Borrar lo que hay, pegar todo `Codigo.gs` y guardar.
+3. **Configuración del proyecto** (⚙) → **Propiedades de la secuencia de comandos** → agregar la propiedad `CLAVE` con la clave para entrar al cuaderno.
+4. **Implementar → Nueva implementación → Aplicación web**: ejecutar como **Yo**, acceso **Cualquier usuario**.
+5. Autorizar los permisos y copiar la URL (termina en `/exec`).
+«Cualquier usuario» es necesario para que las páginas compartidas se vean sin cuenta de Google. La planilla sigue siendo privada: sin la clave, el servidor solo entrega las páginas compartidas, de a una y con su link.
  
-## 2. Conectar la página
+### 2. Conectar la página
  
-La configuración está en un archivo aparte, `config.js`, para no tener que volver a pegarla cada vez que se actualiza `index.html`:
+En `config.js`:
  
 ```js
 window.CUADERNO_CONFIG = {
   API_URL: 'https://script.google.com/macros/s/XXXX/exec',
-  AUTORA: ''
+  AUTORA: 'Nombre que aparece como subtítulo'
 };
 ```
  
-Subir `index.html` y `config.js` al repo y activar GitHub Pages.
+Subir `index.html`, `actividades.js` y `config.js` al repo y activar GitHub Pages. `config.js` se completa una sola vez: las actualizaciones de `index.html` no lo tocan.
  
-## 3. Primer uso
+### 3. Primer uso
  
-1. Abrir la página → **Entrar** → escribir la clave.
-2. Como la planilla está vacía, aparece **«Subir las notas de este navegador»**: carga las 52 notas iniciales (o las que ya tenías en ese navegador).
-## Índice por grupos
+Abrir la página → **Entrar** → escribir la clave. Si la planilla está vacía, el cuaderno ofrece subir las notas que haya en ese navegador, o se puede usar **Restaurar** con un archivo de respaldo.
  
-El cuaderno abre en el **Índice**: una hoja con todos los grupos y sus páginas. A la derecha hay **pestañas de colores**, una por grupo (en el celular quedan arriba, en una fila).
+### Actualizar
  
-- La primera vez, el Índice ofrece crear los grupos escribiendo uno por línea. Después: pestaña **+** para un grupo nuevo, «editar grupo» para renombrarlo, cambiarle el color o borrarlo (sus páginas pasan a «Sin grupo», no se borran).
-- Al tocar la pestaña de un grupo, arriba aparecen solo las páginas de ese grupo.
-- Cada página tiene su grupo en «editar página» → «Grupo». «📚 Todo» sigue mostrando todas las notas.
-- **Copiar una página a otro grupo**: en la página, «copiar a otro grupo». Se elige el grupo de destino y se crea una copia con su propio link y sus propios resultados, con la misma consigna, contenido y materiales. La lista de estudiantes se toma de otra página de ese grupo (si hay); si no, cargarla en «editar página».
-- **Lista de estudiantes del grupo**: en el Índice, «editar grupo» → «Estudiantes del grupo» (un nombre por línea; se puede pegar una columna de Google Sheets). Todas las páginas del grupo la usan: pizarrones, actividades con registro, modo bloqueado y ruletas sin contenido. Si un estudiante entra o se va, se cambia en un solo lugar. Una página puede tener su propia lista si la necesita (por ejemplo, un subgrupo): si se deja vacía, usa la del grupo.
-- Los grupos y sus listas se guardan en la hoja **Secciones** de la planilla, y no cambian los links de las páginas compartidas.
-## Cómo se usa
+- Cambios en `index.html` o `actividades.js`: subir el archivo nuevo al repo y recargar sin caché (Ctrl + Fn + F5).
+- Cambios en `Codigo.gs`: pegar el código nuevo en Apps Script y hacer **Implementar → Administrar implementaciones → ✎ → Versión: nueva → Implementar**. Así la URL sigue siendo la misma.
+## Índice y grupos
  
-- **Páginas del cuaderno**: «+ página» crea un separador nuevo. 🔒 = privada, 🌐 = compartida. Se cambia tocando el botón de la página.
-- **Compartir**: en una página 🌐 aparece «Copiar link» (`…/?p=nombre-xxxxx`, con un final al azar para que no se pueda adivinar). Quien abre el link solo ve esa página, sin poder editar. La dirección principal no muestra ninguna lista de páginas.
-- **Cortar un link**: en «editar página», marcar «Generar un link nuevo». El link viejo deja de funcionar.
-- **Una nota en varias páginas**: al editarla, marcar todas las páginas donde tiene que aparecer.
+El cuaderno abre en el **Índice**: todos los grupos con sus páginas, como el índice de un cuaderno. A la derecha hay una **pestaña de color por grupo**, con la asignatura arriba y el lugar abajo (en el celular quedan en una fila arriba).
+ 
+- La primera vez, el Índice ofrece crear los grupos escribiendo uno por línea. Después: pestaña **+** para uno nuevo y «editar grupo» para renombrarlo, cambiarle el color o borrarlo (sus páginas pasan a «Sin grupo», no se borran).
+- **Lista de estudiantes del grupo**: en «editar grupo», un nombre por línea (se puede pegar una columna de Google Sheets). La usan todas las páginas del grupo: pizarrones, actividades con registro, modo bloqueado y ruletas sin contenido. Una página puede tener su propia lista (por ejemplo, un subgrupo); si se deja vacía, usa la del grupo.
+- Al tocar la pestaña de un grupo, arriba aparecen solo sus páginas. «📚 Todo» muestra todas las notas.
+- **Copiar una página a otro grupo**: en la página, «copiar a otro grupo». Se crea una copia con su propio link y sus propios resultados, con la misma consigna, contenido y materiales.
+## Notas (marcadores)
+ 
+- **+ Pegar nota**: dirección, nombre, ícono, descripción, categoría, color y páginas donde aparece (una nota puede estar en varias).
 - **Etiquetas**: separadas por comas. La nube de etiquetas filtra; si se eligen varias, muestra las notas que tienen todas.
-- **Anotaciones**: texto largo de cada nota (📝). Si se marca «Anotación privada», no aparece en las páginas compartidas.
-- **📌 Guardar desde webs**: arrastrar el botón amarillo a la barra de marcadores. En cualquier sitio, tocarlo abre una ventanita para guardar esa página (si antes se selecciona texto, queda en las anotaciones).
+- **Anotaciones** (📝): texto largo de cada nota. «Anotación privada» no aparece en las páginas compartidas.
+- **Videos**: los de YouTube y Vimeo se ven dentro de la nota (miniatura, se reproducen ahí mismo; ⤢ los agranda). Los Google Forms, Docs, Slides y archivos de Drive se abren dentro del cuaderno con ▶. Para otros sitios (Genially, Wordwall…), pegar su link o su código `<iframe>` en «Contenido para incrustar».
+- **📌 Guardar desde webs**: arrastrar el botón amarillo a la barra de marcadores; en cualquier sitio, tocarlo guarda esa página (el texto seleccionado queda en las anotaciones).
 - **Exportar / Restaurar**: copia de seguridad en un archivo JSON.
-- **Contenido incrustado**: en cada nota, el campo «Contenido para incrustar» acepta links de YouTube, Vimeo, Google Forms/Docs/Slides/Drive, Genially, Wordwall, etc., o un código `<iframe>`. El botón ▶ lo abre dentro del cuaderno. Algunos sitios no permiten mostrarse dentro de otra página: para esos queda «Abrir en pestaña nueva».
-## Pizarrón (los estudiantes responden)
+## Páginas
  
-1. «+ página» → tipo **Pizarrón**. Escribir la consigna y pegar la lista del grupo (un nombre por línea). Un pizarrón es siempre una página compartida.
-2. Pasar el link a los estudiantes. Cada uno elige su nombre, escribe y envía. Puede corregir su respuesta hasta que se muestren todas, solo desde el mismo dispositivo.
-3. Las respuestas empiezan **ocultas**: los estudiantes no reciben las de los demás (el servidor no las manda), solo ven cuántos respondieron.
-4. En la vista docente: quién falta, nota y devolución por respuesta (se guardan solas al salir del campo), «Descargar CSV» (se abre en Excel).
-5. Botones de estado:
-   - **Recibiendo / No recibe respuestas**
-   - **Respuestas ocultas / visibles para todos** (al mostrarlas ya no se pueden enviar ni cambiar)
-   - **Compañeros: con nombre / sin nombre** (la docente siempre ve los nombres)
-   - **Devoluciones ocultas / visibles**: cada estudiante ve solo su nota y devolución, en el dispositivo desde el que respondió.
-6. «borrar respuesta» permite que un estudiante vuelva a responder (por ejemplo, si eligió el nombre equivocado).
-Las respuestas quedan en la hoja **Respuestas** de la planilla.
+- **+ página** crea una página en el grupo actual. Tipos: 📚 Recursos, 🧑‍🏫 Pizarrón y 🎮 Actividad.
+- 🔒 Privada (solo con la clave) o 🌐 Compartida (cualquiera con el link). Pizarrones y actividades son siempre compartidas.
+- **Copiar link** da el link para los estudiantes, con un final al azar para que no se pueda adivinar. «editar página» → «Generar un link nuevo» corta el link anterior.
+- **ver como visitante** abre la página como la ve un estudiante, empezando de cero (sin nombre ni bloqueo guardados de pruebas anteriores).
+## Pizarrón
  
-Límite: como no hay usuarios con contraseña, un estudiante podría elegir el nombre de un compañero que todavía no respondió. Si pasa, se borra esa respuesta y se avisa al grupo.
- 
- 
+1. Tipo **🧑‍🏫 Pizarrón**, con una consigna. Los videos y contenidos incrustados de la página aparecen abiertos debajo de la consigna.
+2. Cada estudiante elige su nombre de la lista, escribe y envía. Puede corregir su respuesta hasta que se muestren todas, desde el mismo dispositivo.
+3. Las respuestas empiezan **ocultas**: el servidor no le manda a nadie las de los demás; solo se ve cuántos respondieron.
+4. Vista docente: quién falta, **nota y devolución** por respuesta (se guardan solas), «Descargar CSV», «📒 Pasar al Portafolio» y «borrar respuesta» (para que alguien vuelva a responder).
+5. Botones de estado: recibiendo / no recibe respuestas · respuestas ocultas / visibles para todos · compañeros con nombre / sin nombre · devoluciones ocultas / visibles (cada estudiante ve solo la suya, en el dispositivo desde el que respondió).
 ## Actividades (estilo Wordwall)
  
-«+ página» → tipo **🎮 Actividad**. Se escribe una consigna (opcional), se elige la plantilla y se carga el contenido: **un par por línea, separado por «|»**.
+Tipo **🎮 Actividad**: consigna opcional, plantilla y contenido con **un par por línea, separado por «|»**:
  
 ```
 clase | Molde para crear objetos
@@ -93,51 +88,59 @@ objeto | Instancia de una clase
 herencia | Mecanismo para reutilizar una clase
 ```
  
-La misma lista sirve para todas las plantillas, y se puede cambiar de plantilla con un clic desde la página:
+La misma lista sirve para todas las plantillas; se cambia de plantilla con un clic desde la página.
  
 | Plantilla | Qué usa de cada par |
 |---|---|
 | 🔗 Unir con flechas | concepto ↔ definición |
 | 🃏 Memotest | carta A ↔ carta B |
 | ✏️ Crucigrama | palabra · pista |
-| 🔎 Sopa de letras | palabra (la pista es opcional) |
+| 🔎 Sopa de letras | palabra (pista opcional) |
 | 🪢 Ahorcado | palabra · pista |
-| 🔨 Atrapa el topo / 🎈 Explotar globos | respuesta · pregunta (las demás respuestas sirven de distractores) |
+| 🔨 Atrapa el topo / 🎈 Explotar globos | respuesta · pregunta (las otras respuestas sirven de distractores) |
 | 🗂️ Tarjetas | frente · dorso |
-| 🎡 Ruleta / 🎁 Abrir la caja | opción o pregunta · respuesta opcional (para usar en el proyector, sin puntaje) |
+| 🎡 Ruleta / 🎁 Abrir la caja | opción o pregunta · respuesta opcional (para el proyector, sin puntaje) |
  
-En crucigrama, sopa y ahorcado las palabras se pasan a mayúsculas sin tildes ni espacios (la Ñ se respeta).
+Una **ruleta sin contenido** gira con los nombres de la lista del grupo.
  
-**Resultados**: «Práctica libre» no guarda nada. «Con registro» pide elegir el nombre de la lista y guarda puntaje, tiempo y fecha en la hoja **Resultados**; se puede limitar a **un solo intento**. En la vista docente se ve la tabla (mejor resultado, último, intentos, quién falta), «reiniciar» para que alguien vuelva a jugar y «Descargar CSV». Lo que juega la docente en su vista es una vista previa y no se registra.
- 
-Las actividades también se pueden usar con el **modo bloqueado**.
- 
-Límite: en los juegos, las respuestas están en la página (como en Wordwall), así que alguien con conocimientos podría verlas con F12. Para una evaluación seria conviene un pizarrón o el escrito digital.
- 
-## Pasar notas al Portafolio de Clase
- 
-En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar al Portafolio**.
- 
-1. Se elige el **grupo del Portafolio** (se propone el que más se parece al grupo del cuaderno, y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase: cuenta como horas dictadas para las faltas, así que solo conviene si ese día hubo clase.
-2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el resumen del Portafolio las promedia juntas.
-3. Se revisa la tabla: cada estudiante del cuaderno con su nota y con quién se empareja en el Portafolio (se emparejan solos por nombre; «Ana» encuentra a «Ana Pérez» si es la única). Las notas se pueden corregir.
-4. **Pasar notas**. Se guardan como una columna de nota de ese día en la clase elegida, sin tocar asistencia ni lo demás.
-En las actividades la nota es proporcional de 1 a 10 (4 de 4 → 10, 2 de 4 → 6; se puede elegir el mejor intento o el último). En los pizarrones se pasa la nota que se puso en cada respuesta.
- 
-La conexión usa la misma URL y clave que el Portafolio. Si el Portafolio ya está conectado en ese navegador, no hay que hacer nada; si no, se pide una vez.
+**Resultados**: «Práctica libre» no guarda nada. «Con registro» pide elegir el nombre y guarda puntaje, tiempo y fecha; se puede limitar a **un solo intento**. Vista docente: mejor resultado, último, intentos, quién falta, «reiniciar», «Descargar CSV» y «📒 Pasar al Portafolio». Lo que juega la docente en su vista es una vista previa y no se registra.
  
 ## Modo bloqueado
  
-En «editar página», marcar **🔒 Modo bloqueado** (sirve para páginas de recursos y para pizarrones). Se completa la lista del grupo y un código de desbloqueo (se propone uno al azar). La página pasa a ser compartida.
+En «editar página», **🔒 Modo bloqueado** (para cualquier tipo de página), con un código de desbloqueo.
  
-- El estudiante elige su nombre y toca **Comenzar**: la página pasa a pantalla completa.
-- Todos los recursos se abren **dentro** de la página (no se abren pestañas nuevas ni se ve el botón «Abrir en pestaña nueva»). Los sitios que no permiten mostrarse dentro de otra página no se van a ver: conviene probarlos antes con «ver como visitante».
-- Si sale de la pantalla completa, cambia de pestaña o de ventana, minimiza o recarga, la pantalla se tapa y queda registrado con nombre y hora. Para seguir, la docente escribe el código en esa computadora. Recargar la página no lo destraba.
-- En la vista docente aparece el **Registro del modo bloqueado** (quién salió, cuándo y cuántas veces) y, en los pizarrones, una columna «Salidas» en el CSV. Todo queda también en la hoja **Incidentes**.
-- Si se desmarca el modo bloqueado, en menos de medio minuto se libera en todas las computadoras.
-Límites: una página web no puede bloquear la computadora. No detecta un celular al lado, una segunda pantalla ni otro dispositivo. En iPhone/iPad no existe la pantalla completa para páginas web: ahí solo se detecta el cambio de app o de pestaña.
+- El estudiante elige su nombre y toca **Comenzar**: pantalla completa, y todos los recursos se abren dentro de la página.
+- Si sale de la pantalla completa, cambia de pestaña o de ventana, minimiza o recarga, la pantalla se tapa y queda registrado con nombre y hora. Para seguir, la docente escribe el código en esa computadora.
+- Vista docente: **Registro del modo bloqueado** (quién salió, cuándo, cuántas veces); en pizarrones, columna «Salidas» en el CSV.
+- Al desmarcar el modo bloqueado, se libera en todas las computadoras en menos de medio minuto.
+## Pasar notas al Portafolio de Clase
  
-## Si se cambia `Codigo.gs`
+En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar al Portafolio** ([Portafolio de Clase](https://recursos-docentes.github.io/portafolio/)).
  
-Después de editar el código: **Implementar → Administrar implementaciones → ✎ → Versión: nueva → Implementar**. Así la URL sigue siendo la misma.
+1. Elegir el **grupo del Portafolio** (se propone el más parecido y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase, que cuenta como horas dictadas para las faltas.
+2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el Portafolio las promedia juntas.
+3. Revisar la tabla: nota de cada estudiante y con quién se empareja en el Portafolio (se emparejan solos por nombre, sin importar mayúsculas, tildes ni el orden nombre/apellido). Las notas se pueden corregir.
+4. **Pasar notas**: se guardan como columna de nota de ese día, sin tocar asistencia ni lo demás.
+- Actividades: nota proporcional de 1 a 10 (mejor intento o último). Pizarrones: la nota puesta en cada respuesta.
+- En la página queda escrito **cuándo se pasó a la libreta**, a qué grupo, clase y columna, y cuántas notas.
+- Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
+- La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
+## Hojas de la planilla
  
+| Hoja | Qué guarda |
+|---|---|
+| Marcadores | Las notas |
+| Paginas | Las páginas (incluye cuándo se pasaron notas a la libreta) |
+| Secciones | Los grupos y sus listas de estudiantes |
+| Respuestas | Las respuestas de los pizarrones, con nota y devolución |
+| Resultados | Los resultados de las actividades con registro |
+| Incidentes | Entradas, salidas y desbloqueos del modo bloqueado |
+ 
+No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
+ 
+## Límites
+ 
+- Los estudiantes no tienen usuario y contraseña: alguien podría elegir el nombre de un compañero que todavía no respondió. Si pasa, se borra esa respuesta y se avisa al grupo. Una respuesta ya enviada no se puede cambiar desde otro dispositivo.
+- En los juegos, las respuestas están dentro de la página (como en Wordwall): con F12 se podrían ver. Para evaluar en serio, mejor un pizarrón o el escrito digital.
+- El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla. En iPhone/iPad no hay pantalla completa para páginas web.
+- Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
