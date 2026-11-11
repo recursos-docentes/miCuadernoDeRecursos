@@ -330,7 +330,7 @@
 <body>
 <main class="board">
   <header class="top">
-    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">proyectos en GitHub, Pages y Vercel</small></h1>
+    <h1 id="title">Mi cuaderno de recursos<small id="subtitle">cuaderno de recursos</small></h1>
     <div class="head-right">
       <div class="date" id="today"></div>
       <div class="status" id="status" hidden><span><span class="dot"></span><span id="statusTxt"></span></span></div>
@@ -643,7 +643,7 @@
     return { id: p.id || uid(), title: p.title || 'Sin título', slug: p.slug || slugify(p.title || 'pagina'),
       visibility: p.visibility === 'publica' ? 'publica' : 'privada', desc: p.desc || '', color: p.color || 'yellow',
       type: ['pizarron', 'actividad'].includes(p.type) ? p.type : 'recursos', prompt: p.prompt || '', roster: p.roster || '',
-      section: p.section || '', template: p.template || 'unir', pairs: Array.isArray(p.pairs) ? p.pairs : [], actMode: p.actMode === 'registro' ? 'registro' : 'practica', single: !!p.single,
+      section: p.section || '', porta: Array.isArray(p.porta) ? p.porta : [], template: p.template || 'unir', pairs: Array.isArray(p.pairs) ? p.pairs : [], actMode: p.actMode === 'registro' ? 'registro' : 'practica', single: !!p.single,
       open: p.open !== false, revealed: !!p.revealed, anonymous: !!p.anonymous, feedback: !!p.feedback,
       locked: !!p.locked, code: p.code == null ? '' : String(p.code) };
   }
@@ -977,7 +977,7 @@
     if (mode === 'public') return renderPublic();
     // dueña (local u owner)
     $('#title').firstChild.textContent = 'Mi cuaderno de recursos';
-    $('#subtitle').textContent = 'proyectos en GitHub, Pages y Vercel';
+    $('#subtitle').textContent = AUTORA ? `cuaderno de recursos de ${AUTORA}` : 'cuaderno de recursos';
     document.title = 'Mi Cuaderno de Recursos';
     const pg = pages.find(p => p.id === view);
     const hasNone = pages.some(p => !secOf(p));
@@ -1256,6 +1256,7 @@
         <button class="linkbtn" id="pzRefresh">actualizar</button>
       </div>
       <p class="pz-count"><b>${list.length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} respondieron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
+      ${portaInfo(pg)}
       <div class="pz-wall">${list.map(r => `<div class="pz-card" style="--c:var(--n-${esc(pg.color)});--r:${tilt(r.id) / 2}deg">
           <div class="who">${esc(r.estudiante)}</div>
           <div class="when">${fmtDate(r.editado || r.creado)}${r.editado ? ' · editada' : ''}</div>
@@ -1389,6 +1390,7 @@
     const names = [...roster, ...Object.keys(by).filter(n => !roster.includes(n))];
     const missing = roster.filter(n => !by[n]);
     w.innerHTML = `<div class="res-wrap"><h3>Resultados</h3>
+      ${portaInfo(pg)}
       <p class="pz-count"><b>${Object.keys(by).length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} jugaron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
       <div style="overflow:auto"><table class="res-table"><thead><tr><th>Estudiante</th><th>Mejor</th><th>Último</th><th>Intentos</th><th>Tiempo (último)</th><th></th></tr></thead><tbody>
       ${names.map(n => { const rs = by[n] || [], best = rs.slice().sort((a, b) => pct(b) - pct(a))[0], last = rs[rs.length - 1];
@@ -1804,6 +1806,15 @@
     view = 'sec'; $('#dlgPage').close(); persist(); render(); toast('Página borrada');
   });
  
+  /* Texto con la última vez que las notas de esta página se pasaron a la libreta (Portafolio) */
+  function portaInfo(pg) {
+    const h = (pg.porta || [])[0];
+    if (!h) return '<p class="pz-count porta-info">📒 Todavía no se pasaron notas a la libreta.</p>';
+    const f = s => { const [y, m, d] = String(s).split('-'); return `${d}/${m}/${y}`; };
+    const mas = (pg.porta.length > 1) ? ` <span title="${esc(pg.porta.slice(1).map(x => `${fmtDate(x.when)}: ${x.n} notas → «${x.grupo}», clase del ${f(x.clase)}, columna «${x.col}»`).join('\n'))}">(${pg.porta.length - 1} vez${pg.porta.length > 2 ? 'es' : ''} antes)</span>` : '';
+    return `<p class="pz-count porta-info">📒 Pasada a la libreta el <b>${fmtDate(h.when)}</b>: ${h.n} nota${h.n === 1 ? '' : 's'} → «${esc(h.grupo)}», clase del ${f(h.clase)}, columna «${esc(h.col)}».${mas}</p>`;
+  }
+ 
   /* ---------------- pasar notas al Portafolio ----------------
      Usa el Apps Script del Portafolio (acciones «grupos», «clases» y «guardarClase»).
      Las notas van a una columna de nota «solo de ese día» (c.extra) de la clase elegida. */
@@ -1954,6 +1965,10 @@
       $('#dlgPorta').close();
       const [y, m, d] = fecha.split('-');
       toast(`Se pasaron ${filas.length} notas a «${g.nombre}», clase del ${d}/${m}`);
+      // queda registrado en la página (se guarda en la planilla del cuaderno)
+      porta.page.porta = [{ when: Date.now(), grupo: g.nombre || 'Grupo', clase: fecha, col: col.nombre, n: filas.length }, ...(porta.page.porta || [])].slice(0, 10);
+      persist();
+      if (porta.page.type === 'pizarron') renderPzOwner(porta.page); else renderResults(porta.page);
     } catch (err) { $('#poErr').textContent = 'No se pudo guardar: ' + err.message; $('#poSend').disabled = false; }
   });
  
