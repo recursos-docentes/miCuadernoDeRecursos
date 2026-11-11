@@ -1936,7 +1936,8 @@
     if (!j.ok) throw new Error(j.mensaje || j.error || 'Error del Portafolio');
     return j.data;
   }
-  const toNota = (p, t) => t ? Math.max(1, Math.min(10, Math.round(1 + 9 * p / t))) : '';
+  // nota = puntaje sobre 10 (4 de 10 → 4; 7 de 12 → 5,8 → 6), con mínimo 1
+  const toNota = (p, t) => t ? Math.max(1, Math.min(10, Math.round(10 * p / t))) : '';
   function portaSource(pg) {
     // [{ nombre, resultado (texto), nota }]
     if (pg.type === 'pizarron') return (pzFor === pg.id ? pzList : []).map(r => ({ nombre: r.estudiante, resultado: r.nota ? 'nota ' + r.nota : 'sin nota', nota: r.nota }));
@@ -2033,7 +2034,7 @@
   function portaSummary() {
     const ok = porta.rows.filter(r => r.sid && String(r.nota).trim() !== '').length, sin = porta.rows.filter(r => !r.sid).length;
     $('#poSummary').textContent = `Se van a pasar ${ok} nota${ok === 1 ? '' : 's'}.` + (sin ? ` ${sin} sin estudiante elegido (no se pasan).` : '') +
-      (porta.page.type === 'actividad' ? ' Nota = puntaje proporcional de 1 a 10 (se puede corregir).' : '');
+      (porta.page.type === 'actividad' ? ' Nota = puntaje llevado a 10 (4 de 10 → 4), con mínimo 1 (se puede corregir).' : '');
     $('#poSend').disabled = !ok;
   }
   $('#poRows').addEventListener('input', e => {
