@@ -1764,7 +1764,7 @@
     $('#promptWrap').hidden = !(pz || act); $('#actFields').hidden = !act; $('#pSingleWrap').hidden = !reg;
     $('#lockFields').hidden = !lk; $('#rosterWrap').hidden = !(pz || lk || reg);
     const t = window.Actividades && Actividades.TEMPLATES[$('#pTpl').value];
-    if (t) $('#pPairsHint').textContent = `Para «${t.name}»: ${t.cols[0]} | ${t.cols[1]}. Con la misma lista se puede cambiar de plantilla en cualquier momento.` +
+    if (t) $('#pPairsHint').textContent = (t.hint || `Para «${t.name}»: ${t.cols[0]} | ${t.cols[1]}. Con la misma lista se puede cambiar de plantilla en cualquier momento.`) +
       ($('#pTpl').value === 'ruleta' ? ' Si se deja vacío, la ruleta gira con los nombres del grupo.' : '');
   }
   document.querySelectorAll('input[name=pActMode]').forEach(r => r.addEventListener('change', syncPageType));
@@ -1780,7 +1780,7 @@
       visibility: type !== 'recursos' || $('#pLocked').checked ? 'publica' : document.querySelector('input[name=pVis]:checked').value };
     if (type === 'actividad') {
       Object.assign(data, { prompt: $('#pPrompt').value.trim(), template: $('#pTpl').value,
-        pairs: window.Actividades ? Actividades.parse($('#pPairs').value) : [],
+        pairs: window.Actividades ? Actividades.parse($('#pPairs').value, $('#pTpl').value) : [],
         actMode: document.querySelector('input[name=pActMode]:checked').value, single: $('#pSingle').checked,
         timeLimit: Math.max(0, Math.min(180, Math.round(Number($('#pTime').value) || 0))) });
       if (data.actMode === 'registro') data.roster = $('#pRoster').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean).join('\n');
