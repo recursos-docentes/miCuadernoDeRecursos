@@ -48,6 +48,8 @@
   .act-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
   .act-head b { font-family: var(--script, cursive); font-size: 1.8rem; color: var(--ink-blue, #1d4ea0); }
   .act-head span { color: var(--ink-soft, #5b6478); font-size: 1.05rem; }
+  .act-head .act-timer { margin-left: auto; font: 700 1.2rem system-ui, sans-serif; color: var(--ink, #1f2a44); background: #eef1f6; border-radius: 999px; padding: 2px 12px; }
+  .act-head .act-timer.low { color: #fff; background: #a3222c; }
   .act-stage { position: relative; background: #fff; border: 2px solid var(--ink-blue, #1d4ea0); border-radius: 10px; padding: 16px; min-height: 260px; box-shadow: 3px 4px 0 rgba(29,78,160,.12); }
   .act-btn { font-family: inherit; font-size: 1.1rem; border: 0; border-radius: 6px; padding: 7px 16px; background: var(--ink-blue, #1d4ea0); color: #fff; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.15); }
   .act-btn.alt { background: #eef1f6; color: var(--ink, #1f2a44); }
@@ -176,16 +178,18 @@
       const l = e.target.closest('[data-l]'), r = e.target.closest('[data-r]');
       if (l) { box.querySelectorAll('[data-l].sel').forEach(x => x.classList.remove('sel')); selL = Number(l.dataset.l); l.classList.add('sel'); if (selR != null) link(selL, selR); }
       if (r) { box.querySelectorAll('[data-r].sel').forEach(x => x.classList.remove('sel')); selR = Number(r.dataset.r); r.classList.add('sel'); if (selL != null) link(selL, selR); }
-      if (e.target.closest('[data-check]')) {
-        checked = true; let ok = 0;
-        pairs.forEach((_, i) => {
-          const good = links[i] === i; if (good) ok++;
-          box.querySelector(`[data-l="${i}"]`).classList.add(good ? 'ok' : 'bad');
-        });
-        draw();
-        ctx.later(() => done(ok, n, ''), 1400);
-      }
+      if (e.target.closest('[data-check]')) check(1400);
     });
+    function check(wait) {
+      if (checked) return; checked = true; let ok = 0;
+      pairs.forEach((_, i) => {
+        const good = links[i] === i; if (good) ok++;
+        box.querySelector(`[data-l="${i}"]`).classList.add(good ? 'ok' : 'bad');
+      });
+      draw();
+      ctx.later(() => done(ok, n, ''), wait);
+    }
+    ctx.onTimeout = () => check(0);
     ctx.on(window, 'resize', draw);
   }
  
@@ -194,9 +198,18 @@
     const n = pairs.length;
     const cards = shuffle(pairs.flatMap((p, i) => [{ i, t: p.a }, { i, t: p.b || p.a }]));
     root.innerHTML = `<div class="act-info">Intentos: <b data-tries>0</b> · Parejas: <b data-found>0</b> de ${n}</div>
-      <div class="act-memo">${cards.map((c, k) => `<button class="act-card" data-k="${k}"><div class="in"><div class="f">?</div><div class="bk">${esc(c.t)}</div></div></button>`).join('')}</div>`;
+      <div class="act-memo">${cards.map((c, k) => `<button class="act-card" data-k="${k}"><div class="in"><div class="f">?</div><div class="bk">${esc(c.t)}</div></div></button>`).join('')}</div>
+      <div class="act-bar"><button class="act-btn alt" data-finish>Terminar</button></div>`;
     let open = [], tries = 0, found = 0, busy = false;
+    // puntaje: parejas encontradas, descontando los intentos de más (perfecto = un intento por pareja)
+    const score = () => Math.round(found * found / Math.max(tries, 1));
+    const finishNow = () => done(score(), n, `${found} de ${n} parejas en ${tries} intentos`);
+    ctx.onTimeout = finishNow;
     root.addEventListener('click', e => {
+      if (e.target.closest('[data-finish]')) {
+        if (found < n && !confirm(`Faltan ${n - found} parejas. ¿Terminar igual? Se guarda lo hecho hasta ahora.`)) return;
+        return finishNow();
+      }
       const el = e.target.closest('.act-card'); if (!el || busy || el.classList.contains('open') || el.classList.contains('done')) return;
       el.classList.add('open'); open.push(el);
       if (open.length < 2) return;
@@ -205,7 +218,7 @@
       if (cx.i === cy.i) {
         x.classList.add('done'); y.classList.add('done'); open = []; found++;
         root.querySelector('[data-found]').textContent = found;
-        if (found === n) ctx.later(() => done(Math.round(n * n / tries), n, `${tries} intentos`), 700);
+        if (found === n) ctx.later(() => done(score(), n, `${tries} intentos`), 700);
       } else {
         busy = true;
         ctx.later(() => { x.classList.remove('open'); y.classList.remove('open'); open = []; busy = false; }, 900);
@@ -318,6 +331,7 @@
       if (e.target.closest('[data-check]')) check();
       if (e.target.closest('[data-finish]')) done(root.querySelectorAll('.clues li.ok').length, placed.length, '');
     });
+    ctx.onTimeout = () => { check(); done(root.querySelectorAll('.clues li.ok').length, placed.length, 'se terminó el tiempo'); };
   }
  
   /* ---------- 4. Sopa de letras ---------- */
@@ -347,9 +361,13 @@
       <ul>${placed.map((p, k) => `<li data-k="${k}">${esc(p.label)}</li>`).join('')}</ul></div>
       <div class="act-bar"><span class="act-info"><b data-f>0</b> de ${placed.length}</span><button class="act-btn alt" data-finish>Terminar</button></div>`;
     let start = null, found = 0;
+    ctx.onTimeout = () => done(found, placed.length, 'se terminó el tiempo');
     const btn = (r, c) => root.querySelector(`[data-rc="${r},${c}"]`);
     root.addEventListener('click', e => {
-      if (e.target.closest('[data-finish]')) return done(found, placed.length, '');
+      if (e.target.closest('[data-finish]')) {
+        if (found < placed.length && !confirm(`Faltan ${placed.length - found} palabras. ¿Terminar igual?`)) return;
+        return done(found, placed.length, '');
+      }
       const b = e.target.closest('[data-rc]'); if (!b) return;
       const [r, c] = b.dataset.rc.split(',').map(Number);
       if (!start) { start = [r, c]; b.classList.add('start'); return; }
@@ -398,6 +416,7 @@
       }
     }
     const disable = () => root.querySelectorAll('.act-keys button').forEach(b => b.disabled = true);
+    ctx.onTimeout = () => done(ok, list.length, 'se terminó el tiempo');
     root.addEventListener('click', e => {
       const b = e.target.closest('[data-k]'); if (!b || b.disabled) return;
       guessed.add(b.dataset.k); if (!list[idx].w.includes(b.dataset.k)) errors++;
@@ -415,6 +434,7 @@
     const rounds = shuffle(pairs.filter(p => p.a)), all = pairs.map(p => p.a);
     const COLORS = ['#ffd3e2', '#cfeaff', '#d6f0bf', '#ffdcb0', '#e3d8ff', '#fff1a8'];
     let idx = -1, ok = 0, misses = 0, roundTimer = null;
+    ctx.onTimeout = () => done(ok, rounds.length, 'se terminó el tiempo');
     root.innerHTML = `<div class="act-prompt" data-prompt></div>
       <div class="act-field ${kind}"><div class="act-score">✔ <b data-ok>0</b> · ronda <b data-r>1</b>/${rounds.length}</div>
       ${kind === 'topo' ? Array.from({ length: 6 }, (_, i) => `<div class="act-hole" data-h="${i}"></div>`).join('') : ''}</div>`;
@@ -467,8 +487,9 @@
   }
  
   /* ---------- 8. Tarjetas ---------- */
-  function tarjetas(root, pairs, done) {
+  function tarjetas(root, pairs, done, ctx) {
     const list = shuffle(pairs); let idx = 0, known = 0;
+    ctx.onTimeout = () => done(known, list.length, 'se terminó el tiempo');
     function show() {
       if (idx >= list.length) return done(known, list.length, '');
       const p = list[idx];
@@ -580,12 +601,15 @@
     function start() {
       if (ctx) ctx.clear();
       ctx = makeCtx();
-      el.innerHTML = `<div class="act"><div class="act-head"><b>${t.icon} ${esc(t.name)}</b><span>${esc(t.help)}</span></div><div class="act-stage"></div></div>`;
+      const limit = t.scored ? Math.max(0, Number(opts.timeLimit) || 0) : 0;
+      el.innerHTML = `<div class="act"><div class="act-head"><b>${t.icon} ${esc(t.name)}</b><span>${esc(t.help)}${limit ? ` Tiempo: ${limit} min.` : ''}</span>${limit ? '<span class="act-timer" aria-live="off"></span>' : ''}</div><div class="act-stage"></div></div>`;
       const stage = el.querySelector('.act-stage');
       const minimo = key === 'memotest' || key === 'unir' ? 2 : 1;
       if (pairs.length < minimo) { stage.innerHTML = '<p class="act-info">Esta actividad todavía no tiene contenido.</p>'; return; }
       const t0 = Date.now();
+      let ended = false;
       const finish = (score, total, detail) => {
+        if (ended) return; ended = true;     // una sola vez (por si coinciden el final y el tiempo)
         const secs = Math.round((Date.now() - t0) / 1000);
         ctx.clear();
         const end = document.createElement('div'); end.className = 'act-end';
@@ -602,6 +626,16 @@
         }
       };
       IMPL[key](stage, key === 'ruleta' || key === 'caja' ? pairs : pairs.slice(0, 40), finish, ctx);
+      if (limit) {
+        const tm = el.querySelector('.act-timer'), end = t0 + limit * 60000;
+        const tick = () => {
+          const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+          tm.textContent = '⏱ ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+          tm.classList.toggle('low', left <= 30);
+          if (!left && !ended) { if (ctx.onTimeout) ctx.onTimeout(); else finish(0, pairs.length, 'se terminó el tiempo'); }
+        };
+        tick(); ctx.every(tick, 1000, 'timer');
+      }
     }
     start();
     return { restart: start, destroy() { if (ctx) ctx.clear(); el.innerHTML = ''; } };
@@ -609,4 +643,3 @@
  
   window.Actividades = { TEMPLATES, play, parse, format };
 })();
- 
