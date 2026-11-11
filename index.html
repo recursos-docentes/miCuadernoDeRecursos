@@ -1223,6 +1223,7 @@
       if (t.closest('#editPage2')) return openPageDialog(pga);
       if (t.closest('#resCsv')) return downloadResultsCsv(pga);
       if (t.closest('#resPorta')) return openPorta(pga);
+      if (t.closest('#resAnep')) return copiarAnep(pga);
       if (t.closest('#resRefresh')) { loadResults(pga.id); return; }
       const rr = t.closest('[data-resreset]');
       if (rr) {
@@ -1250,6 +1251,7 @@
       if (t.closest('#pzFeed')) return flip('feedback', 'Cada estudiante ve su nota y devolución', 'Devoluciones ocultas');
       if (t.closest('#pzCsv')) return downloadCsv(pgz);
       if (t.closest('#pzPorta')) return openPorta(pgz);
+      if (t.closest('#pzAnep')) return copiarAnep(pgz);
       if (t.closest('#pzRefresh')) { loadResponses(pgz.id); return; }
       if (t.closest('#copyLink2')) return copy(`${baseUrl()}?p=${encodeURIComponent(pgz.slug)}`);
       const dr = t.closest('[data-delresp]');
@@ -1307,7 +1309,7 @@
         <button class="pill" id="pzAnon" title="Cómo ven los compañeros las respuestas">${pg.anonymous ? '👤 Compañeros: sin nombre' : '👤 Compañeros: con nombre'}</button>
         <button class="pill ${pg.feedback ? 'on' : ''}" id="pzFeed" title="Cada estudiante ve su nota y devolución">${pg.feedback ? '📝 Devoluciones visibles' : '📝 Devoluciones ocultas'}</button>
         <button class="btn small" id="pzCsv">Descargar CSV</button>
-        <button class="btn small" id="pzPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button>
+        <button class="btn small" id="pzPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button><button class="btn small" id="pzAnep" title="Copia nombre y nota para pegarlos en el Portafolio Docente de ANEP con el marcador «Pegar notas» (ver anep.html)">📋 Copiar para ANEP</button>
         <button class="linkbtn" id="pzRefresh">actualizar</button>
       </div>
       <p class="pz-count"><b>${list.length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} respondieron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
@@ -1455,7 +1457,7 @@
           <td>${rs.length ? `<button class="linkbtn" data-resreset="${esc(n)}">reiniciar</button>` : ''}</td></tr>`; }).join('')}
       </tbody></table></div>
       ${list.some(r => !r.verificado) ? `<p class="hint">⚠ = puntaje calculado en el navegador del estudiante, que se puede falsificar${(window.Actividades && Actividades.VERIFICABLES.includes(pg.template)) ? ' (resultados guardados antes de la corrección en el servidor)' : '. Esta plantilla no se puede corregir en el servidor: usarla para practicar, no para notas'}.</p>` : ''}
-      <div class="act-switch"><button class="btn small" id="resCsv">Descargar CSV</button><button class="btn small" id="resPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button><button class="linkbtn" id="resRefresh">actualizar</button></div></div>`;
+      <div class="act-switch"><button class="btn small" id="resCsv">Descargar CSV</button><button class="btn small" id="resPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button><button class="btn small" id="resAnep" title="Copia nombre y nota para pegarlos en el Portafolio Docente de ANEP con el marcador «Pegar notas» (ver anep.html)">📋 Copiar para ANEP</button><button class="linkbtn" id="resRefresh">actualizar</button></div></div>`;
   }
   function downloadResultsCsv(pg) {
     const T = window.Actividades ? Actividades.TEMPLATES : {};
@@ -1951,6 +1953,24 @@
     let e = est.find(x => normName(x.nombre) === n);
     if (!e) { const tk = n.split(' '); const c = est.filter(x => { const m = normName(x.nombre).split(' '); return tk.every(t => m.includes(t)) || m.every(t => tk.includes(t)); }); if (c.length === 1) e = c[0]; }
     return e ? e.id : '';
+  }
+  /* Copiar para el Portafolio Docente de ANEP: «nombre <TAB> nota <TAB> comentario», para pegar con el marcador (anep.html) */
+  async function copiarAnep(pg) {
+    const T = window.Actividades ? Actividades.TEMPLATES : {};
+    const filas = portaSource(pg).filter(x => x.nota !== '' && x.nota != null && x.nota !== 'undefined');
+    if (!filas.length) return toast('Todavía no hay notas para copiar.');
+    if (pg.type !== 'pizarron' && filas.some(x => /no verificado/.test(x.resultado)) &&
+        !confirm('Hay puntajes ⚠ no verificados (calculados en el navegador del estudiante). ¿Copiarlos igual?')) return;
+    const com = x => pg.type === 'pizarron'
+      ? ((pzList.find(r => r.estudiante === x.nombre) || {}).comentario || '')
+      : `${(T[pg.template] || {}).name || 'Actividad'}: ${x.resultado.replace(/ ⚠.*$/, '')}`;
+    const txt = filas.map(x => [x.nombre, x.nota, com(x)].map(v => String(v ?? '').replace(/[\t\r\n]+/g, ' ').trim()).join('\t')).join('\n');
+    let ok = false;
+    try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) {
+      const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove();
+    }
+    toast(ok ? `Copiadas ${filas.length} notas. En el Portafolio de ANEP: abrir la evaluación y tocar el marcador «Pegar notas».` : 'No se pudo copiar.');
   }
   async function openPorta(pg) {
     porta.page = pg; porta.cfg = portaCfg();
