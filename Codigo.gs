@@ -21,7 +21,7 @@ const COLS_M = ['id', 'url', 'nombre', 'icono', 'categoria', 'descripcion', 'not
                 'etiquetas', 'color', 'favorita', 'paginas', 'agregado', 'incrustar'];
 const COLS_P = ['id', 'titulo', 'slug', 'visibilidad', 'descripcion', 'color', 'orden',
                 'tipo', 'consigna', 'lista', 'abierto', 'revelado', 'anonimo', 'devolucion',
-                'bloqueado', 'codigo', 'plantilla', 'contenido', 'modoActividad', 'intentoUnico', 'seccion'];
+                'bloqueado', 'codigo', 'plantilla', 'contenido', 'modoActividad', 'intentoUnico', 'seccion', 'portafolio'];
 const COLS_R = ['id', 'pagina', 'estudiante', 'texto', 'creado', 'editado', 'nota', 'comentario', 'token'];
 const COLS_I = ['id', 'pagina', 'estudiante', 'tipo', 'detalle', 'fecha'];
 const COLS_S = ['id', 'nombre', 'color', 'lista'];
@@ -148,7 +148,7 @@ function aPagina(f) {
     locked: bool(f.bloqueado), code: String(f.codigo || ''),
     template: String(f.plantilla || 'unir'), pairs: jsonLista(f.contenido),
     actMode: String(f.modoActividad) === 'registro' ? 'registro' : 'practica', single: bool(f.intentoUnico),
-    section: String(f.seccion || '')
+    section: String(f.seccion || ''), porta: jsonLista(f.portafolio)
   };
 }
 function jsonLista(v) { try { const a = JSON.parse(String(v || '[]')); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
@@ -439,7 +439,8 @@ function guardar(d) {
       p.open !== false, !!p.revealed, !!p.anonymous, !!p.feedback,
       !!p.locked, /^\d+$/.test(String(p.code || '')) ? "'" + p.code : seguro(p.code), // texto, para no perder ceros
       seguro(p.template || ''), JSON.stringify(Array.isArray(p.pairs) ? p.pairs.map(x => ({ a: String(x.a || ''), b: String(x.b || '') })) : []),
-      p.actMode === 'registro' ? 'registro' : 'practica', !!p.single, seguro(p.section || '')
+      p.actMode === 'registro' ? 'registro' : 'practica', !!p.single, seguro(p.section || ''),
+      JSON.stringify(Array.isArray(p.porta) ? p.porta.slice(0, 10) : [])
     ]));
     // grupos del índice, con su lista de estudiantes
     if (Array.isArray(d.secciones)) {
