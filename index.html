@@ -308,6 +308,18 @@
   #dlgPorta select { font-family: var(--ui); font-size: .95rem; padding: 7px 9px; border: 1.5px solid #c9c3b0; border-radius: 4px; background: #fff; width: 100%; }
   #dlgPorta .scroll { max-height: 42vh; overflow: auto; margin-top: 8px; border: 1px solid var(--line); border-radius: 4px; }
   .warn { color: var(--err); font-family: var(--hand); font-size: 1.02rem; margin: 6px 0 0; }
+  .locked-now { margin: 10px 0; background: #fdecec; border: 1.5px solid #e9a9ae; border-radius: 6px; padding: 8px 12px; font-family: var(--hand); font-size: 1.1rem; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+  .locked-now b { color: var(--err); }
+  /* editor del diagrama */
+  .dg-labs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .dg-labs button { font-family: var(--hand); font-size: 1.02rem; border: 2px solid #c9d1de; background: #fff; border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+  .dg-labs button.sel { border-color: var(--ink-blue); background: #e8f0ff; }
+  .dg-labs button.done::after { content: " ✓"; color: var(--ok); }
+  .dg-labs button .x { color: var(--err); margin-left: 6px; }
+  .dg-edit { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #fff; cursor: crosshair; min-height: 60px; }
+  .dg-edit img { display: block; width: 100%; height: auto; user-select: none; }
+  .dg-edit .pin { position: absolute; transform: translate(-50%, -50%); background: #fff7d6; border: 2px solid #c9a227; border-radius: 999px; padding: 1px 8px; font-family: var(--hand); font-size: .95rem; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+  .dg-edit .pin.sel { border-color: var(--ink-blue); background: #e8f0ff; }
   [hidden] { display: none !important; }
 
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink-blue); color: #fff; font-family: var(--hand); font-size: 1.15rem; padding: 8px 18px; box-shadow: 3px 5px 12px rgba(0,0,0,.3); border-radius: 4px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
@@ -417,6 +429,7 @@
       <label for="pPairs">Contenido: un par por línea, separado por «|»</label>
       <textarea id="pPairs" style="min-height:170px" placeholder="clase | Molde para crear objetos&#10;objeto | Instancia de una clase&#10;herencia | Mecanismo para reutilizar una clase"></textarea>
       <p class="hint" id="pPairsHint"></p>
+      <button type="button" class="btn small" id="dgOpen" hidden>📍 Ubicar etiquetas sobre la imagen</button>
       <label>Resultados</label>
       <label class="check"><input type="radio" name="pActMode" value="practica" checked> Práctica libre: sin nombres, se puede repetir</label>
       <label class="check"><input type="radio" name="pActMode" value="registro"> Con registro: eligen su nombre y se guarda el puntaje</label>
@@ -460,6 +473,27 @@
       </div>
     </div>
   </form>
+</dialog>
+
+<!-- Editor del diagrama etiquetado -->
+<dialog id="dlgDg" class="wide">
+  <div class="sheet">
+    <h2>📍 Ubicar etiquetas</h2>
+    <label for="dgImg">Link de la imagen</label>
+    <input type="url" id="dgImg" placeholder="https://…">
+    <p class="hint">Sirve un link de Google Drive (compartido como «Cualquier persona con el enlace»), una imagen de un repo de GitHub Pages o cualquier link directo a una imagen.</p>
+    <div class="row" style="grid-template-columns:1fr auto;align-items:end">
+      <div><label for="dgNew">Etiquetas</label><input type="text" id="dgNew" placeholder="Escribir una etiqueta y tocar «Agregar»"></div>
+      <button type="button" class="btn small" id="dgAdd">Agregar</button>
+    </div>
+    <div class="dg-labs" id="dgLabs"></div>
+    <p class="hint" id="dgMsg"></p>
+    <div class="dg-edit" id="dgPic"></div>
+    <div class="dlg-actions"><div class="right">
+      <button type="button" class="btn plain" data-close>Cancelar</button>
+      <button type="button" class="btn" id="dgOk">Listo</button>
+    </div></div>
+  </div>
 </dialog>
 
 <!-- Pasar notas al Portafolio -->
@@ -552,6 +586,7 @@
     <label for="lClave">Clave</label>
     <input type="password" id="lClave" autocomplete="current-password" required>
     <label class="check"><input type="checkbox" id="lRemember" checked> Recordar en este dispositivo</label>
+    <p class="hint">No marcarlo en computadoras de estudiantes: la clave queda guardada en ese navegador.</p>
     <div class="err-msg" id="lErr"></div>
     <div class="dlg-actions"><div class="right">
       <button type="button" class="btn plain" data-close>Cancelar</button>
@@ -1008,7 +1043,7 @@
       const pub = pg.visibility === 'publica';
       head = `<div class="page-head">
         <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : pg.type === 'actividad' ? '🎮 ' : ''}${esc(pg.title)}</h2>
-        ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span>` : ''}
+        ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span><button class="linkbtn" id="newCode" title="Si el código se usó delante de los estudiantes, conviene cambiarlo">nuevo código</button>` : ''}
         ${pg.type !== 'recursos' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
         ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}&prueba=1" target="_blank" rel="noopener" title="Abre la página como la ve un estudiante, empezando de cero">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
@@ -1043,7 +1078,7 @@
     if (isPz || isLk || (isAct && pg.actMode === 'registro')) {
       const tick = quiet => { if (isPz) loadResponses(pg.id, quiet); if (isLk) loadIncidents(pg.id, quiet); if (isAct) loadResults(pg.id, quiet); };
       tick(false);
-      if (mode === 'owner') pzTimer = setInterval(() => tick(true), 15000);
+      if (mode === 'owner') pzTimer = setInterval(() => tick(true), isLk ? 8000 : 15000);
     }
   }
 
@@ -1158,6 +1193,21 @@
     if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}?p=${encodeURIComponent(pg.slug)}`); return; }
     if (t.closest('#loginBtn')) return openLogin();
     if (t.closest('#lkStart')) return lockStart();
+    const ul = t.closest('[data-unlock]');
+    if (ul) {
+      const pg = pages.find(p => p.id === view); if (!pg) return;
+      ul.disabled = true; ul.textContent = 'Desbloqueando…';
+      api({ accion: 'desbloquearDesde', clave, pagina: pg.id, estudiante: ul.dataset.unlock })
+        .then(r => { if (r.ok) { toast(`${ul.dataset.unlock}: desbloqueado. En su pantalla aparece «Seguir».`); loadIncidents(pg.id, true); } else toast(r.error || 'No se pudo desbloquear'); })
+        .catch(() => toast('Sin conexión'));
+      return;
+    }
+    if (t.closest('#incRefresh')) { const pg = pages.find(p => p.id === view); if (pg) loadIncidents(pg.id); return; }
+    if (t.closest('#newCode')) {
+      const pg = pages.find(p => p.id === view); if (!pg) return;
+      if (!confirm('¿Generar un código de desbloqueo nuevo? El anterior deja de servir.')) return;
+      pg.code = String(1000 + Math.floor(Math.random() * 9000)); persist(); render(); toast('Código nuevo: ' + pg.code); return;
+    }
     // actividades
     if (t.closest('#actGo')) {
       const n = $('#actName').value; if (!n) { $('#actMsg').textContent = 'Falta elegir tu nombre.'; return; }
@@ -1463,8 +1513,14 @@
     const c = incFor === pg.id ? salidasPor() : {};
     const resumen = Object.entries(c).sort((a, b) => b[1] - a[1]).map(([n, k]) => `${esc(n || 'sin nombre')} ${k}`).join(' · ');
     const total = list.filter(i => i.tipo === 'salida').length;
-    const label = { inicio: () => 'Entró', desbloqueo: () => 'Desbloqueado con código', salida: i => 'Salió' + (i.detalle ? ': ' + esc(i.detalle) : '') };
-    w.innerHTML = `<details class="inc"${wasOpen ? ' open' : ''}>
+    const label = { inicio: () => 'Entró', desbloqueo: i => 'Desbloqueado ' + (i.detalle ? esc(i.detalle) : 'con código'), salida: i => 'Salió' + (i.detalle ? ': ' + esc(i.detalle) : '') };
+    // quién está bloqueado ahora: su último evento (salida/desbloqueo) es una salida
+    const last = {};
+    list.forEach(i => { if (i.tipo === 'salida' || i.tipo === 'desbloqueo') last[i.estudiante] = i; });
+    const now = Object.values(last).filter(i => i.tipo === 'salida');
+    w.innerHTML = (now.length ? `<div class="locked-now"><b>🔒 Bloqueados ahora:</b>${now.map(i =>
+        `<span>${esc(i.estudiante || 'sin nombre')} <button class="btn small" data-unlock="${esc(i.estudiante)}">Desbloquear</button></span>`).join('')}
+        <button class="linkbtn" id="incRefresh">actualizar</button></div>` : '') + `<details class="inc"${wasOpen ? ' open' : ''}>
       <summary>🔒 Registro del modo bloqueado: <b>${total}</b> salida${total === 1 ? '' : 's'}${resumen ? ' · ' + resumen : ''}</summary>
       ${list.length ? `<div class="tablewrap"><table><thead><tr><th>Hora</th><th>Estudiante</th><th>Qué pasó</th></tr></thead><tbody>
         ${list.slice().reverse().map(i => `<tr class="${esc(i.tipo)}"><td>${fmtDate(i.fecha)}</td><td>${esc(i.estudiante || '—')}</td><td>${(label[i.tipo] || (() => esc(i.tipo)))(i)}</td></tr>`).join('')}
@@ -1484,9 +1540,9 @@
   function report(tipo, detalle) {
     const body = { accion: 'incidente', p: pubPage.slug, estudiante: lockName, tipo, detalle: detalle || '' };
     if (document.visibilityState === 'hidden' && navigator.sendBeacon) {
-      try { navigator.sendBeacon(API_URL, new Blob([JSON.stringify(body)], { type: 'text/plain' })); return; } catch (e) {}
+      try { navigator.sendBeacon(API_URL, new Blob([JSON.stringify(body)], { type: 'text/plain' })); return Promise.resolve(); } catch (e) {}
     }
-    api(body).catch(() => {});
+    return api(body).catch(() => {});
   }
   function renderGate() {
     const st = ls.json(lkKey(), {}), roster = pubPage.roster || [];
@@ -1541,19 +1597,30 @@
       openEmbed(it ? { name: it.name, embed: embedOf(it) || it.url, url: it.url } : { name: a.textContent.trim() || 'Recurso', embed: a.href, url: a.href });
     }, true);
     document.addEventListener('contextmenu', e => { if (guardsOn) e.preventDefault(); });
+    // F12, Ctrl+Shift+I/J/C y Ctrl+U abren las herramientas del navegador o el código: se bloquea y queda registrado
+    document.addEventListener('keydown', e => {
+      if (!guardsOn || lockedNow) return;
+      const k = (e.key || '').toLowerCase();
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(k)) || (e.ctrlKey && k === 'u') || (e.metaKey && e.altKey && ['i', 'j', 'c', 'u'].includes(k))) {
+        e.preventDefault(); e.stopPropagation();
+        showLock('intentó abrir las herramientas del navegador');
+      }
+    }, true);
   }
   function showLock(detalle, doReport = true) {
     if (lockedNow) return;
     lockedNow = true;
     const st = ls.json(lkKey(), {}); st.locked = true; ls.set(lkKey(), JSON.stringify(st));
-    if (doReport) report('salida', detalle);
+    // mientras está bloqueada, pregunta cada pocos segundos si la docente la desbloqueó desde su cuaderno
+    const startPoll = () => { clearInterval(lockPoll); lockPoll = setInterval(pollUnlock, 4000); };
+    if (doReport) Promise.resolve(report('salida', detalle)).then(startPoll); else setTimeout(startPoll, 3000);
     try { if ($('#dlgEmbed').open) $('#dlgEmbed').close(); } catch (e) {}
     const o = document.createElement('div');
     o.className = 'lock-overlay'; o.id = 'lockOverlay';
     o.innerHTML = `<div class="lock-box" role="alertdialog" aria-labelledby="lkTitle">
       <h2 id="lkTitle">Página bloqueada</h2>
       <p>${detalle ? 'Motivo: ' + esc(detalle) + '. ' : ''}Quedó registrado (${new Date().toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}).</p>
-      <p>Para seguir, la docente tiene que escribir el código.</p>
+      <p>Para seguir, la docente la desbloquea desde su cuaderno, o escribe el código acá.</p>
       <input type="password" id="lkCode" inputmode="numeric" autocomplete="off" aria-label="Código de desbloqueo">
       <div><button class="btn" id="lkUnlock">Desbloquear</button></div>
       <div class="pz-msg err" id="lkErr"></div>
@@ -1561,25 +1628,42 @@
     document.body.appendChild(o);
     setTimeout(() => { const c = $('#lkCode'); if (c) c.focus(); }, 50);
   }
+  let lockPoll = null;
+  async function pollUnlock() {
+    if (!lockedNow) { clearInterval(lockPoll); return; }
+    try {
+      const r = await api({ accion: 'estadoBloqueo', p: pubPage.slug, estudiante: lockName });
+      if (r.ok && r.desbloqueado && lockedNow) {
+        clearInterval(lockPoll);
+        // volver a pantalla completa necesita un toque del estudiante
+        $('#lockOverlay .lock-box').innerHTML = `<h2 style="color:var(--ok)">Desbloqueada</h2><p>La docente desbloqueó la página.</p>
+          <div><button class="btn" id="lkResume">Seguir</button></div>`;
+      }
+    } catch (e) {}
+  }
+  function unlockDone() {
+    clearInterval(lockPoll);
+    goFs();
+    lockedNow = false;
+    const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
+    const o = $('#lockOverlay'); if (o) o.remove();
+  }
   async function tryUnlock() {
     const code = $('#lkCode').value.trim(); if (!code) return;
     $('#lkErr').textContent = 'Verificando…';
     try {
       const r = await api({ accion: 'desbloquear', p: pubPage.slug, estudiante: lockName, codigo: code });
-      if (r.ok) {
-        goFs();
-        lockedNow = false;
-        const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
-        $('#lockOverlay').remove();
-      } else { $('#lkErr').textContent = r.error || 'Código incorrecto'; $('#lkCode').select(); }
+      if (r.ok) unlockDone();
+      else { $('#lkErr').textContent = r.error || 'Código incorrecto'; $('#lkCode').select(); }
     } catch (e) { $('#lkErr').textContent = 'Sin conexión. Probar de nuevo.'; }
   }
   function releaseLock() {
+    clearInterval(lockPoll);
     guardsOn = false; lockedNow = false;
     const o = $('#lockOverlay'); if (o) o.remove();
     const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
   }
-  document.addEventListener('click', e => { if (e.target.closest('#lkUnlock')) tryUnlock(); });
+  document.addEventListener('click', e => { if (e.target.closest('#lkUnlock')) tryUnlock(); if (e.target.closest('#lkResume')) unlockDone(); });
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'lkCode') tryUnlock(); });
 
   /* ---------------- diálogo de nota ---------------- */
@@ -1761,6 +1845,7 @@
     const lk = $('#pLocked').checked, act = document.querySelector('input[name=pType]:checked').value === 'actividad';
     const reg = act && document.querySelector('input[name=pActMode]:checked').value === 'registro';
     $('#pzFields').hidden = !pz; $('#visWrap').hidden = pz || lk || act;
+    $('#dgOpen').hidden = !(act && $('#pTpl').value === 'diagrama');
     $('#promptWrap').hidden = !(pz || act); $('#actFields').hidden = !act; $('#pSingleWrap').hidden = !reg;
     $('#lockFields').hidden = !lk; $('#rosterWrap').hidden = !(pz || lk || reg);
     const t = window.Actividades && Actividades.TEMPLATES[$('#pTpl').value];
@@ -1975,6 +2060,58 @@
       persist();
       if (porta.page.type === 'pizarron') renderPzOwner(porta.page); else renderResults(porta.page);
     } catch (err) { $('#poErr').textContent = 'No se pudo guardar: ' + err.message; $('#poSend').disabled = false; }
+  });
+
+  /* ---------------- editor del diagrama etiquetado ----------------
+     Escribe en «Contenido»:  #imagen | link   y una línea  etiqueta | x, y  (porcentajes) por etiqueta */
+  let dg = { img: '', labels: [], sel: 0 };
+  function dgOpen() {
+    const pairs = Actividades.parse($('#pPairs').value, 'diagrama');
+    dg.img = ((pairs.find(p => p.a.trim().toLowerCase() === '#imagen') || {}).b || '').trim();
+    dg.labels = Actividades.diagramOf(pairs).labels.map(l => ({ ...l }));
+    dg.sel = Math.max(0, dg.labels.findIndex(l => l.x == null));
+    $('#dgImg').value = dg.img;
+    dgPaint(); $('#dlgDg').showModal();
+  }
+  function dgPaint() {
+    $('#dgLabs').innerHTML = dg.labels.map((l, i) => `<button type="button" data-dgl="${i}" class="${i === dg.sel ? 'sel' : ''}${l.x != null ? ' done' : ''}">${esc(l.t)}<span class="x" data-dgx="${i}" title="Quitar" aria-label="Quitar ${esc(l.t)}">×</span></button>`).join('');
+    const src = Actividades.imgUrl(dg.img);
+    $('#dgMsg').textContent = !src ? 'Pegar arriba el link de la imagen.' : !dg.labels.length ? 'Agregar las etiquetas.'
+      : dg.labels[dg.sel] ? `Tocar en la imagen dónde va «${dg.labels[dg.sel].t}».` : '';
+    const pic = $('#dgPic');
+    pic.innerHTML = src ? `<img src="${esc(src)}" alt="" draggable="false">` + dg.labels.map((l, i) => l.x == null ? '' :
+      `<span class="pin${i === dg.sel ? ' sel' : ''}" style="left:${l.x}%;top:${l.y}%">${esc(l.t)}</span>`).join('') : '';
+    const im = pic.querySelector('img');
+    if (im) im.onerror = () => { $('#dgMsg').textContent = 'No se pudo cargar la imagen: revisar que el link sea público y que sea una imagen.'; };
+  }
+  $('#dgOpen').addEventListener('click', dgOpen);
+  $('#dgImg').addEventListener('change', () => { dg.img = $('#dgImg').value.trim(); dgPaint(); });
+  $('#dgAdd').addEventListener('click', () => {
+    const t = $('#dgNew').value.trim(); if (!t) return;
+    dg.labels.push({ t, x: null, y: null }); dg.sel = dg.labels.length - 1; $('#dgNew').value = ''; dgPaint(); $('#dgNew').focus();
+  });
+  $('#dgNew').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#dgAdd').click(); } });
+  $('#dgLabs').addEventListener('click', e => {
+    const x = e.target.closest('[data-dgx]');
+    if (x) { dg.labels.splice(+x.dataset.dgx, 1); dg.sel = Math.min(dg.sel, dg.labels.length - 1); dgPaint(); return; }
+    const b = e.target.closest('[data-dgl]'); if (b) { dg.sel = +b.dataset.dgl; dgPaint(); }
+  });
+  $('#dgPic').addEventListener('click', e => {
+    const im = $('#dgPic img'); if (!im || !dg.labels[dg.sel]) return;
+    const r = im.getBoundingClientRect();
+    const x = Math.round(((e.clientX - r.left) / r.width) * 1000) / 10, y = Math.round(((e.clientY - r.top) / r.height) * 1000) / 10;
+    if (x < 0 || x > 100 || y < 0 || y > 100) return;
+    Object.assign(dg.labels[dg.sel], { x, y });
+    const next = dg.labels.findIndex(l => l.x == null);   // pasa sola a la siguiente sin ubicar
+    if (next >= 0) dg.sel = next;
+    dgPaint();
+  });
+  $('#dgOk').addEventListener('click', () => {
+    dg.img = $('#dgImg').value.trim();
+    $('#pPairs').value = (dg.img ? `#imagen | ${dg.img}\n` : '') + dg.labels.map(l => l.x == null ? l.t : `${l.t} | ${l.x}, ${l.y}`).join('\n');
+    $('#dlgDg').close();
+    const sin = dg.labels.filter(l => l.x == null).length;
+    toast(sin ? `Falta ubicar ${sin} etiqueta${sin > 1 ? 's' : ''}` : 'Etiquetas ubicadas');
   });
 
   /* ---------------- diálogo de grupo ---------------- */

@@ -110,6 +110,17 @@ La misma lista sirve para todas las plantillas; se cambia de plantilla con un cl
 | 📦 Clasificar en grupos | elemento · grupo (ej. `int \| Primitivo`, `CREATE TABLE \| DDL`) |
 | ✔️ Verdadero o falso | afirmación · V o F (10 segundos por afirmación; también con las teclas V y F) |
 
+**🏷️ Diagrama etiquetado**: una imagen (un MER, un circuito, un robot…) con puntos donde hay que poner cada etiqueta. En «editar contenido», con la plantilla elegida, aparece **📍 Ubicar etiquetas sobre la imagen**: se pega el link de la imagen, se agregan las etiquetas y se toca en la imagen dónde va cada una. El contenido queda así (se puede editar a mano):
+
+```
+#imagen | https://drive.google.com/file/d/…/view
+Entidad | 18.7, 48.8
+Relación | 50, 48.7
+Atributo | 18.7, 15.4
+```
+
+Las posiciones son porcentajes del ancho y del alto de la imagen. La imagen tiene que tener un link público: en Google Drive, compartirla como «Cualquier persona con el enlace» (el cuaderno convierte el link para poder mostrarla); también sirve una imagen subida a un repo de GitHub Pages. Si hay dos etiquetas iguales (dos «Entidad»), cualquiera de las dos vale en cualquiera de sus puntos.
+
 **🧩 Ordenar líneas** usa otro formato: las líneas en el **orden correcto**, una por renglón, sin «|» (se respetan las sangrías y el «|» del código, como `||`, no corta). El juego las mezcla. Para varios ejercicios en la misma actividad, separarlos con una línea que diga `---`. El puntaje es la cantidad de líneas que quedan en su lugar.
 
 ```
@@ -132,7 +143,10 @@ Una **ruleta sin contenido** gira con los nombres de la lista del grupo.
 En «editar página», **🔒 Modo bloqueado** (para cualquier tipo de página), con un código de desbloqueo.
 
 - El estudiante elige su nombre y toca **Comenzar**: pantalla completa, y todos los recursos se abren dentro de la página.
-- Si sale de la pantalla completa, cambia de pestaña o de ventana, minimiza o recarga, la pantalla se tapa y queda registrado con nombre y hora. Para seguir, la docente escribe el código en esa computadora.
+- Si sale de la pantalla completa, cambia de pestaña o de ventana, minimiza, recarga o intenta abrir las herramientas del navegador (F12, Ctrl+Shift+I, Ctrl+U), la pantalla se tapa y queda registrado con nombre y hora.
+- **Para desbloquear, mejor desde la vista docente**: arriba del registro aparece «🔒 Bloqueados ahora» con un botón **Desbloquear** por estudiante; en su pantalla aparece «Seguir» a los pocos segundos. Así el código nunca se escribe en la computadora del estudiante (con F12 abierto, lo que se escribe ahí se puede ver).
+- También se puede escribir el código en esa computadora. Si se usó delante de los estudiantes, «nuevo código» (al lado del código) genera otro.
+- No marcar «Recordar en este dispositivo» al entrar desde una computadora de estudiantes: la clave quedaría guardada en ese navegador.
 - Vista docente: **Registro del modo bloqueado** (quién salió, cuándo, cuántas veces); en pizarrones, columna «Salidas» en el CSV.
 - Al desmarcar el modo bloqueado, se libera en todas las computadoras en menos de medio minuto.
 
@@ -167,5 +181,5 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 
 - Los estudiantes no tienen usuario y contraseña: alguien podría elegir el nombre de un compañero que todavía no respondió. Si pasa, se borra esa respuesta y se avisa al grupo. Una respuesta ya enviada no se puede cambiar desde otro dispositivo.
 - En los juegos, las respuestas están dentro de la página (como en Wordwall): con F12 se podrían ver. Para evaluar en serio, mejor un pizarrón o el escrito digital.
-- El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla. En iPhone/iPad no hay pantalla completa para páginas web.
+- El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
