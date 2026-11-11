@@ -1,3 +1,4 @@
+
 /* Actividades interactivas del Cuaderno de recursos (estilo Wordwall).
    Todas las plantillas usan el mismo contenido: una lista de pares { a, b }.
    Uso: Actividades.play(elemento, { template, pairs, onResult(puntaje, total, segundos, detalle), canReplay }) */
@@ -39,9 +40,6 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const rnd = n => Math.floor(Math.random() * n);
-  // Palabra para crucigrama/sopa/ahorcado: mayúsculas, sin tildes ni espacios (la Ñ se respeta)
-  const word = s => String(s || '').toUpperCase().replace(/Ñ/g, '\u0001').normalize('NFD')
-    .replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'Ñ').replace(/[^A-ZÑ0-9]/g, '');
   const LETTERS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
  
   function parse(text, template) {
@@ -54,21 +52,183 @@
       return i < 0 ? { a: l, b: '' } : { a: l.slice(0, i).trim(), b: l.slice(i + 1).trim() };
     }).filter(p => p.a);
   }
-  /* Link de imagen: los de Google Drive se convierten a un link que se puede mostrar */
-  function imgUrl(raw) {
+  /* ===== NÚCLEO DE CORRECCIÓN — idéntico en actividades.js y en Codigo.gs (no editar uno sin el otro) =====
+     nVista(plantilla, pares)  → lo que ve el estudiante (sin soluciones).
+     nCorregir(plantilla, pares, respuestas) → { puntaje, total, items, sol } o { error }.
+     En «Con registro» la vista y la corrección las hace el servidor; en «Práctica», el navegador. */
+  const VERIFICABLES = ['unir', 'clasificar', 'vf', 'ordenar', 'diagrama', 'crucigrama'];
+  function nMezclar(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  // Palabra para crucigrama: mayúsculas, sin tildes ni espacios (la Ñ se respeta)
+  function nPalabra(s) {
+    return String(s || '').toUpperCase().replace(/Ñ/g, '\u0001').normalize('NFD')
+      .replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'Ñ').replace(/[^A-ZÑ0-9]/g, '');
+  }
+  function nImgUrl(raw) {
     const u = String(raw || '').trim(); if (!u) return '';
     const id = (u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/) || [])[1];
     return id ? 'https://lh3.googleusercontent.com/d/' + id : u;
   }
-  /* Diagrama: { img, labels: [{ t, x, y }] } a partir de los pares */
-  function diagramOf(pairs) {
-    const img = imgUrl(((pairs || []).find(p => String(p.a).trim().toLowerCase() === '#imagen') || {}).b);
+  function nDiagrama(pairs) {
+    const img = nImgUrl(((pairs || []).find(p => String(p.a).trim().toLowerCase() === '#imagen') || {}).b);
     const labels = (pairs || []).filter(p => p.a && String(p.a).trim()[0] !== '#').map(p => {
       const m = String(p.b || '').match(/(-?\d+(?:[.,]\d+)?)\s*[;, ]\s*(-?\d+(?:[.,]\d+)?)/);
       return { t: String(p.a).trim(), x: m ? +m[1].replace(',', '.') : null, y: m ? +m[2].replace(',', '.') : null };
     });
-    return { img, labels };
+    return { img: img, labels: labels };
   }
+  function nValorVF(v) {
+    v = String(v || '').trim().toLowerCase();
+    return /^(v|verdadero|true|t|si|sí|1)$/.test(v) ? true : /^(f|falso|false|no|0)$/.test(v) ? false : null;
+  }
+  // Pares limpios, con el mismo recorte que usa el juego (40, salvo «ordenar»)
+  function nBase(t, pairs) {
+    const ps = (pairs || []).filter(p => p && p.a).map(p => ({ a: String(p.a), b: String(p.b == null ? '' : p.b) }));
+    return t === 'ordenar' ? ps : ps.slice(0, 40);
+  }
+  function nBloques(ps) {
+    const blocks = []; let cur = [];
+    ps.forEach(p => { if (p.a.trim() === '---') { if (cur.length) blocks.push(cur); cur = []; } else cur.push(p.a); });
+    if (cur.length) blocks.push(cur);
+    return blocks.filter(b => b.length > 1);
+  }
+  function nCrucigrama(list) {
+    const words = list.map((p, k) => ({ w: nPalabra(p.a), clue: p.b || p.a, k: k })).filter(x => x.w.length > 1)
+      .sort((a, b) => b.w.length - a.w.length || a.k - b.k);
+    const grid = {}, placed = [];
+    const key = (r, c) => r + ',' + c, get = (r, c) => grid[key(r, c)];
+    function fits(w, r, c, dir) {
+      const dr = dir === 'v' ? 1 : 0, dc = dir === 'h' ? 1 : 0;
+      if (get(r - dr, c - dc) || get(r + dr * w.length, c + dc * w.length)) return -1;
+      let inter = 0;
+      for (let i = 0; i < w.length; i++) {
+        const rr = r + dr * i, cc = c + dc * i, cur = get(rr, cc);
+        if (cur) { if (cur !== w[i]) return -1; inter++; }
+        else if (get(rr + dc, cc + dr) || get(rr - dc, cc - dr)) return -1; // vecinos paralelos
+      }
+      return inter;
+    }
+    function put(x, r, c, dir) {
+      for (let i = 0; i < x.w.length; i++) grid[key(r + (dir === 'v' ? i : 0), c + (dir === 'h' ? i : 0))] = x.w[i];
+      placed.push({ w: x.w, clue: x.clue, k: x.k, r: r, c: c, dir: dir });
+    }
+    words.forEach((x, idx) => {
+      if (!idx) return put(x, 0, 0, 'h');
+      let best = null;
+      placed.forEach(p => { for (let i = 0; i < p.w.length; i++) for (let j = 0; j < x.w.length; j++) {
+        if (p.w[i] !== x.w[j]) continue;
+        const dir = p.dir === 'h' ? 'v' : 'h';
+        const r = p.dir === 'h' ? p.r - j : p.r + i, c = p.dir === 'h' ? p.c + i : p.c - j;
+        const s = fits(x.w, r, c, dir);
+        if (s > 0 && (!best || s > best.s)) best = { r: r, c: c, dir: dir, s: s };
+      } });
+      if (best) put(x, best.r, best.c, best.dir);
+      else { // sin cruce posible: se ubica suelta debajo
+        const ks = Object.keys(grid).map(k => k.split(',').map(Number));
+        put(x, Math.max.apply(null, ks.map(k => k[0])) + 2, Math.min.apply(null, ks.map(k => k[1])), 'h');
+      }
+    });
+    if (!placed.length) return { placed: placed, rows: 0, cols: 0 };
+    const ks = Object.keys(grid).map(k => k.split(',').map(Number));
+    const rs = ks.map(k => k[0]), cs = ks.map(k => k[1]);
+    const r0 = Math.min.apply(null, rs), c0 = Math.min.apply(null, cs);
+    placed.forEach(p => { p.r -= r0; p.c -= c0; });
+    const starts = placed.map(p => p.r * 1000 + p.c).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
+    placed.forEach(p => { p.num = starts.indexOf(p.r * 1000 + p.c) + 1; });
+    return { placed: placed, rows: Math.max.apply(null, rs) - r0 + 1, cols: Math.max.apply(null, cs) - c0 + 1 };
+  }
+  const nCeldas = p => Array.from({ length: p.w.length }, (_, i) => (p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0)));
+ 
+  function nVista(t, pairs) {
+    const ps = nBase(t, pairs);
+    if (t === 'unir') return { izq: ps.map(p => p.a), der: nMezclar(ps.map(p => p.b)) };
+    if (t === 'clasificar') {
+      const it = ps.filter(p => p.b.trim());
+      return { items: nMezclar(it.map(p => p.a)), grupos: nMezclar(it.map(p => p.b.trim()).filter((g, i, a) => a.indexOf(g) === i)) };
+    }
+    if (t === 'vf') return { items: nMezclar(ps.filter(p => nValorVF(p.b) !== null).map(p => p.a)) };
+    if (t === 'ordenar') return { bloques: nBloques(ps).map(b => {
+      let o = b.slice();
+      for (let k = 0; k < 8 && o.every((x, i) => x === b[i]); k++) o = nMezclar(o);
+      return o;
+    }) };
+    if (t === 'diagrama') {
+      const d = nDiagrama(ps), pins = d.labels.filter(l => l.x != null && l.y != null);
+      return { img: d.img, pins: nMezclar(pins.map(p => ({ x: p.x, y: p.y }))), etiquetas: nMezclar(pins.map(p => p.t)) };
+    }
+    if (t === 'crucigrama') {
+      const L = nCrucigrama(ps), celdas = [];
+      L.placed.forEach(p => nCeldas(p).forEach(k => { if (celdas.indexOf(k) < 0) celdas.push(k); }));
+      return { filas: L.rows, cols: L.cols, celdas: celdas,
+               pistas: L.placed.map(p => ({ k: p.k, num: p.num, dir: p.dir, pista: p.clue, largo: p.w.length, r: p.r, c: p.c })) };
+    }
+    return null;
+  }
+ 
+  function nCorregir(t, pairs, ans) {
+    const ps = nBase(t, pairs), CAMBIO = { error: 'La actividad cambió o la respuesta no corresponde: recargar la página.' };
+    const fin = (items, sol) => {
+      const plano = [].concat.apply([], items.map(x => Array.isArray(x) ? x : [x]));
+      return { puntaje: plano.filter(Boolean).length, total: plano.length, items: items, sol: sol };
+    };
+    const cuenta = arr => { const c = {}; arr.forEach(x => { c[x] = (c[x] || 0) + 1; }); return c; };
+    if (t === 'crucigrama') {
+      if (!ans || typeof ans !== 'object' || Array.isArray(ans)) return CAMBIO;
+      const L = nCrucigrama(ps);
+      return fin(L.placed.map(p => nCeldas(p).every((k, i) => nPalabra(ans[k]).slice(-1) === p.w[i])), L.placed.map(p => p.w));
+    }
+    const A = Array.isArray(ans) ? ans : null;
+    if (!A) return CAMBIO;
+    if (t === 'unir') {
+      if (A.length !== ps.length) return CAMBIO;
+      const c = cuenta(ps.map(p => p.b));      // cada texto de la derecha se usa a lo sumo las veces que aparece
+      for (let i = 0; i < A.length; i++) if (A[i] != null) { const s = String(A[i]); if (!c[s]) return CAMBIO; c[s]--; }
+      return fin(ps.map((p, i) => A[i] != null && String(A[i]) === p.b), ps.map(p => p.b));
+    }
+    if (t === 'clasificar' || t === 'vf') {
+      const base = t === 'vf'
+        ? ps.map(p => ({ t: p.a, s: nValorVF(p.b) })).filter(x => x.s !== null)
+        : ps.filter(p => p.b.trim()).map(p => ({ t: p.a, s: p.b.trim() }));
+      if (A.length !== base.length) return CAMBIO;
+      const usado = base.map(() => false), asig = A.map(() => -1);
+      const rta = x => (x && x.r != null) ? (t === 'vf' ? x.r === true || x.r === 'true' : String(x.r)) : null;
+      // primero las coincidencias exactas (así los textos repetidos no se perjudican), después el resto
+      A.forEach((x, i) => { const j = base.findIndex((b, k) => !usado[k] && b.t === String(x && x.t) && b.s === rta(x)); if (j >= 0) { usado[j] = true; asig[i] = j; } });
+      for (let i = 0; i < A.length; i++) if (asig[i] < 0) {
+        const j = base.findIndex((b, k) => !usado[k] && b.t === String(A[i] && A[i].t));
+        if (j < 0) return CAMBIO;
+        usado[j] = true; asig[i] = j;
+      }
+      return fin(A.map((x, i) => rta(x) !== null && base[asig[i]].s === rta(x)), asig.map(j => base[j].s));
+    }
+    if (t === 'ordenar') {
+      const bl = nBloques(ps);
+      if (A.length !== bl.length) return CAMBIO;
+      const items = [];
+      for (let k = 0; k < bl.length; k++) {
+        const a = Array.isArray(A[k]) ? A[k].map(String) : null, b = bl[k];
+        if (!a || a.length !== b.length || a.slice().sort().join('\n') !== b.slice().sort().join('\n')) return CAMBIO;
+        items.push(a.map((x, i) => x === b[i]));
+      }
+      return fin(items, bl);
+    }
+    if (t === 'diagrama') {
+      const pins = nDiagrama(ps).labels.filter(l => l.x != null && l.y != null);
+      if (A.length !== pins.length) return CAMBIO;
+      const c = cuenta(pins.map(p => p.t)), usado = pins.map(() => false), items = [], sol = [];
+      for (let i = 0; i < A.length; i++) {
+        const x = A[i] || {};
+        if (x.t != null) { const s = String(x.t); if (!c[s]) return CAMBIO; c[s]--; }
+        const j = pins.findIndex((p, k) => !usado[k] && p.x === Number(x.x) && p.y === Number(x.y));
+        if (j < 0) return CAMBIO;
+        usado[j] = true; items.push(x.t != null && String(x.t) === pins[j].t); sol.push(pins[j].t);
+      }
+      return fin(items, sol);
+    }
+    return { error: 'Esta plantilla no se corrige en el servidor.' };
+  }
+  /* ===== FIN DEL NÚCLEO ===== */
+ 
+  const word = nPalabra, imgUrl = nImgUrl, diagramOf = nDiagrama;
   const format = pairs => (pairs || []).map(p => p.b ? `${p.a} | ${p.b}` : p.a).join('\n');
  
   /* ---------- estilos (una sola vez) ---------- */
@@ -217,22 +377,25 @@
     const st = document.createElement('style'); st.id = 'act-css'; st.textContent = CSS; document.head.appendChild(st);
   }
  
+  /* Las plantillas verificables reciben V = nVista(...) (sin soluciones) y corrigen con ctx.corregir(respuestas),
+     que en práctica corrige acá y en «Con registro» lo hace el servidor. ctx.practica = true solo en práctica. */
+ 
   /* ---------- 1. Unir con flechas ---------- */
-  function unir(root, pairs, done, ctx) {
-    const n = pairs.length, rightOrder = shuffle(pairs.map((_, i) => i));
+  function unir(root, V, done, ctx) {
+    const n = V.izq.length;
     const COLORS = ['#1d4ea0', '#c2185b', '#2f6f4f', '#e67e22', '#6a1b9a', '#00838f', '#795548', '#5d6d7e'];
     root.innerHTML = `<div class="act-unir"><svg class="act-lines"></svg>
-      <div class="col">${pairs.map((p, i) => `<button class="act-chip" data-l="${i}">${esc(p.a)}</button>`).join('')}</div>
-      <div class="col">${rightOrder.map(i => `<button class="act-chip" data-r="${i}">${esc(pairs[i].b)}</button>`).join('')}</div></div>
+      <div class="col">${V.izq.map((t, i) => `<button class="act-chip" data-l="${i}">${esc(t)}</button>`).join('')}</div>
+      <div class="col">${V.der.map((t, j) => `<button class="act-chip" data-r="${j}">${esc(t)}</button>`).join('')}</div></div>
       <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
     const box = root.querySelector('.act-unir'), svg = root.querySelector('svg');
-    const links = {}; let selL = null, selR = null, checked = false;
+    const links = {}; let selL = null, selR = null, checked = false, res = null;
     function draw() {
       const b = box.getBoundingClientRect();
-      svg.innerHTML = Object.entries(links).map(([l, r], k) => {
+      svg.innerHTML = Object.entries(links).map(([l, r]) => {
         const L = box.querySelector(`[data-l="${l}"]`).getBoundingClientRect(), R = box.querySelector(`[data-r="${r}"]`).getBoundingClientRect();
         const x1 = L.right - b.left, y1 = L.top + L.height / 2 - b.top, x2 = R.left - b.left, y2 = R.top + R.height / 2 - b.top;
-        const col = checked ? (Number(l) === Number(r) ? '#2f6f4f' : '#a3222c') : COLORS[l % COLORS.length];
+        const col = res ? (res.items[l] ? '#2f6f4f' : '#a3222c') : COLORS[l % COLORS.length];
         return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="3" stroke-linecap="round"/>
           <circle cx="${x1}" cy="${y1}" r="5" fill="${col}"/><circle cx="${x2}" cy="${y2}" r="5" fill="${col}"/>`;
       }).join('');
@@ -251,17 +414,18 @@
       if (e.target.closest('[data-check]')) check(1400);
     });
     function check(wait) {
-      if (checked) return; checked = true; let ok = 0;
-      pairs.forEach((_, i) => {
-        const good = links[i] === i; if (good) ok++;
-        box.querySelector(`[data-l="${i}"]`).classList.add(good ? 'ok' : 'bad');
+      if (checked) return; checked = true;
+      ctx.corregir(V.izq.map((_, i) => links[i] != null ? V.der[links[i]] : null)).then(R => {
+        res = R;
+        V.izq.forEach((_, i) => box.querySelector(`[data-l="${i}"]`).classList.add(R.items[i] ? 'ok' : 'bad'));
+        draw();
+        ctx.later(() => done(R.puntaje, R.total, ''), wait);
       });
-      draw();
-      ctx.later(() => done(ok, n, ''), wait);
     }
     ctx.onTimeout = () => check(0);
     ctx.on(window, 'resize', draw);
   }
+ 
  
   /* ---------- 2. Memotest ---------- */
   function memotest(root, pairs, done, ctx) {
@@ -297,75 +461,28 @@
   }
  
   /* ---------- 3. Crucigrama ---------- */
-  function layoutCrossword(list) {
-    const words = list.map((p, k) => ({ w: word(p.a), clue: p.b || p.a, k })).filter(x => x.w.length > 1)
-      .sort((a, b) => b.w.length - a.w.length);
-    const grid = new Map(), placed = [];
-    const key = (r, c) => r + ',' + c, get = (r, c) => grid.get(key(r, c));
-    function fits(w, r, c, dir) {
-      const dr = dir === 'v' ? 1 : 0, dc = dir === 'h' ? 1 : 0;
-      if (get(r - dr, c - dc) || get(r + dr * w.length, c + dc * w.length)) return -1;
-      let inter = 0;
-      for (let i = 0; i < w.length; i++) {
-        const rr = r + dr * i, cc = c + dc * i, cur = get(rr, cc);
-        if (cur) { if (cur !== w[i]) return -1; inter++; }
-        else if (get(rr + dc, cc + dr) || get(rr - dc, cc - dr)) return -1; // vecinos paralelos
-      }
-      return inter;
-    }
-    function put(x, r, c, dir) {
-      for (let i = 0; i < x.w.length; i++) grid.set(key(r + (dir === 'v' ? i : 0), c + (dir === 'h' ? i : 0)), x.w[i]);
-      placed.push({ ...x, r, c, dir });
-    }
-    words.forEach((x, idx) => {
-      if (!idx) return put(x, 0, 0, 'h');
-      let best = null;
-      for (const p of placed) for (let i = 0; i < p.w.length; i++) for (let j = 0; j < x.w.length; j++) {
-        if (p.w[i] !== x.w[j]) continue;
-        const dir = p.dir === 'h' ? 'v' : 'h';
-        const r = p.dir === 'h' ? p.r - j : p.r + i, c = p.dir === 'h' ? p.c + i : p.c - j;
-        const s = fits(x.w, r, c, dir);
-        if (s > 0 && (!best || s > best.s)) best = { r, c, dir, s };
-      }
-      if (best) put(x, best.r, best.c, best.dir);
-      else { // sin cruce posible: se ubica suelta debajo
-        const maxR = Math.max(...[...grid.keys()].map(k => Number(k.split(',')[0])));
-        const minC = Math.min(...[...grid.keys()].map(k => Number(k.split(',')[1])));
-        put(x, maxR + 2, minC, 'h');
-      }
-    });
-    const rs = [...grid.keys()].map(k => Number(k.split(',')[0])), cs = [...grid.keys()].map(k => Number(k.split(',')[1]));
-    const r0 = Math.min(...rs), c0 = Math.min(...cs);
-    placed.forEach(p => { p.r -= r0; p.c -= c0; });
-    const rows = Math.max(...rs) - r0 + 1, cols = Math.max(...cs) - c0 + 1;
-    const starts = [...new Set(placed.map(p => p.r * 1000 + p.c))].sort((a, b) => a - b);
-    placed.forEach(p => { p.num = starts.indexOf(p.r * 1000 + p.c) + 1; });
-    return { placed, rows, cols };
-  }
-  function crucigrama(root, pairs, done, ctx) {
-    const { placed, rows, cols } = layoutCrossword(pairs);
-    if (!placed.length) { root.innerHTML = '<p class="act-info">Hacen falta palabras de 2 letras o más.</p>'; return; }
-    const cell = {}, nums = {};
-    placed.forEach(p => {
-      nums[p.r + ',' + p.c] = p.num;
-      for (let i = 0; i < p.w.length; i++) cell[(p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0))] = p.w[i];
-    });
+  function crucigrama(root, V, done, ctx) {
+    if (!V.pistas.length) { root.innerHTML = '<p class="act-info">Hacen falta palabras de 2 letras o más.</p>'; return; }
+    const isCell = {}, nums = {};
+    V.celdas.forEach(k => { isCell[k] = true; });
+    V.pistas.forEach(p => { nums[p.r + ',' + p.c] = p.num; });
+    const cellsOf = p => Array.from({ length: p.largo }, (_, i) => (p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0)));
     let html = '<table aria-label="Crucigrama">';
-    for (let r = 0; r < rows; r++) {
+    for (let r = 0; r < V.filas; r++) {
       html += '<tr>';
-      for (let c = 0; c < cols; c++) {
+      for (let c = 0; c < V.cols; c++) {
         const k = r + ',' + c;
-        html += cell[k] ? `<td class="l" data-c="${k}">${nums[k] ? `<span class="n">${nums[k]}</span>` : ''}<input maxlength="1" data-c="${k}" aria-label="Casilla"></td>` : '<td></td>';
+        html += isCell[k] ? `<td class="l" data-c="${k}">${nums[k] ? `<span class="n">${nums[k]}</span>` : ''}<input maxlength="1" data-c="${k}" aria-label="Casilla"></td>` : '<td></td>';
       }
       html += '</tr>';
     }
     html += '</table>';
-    const clue = d => placed.filter(p => p.dir === d).sort((a, b) => a.num - b.num)
-      .map(p => `<li data-w="${p.k}"><b>${p.num}.</b> ${esc(p.clue)} <small>(${p.w.length})</small></li>`).join('');
+    const clue = d => V.pistas.map((p, i) => ({ p, i })).filter(x => x.p.dir === d).sort((a, b) => a.p.num - b.p.num)
+      .map(({ p, i }) => `<li data-w="${i}"><b>${p.num}.</b> ${esc(p.pista)} <small>(${p.largo})</small></li>`).join('');
     root.innerHTML = `<div class="act-cw"><div style="overflow:auto;max-width:100%">${html}</div>
       <div class="clues"><h4>Horizontales</h4><ol>${clue('h')}</ol><h4>Verticales</h4><ol>${clue('v')}</ol></div></div>
-      <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
-    let dir = 'h';
+      <div class="act-bar"><button class="act-btn" data-check>${ctx.practica ? 'Comprobar' : 'Entregar'}</button></div>`;
+    let dir = 'h', busy = false, closed = false;
     root.addEventListener('focusin', e => { const inp = e.target.closest('input[data-c]'); if (inp) inp.select(); });
     root.addEventListener('input', e => {
       const inp = e.target.closest('input[data-c]'); if (!inp) return;
@@ -383,26 +500,35 @@
       if (mv) { const t = root.querySelector(`input[data-c="${r + mv[0]},${c + mv[1]}"]`); if (t) { dir = mv[2]; t.focus(); e.preventDefault(); } }
       if (e.key === 'Backspace' && !inp.value) { const t = root.querySelector(dir === 'h' ? `input[data-c="${r},${c - 1}"]` : `input[data-c="${r - 1},${c}"]`); if (t) { t.focus(); e.preventDefault(); } }
     });
-    function check() {
-      let ok = 0;
-      root.querySelectorAll('td.l').forEach(td => td.classList.remove('ok', 'bad'));
-      placed.forEach(p => {
-        const ks = Array.from(p.w, (_, i) => (p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0)));
-        const good = ks.every((k, i) => root.querySelector(`input[data-c="${k}"]`).value === p.w[i]);
-        if (good) ok++;
-        root.querySelector(`li[data-w="${p.k}"]`).classList.toggle('ok', good);
-        ks.forEach(k => { const td = root.querySelector(`td[data-c="${k}"]`); if (good) { td.classList.remove('bad'); td.classList.add('ok'); } else if (!td.classList.contains('ok')) td.classList.add('bad'); });
+    // final = true: es la entrega (siempre en «Con registro»; en práctica, al terminar o al acertar todo)
+    function check(final) {
+      if (busy || closed) return; busy = true;
+      const ans = {}; root.querySelectorAll('input[data-c]').forEach(i => { ans[i.dataset.c] = i.value; });
+      if (!ctx.practica) final = true;
+      if (final) { closed = true; root.querySelectorAll('input[data-c]').forEach(i => { i.readOnly = true; }); }
+      ctx.corregir(ans).then(R => {
+        busy = false;
+        root.querySelectorAll('td.l').forEach(td => td.classList.remove('ok', 'bad'));
+        V.pistas.forEach((p, i) => {
+          const good = !!R.items[i];
+          root.querySelector(`li[data-w="${i}"]`).classList.toggle('ok', good);
+          cellsOf(p).forEach(k => { const td = root.querySelector(`td[data-c="${k}"]`); if (good) { td.classList.remove('bad'); td.classList.add('ok'); } else if (!td.classList.contains('ok')) td.classList.add('bad'); });
+        });
+        if (final || R.puntaje === R.total) { closed = true; ctx.later(() => done(R.puntaje, R.total, ''), 900); }
+        else root.querySelector('.act-bar').innerHTML = `<span class="act-info">${R.puntaje} de ${R.total} correctas.</span>
+          <button class="act-btn alt" data-check>Comprobar de nuevo</button><button class="act-btn" data-finish>Terminar</button>`;
       });
-      if (ok === placed.length) ctx.later(() => done(ok, placed.length, ''), 900);
-      else root.querySelector('.act-bar').innerHTML = `<span class="act-info">${ok} de ${placed.length} correctas.</span>
-        <button class="act-btn alt" data-check>Comprobar de nuevo</button><button class="act-btn" data-finish>Terminar</button>`;
     }
     root.addEventListener('click', e => {
-      if (e.target.closest('[data-check]')) check();
-      if (e.target.closest('[data-finish]')) done(root.querySelectorAll('.clues li.ok').length, placed.length, '');
+      if (e.target.closest('[data-check]')) {
+        if (!ctx.practica && !confirm('¿Entregar el crucigrama? Se corrige una sola vez.')) return;
+        check(false);
+      }
+      if (e.target.closest('[data-finish]')) check(true);
     });
-    ctx.onTimeout = () => { check(); done(root.querySelectorAll('.clues li.ok').length, placed.length, 'se terminó el tiempo'); };
+    ctx.onTimeout = () => check(true);
   }
+ 
  
   /* ---------- 4. Sopa de letras ---------- */
   function sopa(root, pairs, done, ctx) {
@@ -650,37 +776,45 @@
   }
  
   /* ---------- 11. Ordenar líneas (Parsons) ---------- */
-  function ordenar(root, pairs, done, ctx) {
-    const blocks = []; let cur = [];
-    pairs.forEach(p => { if (p.a.trim() === '---') { if (cur.length) blocks.push(cur); cur = []; } else cur.push(p.a); });
-    if (cur.length) blocks.push(cur);
-    const ej = blocks.filter(b => b.length > 1);
+  function ordenar(root, V, done, ctx) {
+    const ej = V.bloques;
     if (!ej.length) { root.innerHTML = '<p class="act-info">Hacen falta al menos dos líneas.</p>'; return; }
-    const total = ej.reduce((n, b) => n + b.length, 0);
-    let bi = 0, ok = 0, order = [], checking = false, from = null;
-    const right = () => order.filter((k, pos) => ej[bi][k] === ej[bi][pos]).length;   // compara texto: líneas repetidas valen igual
-    function start() {
-      const n = ej[bi].length;
-      order = ej[bi].map((_, i) => i);
-      for (let t = 0; t < 6 && order.every((k, i) => ej[bi][k] === ej[bi][i]); t++) order = shuffle(order);
-      checking = false; paint();
-    }
+    const orders = ej.map(b => b.slice());    // orden actual de cada ejercicio (textos)
+    const correctas = ctx.practica ? nBloques(nBase('ordenar', ctx.pares)) : null;   // solo en práctica
+    let bi = 0, checking = false, from = null, sent = false;
     function paint() {
-      const lines = ej[bi];
+      const order = orders[bi], last = bi === ej.length - 1;
       root.innerHTML = `${ej.length > 1 ? `<div class="act-info">Ejercicio ${bi + 1} de ${ej.length}</div>` : ''}
-        <ol class="act-parsons">${order.map((k, pos) => `<li draggable="true" data-pos="${pos}"><span class="grip" aria-hidden="true">⋮⋮</span><code>${esc(lines[k])}</code>
+        <ol class="act-parsons">${order.map((t, pos) => `<li draggable="true" data-pos="${pos}"><span class="grip" aria-hidden="true">⋮⋮</span><code>${esc(t)}</code>
           <span class="mv"><button type="button" data-up="${pos}" aria-label="Subir" ${pos ? '' : 'disabled'}>▲</button><button type="button" data-down="${pos}" aria-label="Bajar" ${pos < order.length - 1 ? '' : 'disabled'}>▼</button></span></li>`).join('')}</ol>
-        <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+        <div class="act-bar"><button class="act-btn" data-check>${ctx.practica ? 'Comprobar' : last ? 'Entregar' : 'Siguiente ejercicio'}</button></div>`;
     }
-    function move(a, b) { if (checking || b < 0 || b >= order.length || a === b) return; const [x] = order.splice(a, 1); order.splice(b, 0, x); paint(); }
+    function move(a, b) { const order = orders[bi]; if (checking || b < 0 || b >= order.length || a === b) return; const [x] = order.splice(a, 1); order.splice(b, 0, x); paint(); }
+    function entregar(wait) {
+      if (sent) return; sent = true; checking = true;
+      ctx.corregir(orders).then(R => {
+        if (!ctx.practica) {
+          const lis = root.querySelectorAll('.act-parsons li');
+          (R.items[bi] || []).forEach((g, pos) => { if (lis[pos]) lis[pos].classList.add(g ? 'ok' : 'bad'); });
+          root.querySelector('.act-bar').innerHTML = `<span class="act-info">${R.puntaje} de ${R.total} líneas en su lugar</span>`;
+        }
+        ctx.later(() => done(R.puntaje, R.total, ''), wait);
+      });
+    }
     function check() {
-      if (checking) return; checking = true;
-      const r = right(); ok += r;
-      root.querySelectorAll('.act-parsons li').forEach((li, pos) => li.classList.add(ej[bi][order[pos]] === ej[bi][pos] ? 'ok' : 'bad'));
-      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${r} de ${ej[bi].length} líneas en su lugar</span>`;
-      ctx.later(() => { bi++; if (bi < ej.length) start(); else done(ok, total, ''); }, 1600);
+      if (checking) return;
+      if (!ctx.practica) {      // «Con registro»: sin corrección parcial; se corrige todo al entregar
+        if (bi < ej.length - 1) { bi++; paint(); return; }
+        if (!confirm('¿Entregar? Se corrige una sola vez.')) return;
+        return entregar(1600);
+      }
+      checking = true;
+      const good = orders[bi].map((t, pos) => t === correctas[bi][pos]);
+      root.querySelectorAll('.act-parsons li').forEach((li, pos) => li.classList.add(good[pos] ? 'ok' : 'bad'));
+      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${good.filter(Boolean).length} de ${good.length} líneas en su lugar</span>`;
+      ctx.later(() => { if (bi < ej.length - 1) { bi++; checking = false; paint(); } else entregar(0); }, 1600);
     }
-    ctx.onTimeout = () => { if (!checking) ok += right(); done(ok, total, 'se terminó el tiempo'); };
+    ctx.onTimeout = () => entregar(0);
     root.addEventListener('click', e => {
       const u = e.target.closest('[data-up]'), d = e.target.closest('[data-down]');
       if (u) move(+u.dataset.up, +u.dataset.up - 1);
@@ -691,13 +825,12 @@
     root.addEventListener('dragend', () => root.querySelectorAll('.drag,.over').forEach(x => x.classList.remove('drag', 'over')));
     root.addEventListener('dragover', e => { const li = e.target.closest('li[data-pos]'); if (!li) return; e.preventDefault(); root.querySelectorAll('.over').forEach(x => x.classList.remove('over')); li.classList.add('over'); });
     root.addEventListener('drop', e => { const li = e.target.closest('li[data-pos]'); if (!li || from == null) return; e.preventDefault(); const to = +li.dataset.pos; const f = from; from = null; move(f, to); });
-    start();
+    paint();
   }
  
   /* ---------- 12. Clasificar en grupos ---------- */
-  function clasificar(root, pairs, done, ctx) {
-    const items = shuffle(pairs.filter(p => p.a && p.b)).map((p, i) => ({ t: p.a, g: p.b.trim(), i }));
-    const groups = [...new Set(items.map(x => x.g))];
+  function clasificar(root, V, done, ctx) {
+    const items = V.items.map((t, i) => ({ t, i })), groups = V.grupos;
     if (groups.length < 2) { root.innerHTML = '<p class="act-info">Hacen falta al menos dos grupos (elemento | grupo).</p>'; return; }
     const COLORS = ['#fff7d6', '#ffe4ee', '#e1f1ff', '#e6f6da', '#ffecd6', '#ece6ff'];
     const place = {}; let sel = null, checked = false, dragI = null;
@@ -709,10 +842,12 @@
     }
     function put(i, g) { if (checked) return; if (g === '' || g == null) delete place[i]; else place[i] = g; sel = null; paint(); }
     function check(wait) {
-      if (checked) return; checked = true; let ok = 0;
-      items.forEach(x => { const good = place[x.i] === x.g; if (good) ok++; const el = root.querySelector(`[data-i="${x.i}"]`); if (el) el.classList.add(good ? 'ok' : 'bad'); });
-      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${ok} de ${items.length} bien clasificados</span>`;
-      ctx.later(() => done(ok, items.length, ''), wait);
+      if (checked) return; checked = true;
+      ctx.corregir(items.map(x => ({ t: x.t, r: place[x.i] == null ? null : place[x.i] }))).then(R => {
+        items.forEach((x, k) => { const el = root.querySelector(`[data-i="${x.i}"]`); if (el) el.classList.add(R.items[k] ? 'ok' : 'bad'); });
+        root.querySelector('.act-bar').innerHTML = `<span class="act-info">${R.puntaje} de ${R.total} bien clasificados</span>`;
+        ctx.later(() => done(R.puntaje, R.total, ''), wait);
+      });
     }
     ctx.onTimeout = () => check(0);
     root.addEventListener('click', e => {
@@ -735,50 +870,59 @@
   }
  
   /* ---------- 13. Verdadero o falso rápido ---------- */
-  function vf(root, pairs, done, ctx) {
-    const val = v => { v = String(v || '').trim().toLowerCase(); return /^(v|verdadero|true|t|si|sí|1)$/.test(v) ? true : /^(f|falso|false|no|0)$/.test(v) ? false : null; };
-    const list = shuffle(pairs.map(p => ({ t: p.a, v: val(p.b) })).filter(x => x.v !== null));
+  function vf(root, V, done, ctx) {
+    const list = V.items;
     if (!list.length) { root.innerHTML = '<p class="act-info">Cada afirmación necesita «| V» o «| F».</p>'; return; }
-    const SEG = 10;
-    let idx = -1, ok = 0, busy = false, timer = null;
+    // en práctica se muestra el acierto al momento; en «Con registro», recién al final (lo corrige el servidor)
+    const clave = ctx.practica ? nBase('vf', ctx.pares).map(p => ({ t: p.a, v: nValorVF(p.b) })).filter(x => x.v !== null) : null;
+    const SEG = 10, resp = list.map(t => ({ t, r: null }));
+    let idx = -1, ok = 0, busy = false, timer = null, sent = false;
     root.innerHTML = `<div class="act-vf"><div class="act-info" data-n></div><div class="st" data-st></div><div class="bar"><i data-bar></i></div>
       <div class="btns"><button type="button" data-v="1">Verdadero</button><button type="button" data-v="0">Falso</button></div></div>`;
     const st = root.querySelector('[data-st]'), bar = root.querySelector('[data-bar]');
+    function entregar() {
+      if (sent) return; sent = true; clearTimeout(timer); busy = true;
+      ctx.corregir(resp).then(R => done(R.puntaje, R.total, ''));
+    }
     function next() {
       clearTimeout(timer); idx++; busy = false; st.className = 'st';
-      if (idx >= list.length) return done(ok, list.length, '');
-      root.querySelector('[data-n]').textContent = `${idx + 1} de ${list.length} · aciertos: ${ok}`;
-      st.textContent = list[idx].t;
+      if (idx >= list.length) return entregar();
+      root.querySelector('[data-n]').textContent = `${idx + 1} de ${list.length}` + (clave ? ` · aciertos: ${ok}` : '');
+      st.textContent = list[idx];
       bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth;
       bar.style.transition = `transform ${SEG}s linear`; bar.style.transform = 'scaleX(0)';
       timer = ctx.later(() => answer(null), SEG * 1000);
     }
     function answer(v) {
-      if (busy || idx >= list.length) return; busy = true; clearTimeout(timer);
-      const good = v === list[idx].v; if (good) ok++;
+      if (busy || sent || idx < 0 || idx >= list.length) return; busy = true; clearTimeout(timer);
+      resp[idx].r = v;
+      if (!clave) {     // sin pistas: solo se marca que se respondió
+        st.textContent = list[idx] + (v === null ? '  (se acabó el tiempo)' : '  ✓');
+        return ctx.later(next, 450);
+      }
+      const k = clave.find(x => x.t === list[idx]), good = !!k && v === k.v; if (good) ok++;
       st.classList.add(good ? 'ok' : 'bad');
-      if (!good) st.textContent = list[idx].t + (v === null ? '  (se acabó el tiempo)' : '') + '  →  ' + (list[idx].v ? 'Verdadero' : 'Falso');
+      if (!good && k) st.textContent = list[idx] + (v === null ? '  (se acabó el tiempo)' : '') + '  →  ' + (k.v ? 'Verdadero' : 'Falso');
       ctx.later(next, good ? 600 : 1500);
     }
-    ctx.onTimeout = () => done(ok, list.length, 'se terminó el tiempo');
+    ctx.onTimeout = entregar;
     root.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) answer(b.dataset.v === '1'); });
     ctx.on(document, 'keydown', e => { if (!root.isConnected) return; const k = (e.key || '').toLowerCase(); if (k === 'v') answer(true); if (k === 'f') answer(false); });
     next();
   }
  
   /* ---------- 14. Diagrama etiquetado ---------- */
-  function diagrama(root, pairs, done, ctx) {
-    const d = diagramOf(pairs), pins = d.labels.filter(l => l.x != null && l.y != null);
-    if (!d.img || pins.length < 2) { root.innerHTML = '<p class="act-info">Falta la imagen o ubicar al menos dos etiquetas (en «editar contenido» → «📍 Ubicar etiquetas»).</p>'; return; }
-    const bankOrder = shuffle(pins.map((_, i) => i));
+  function diagrama(root, V, done, ctx) {
+    const pins = V.pins, labs = V.etiquetas;
+    if (!V.img || pins.length < 2) { root.innerHTML = '<p class="act-info">Falta la imagen o ubicar al menos dos etiquetas (en «editar contenido» → «📍 Ubicar etiquetas»).</p>'; return; }
     const at = {};          // pin -> índice de etiqueta
     let sel = null, checked = false, dragI = null;
     const where = i => Object.keys(at).find(k => at[k] === i);
     function paint() {
-      root.innerHTML = `<div class="act-dg"><div class="pic"><img src="${esc(d.img)}" alt="Diagrama" draggable="false">
+      root.innerHTML = `<div class="act-dg"><div class="pic"><img src="${esc(V.img)}" alt="Diagrama" draggable="false">
         ${pins.map((p, k) => `<button type="button" class="pin${at[k] != null ? ' filled' : ''}" data-pin="${k}" style="left:${p.x}%;top:${p.y}%"
-          aria-label="Punto ${k + 1}${at[k] != null ? ': ' + esc(pins[at[k]].t) : ''}">${at[k] != null ? esc(pins[at[k]].t) : k + 1}</button>`).join('')}</div>
-        <div class="bank">${bankOrder.filter(i => where(i) == null).map(i => `<button type="button" class="lab${sel === i ? ' sel' : ''}" draggable="true" data-lab="${i}">${esc(pins[i].t)}</button>`).join('')}</div></div>
+          aria-label="Punto ${k + 1}${at[k] != null ? ': ' + esc(labs[at[k]]) : ''}">${at[k] != null ? esc(labs[at[k]]) : k + 1}</button>`).join('')}</div>
+        <div class="bank">${labs.map((t, i) => i).filter(i => where(i) == null).map(i => `<button type="button" class="lab${sel === i ? ' sel' : ''}" draggable="true" data-lab="${i}">${esc(labs[i])}</button>`).join('')}</div></div>
         <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
     }
     function put(i, k) {
@@ -787,15 +931,17 @@
       at[k] = i; sel = null; paint();
     }
     function check(wait) {
-      if (checked) return; checked = true; let ok = 0;
-      pins.forEach((p, k) => {
-        const good = at[k] != null && pins[at[k]].t === p.t; if (good) ok++;   // compara el texto: etiquetas repetidas valen igual
-        const el = root.querySelector(`[data-pin="${k}"]`);
-        el.classList.add(good ? 'ok' : 'bad');
-        if (!good) el.innerHTML = (at[k] != null ? esc(pins[at[k]].t) : '—') + `<span class="fix">${esc(p.t)}</span>`;
+      if (checked) return; checked = true;
+      ctx.corregir(pins.map((p, k) => ({ x: p.x, y: p.y, t: at[k] != null ? labs[at[k]] : null }))).then(R => {
+        pins.forEach((p, k) => {
+          const good = !!R.items[k], el = root.querySelector(`[data-pin="${k}"]`);
+          el.classList.add(good ? 'ok' : 'bad');
+          // la etiqueta correcta solo se muestra si el servidor la manda (práctica o un solo intento)
+          if (!good) el.innerHTML = (at[k] != null ? esc(labs[at[k]]) : '—') + (R.sol ? `<span class="fix">${esc(R.sol[k])}</span>` : '');
+        });
+        root.querySelector('.act-bar').innerHTML = `<span class="act-info">${R.puntaje} de ${R.total} bien ubicadas</span>`;
+        ctx.later(() => done(R.puntaje, R.total, ''), wait);
       });
-      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${ok} de ${pins.length} bien ubicadas</span>`;
-      ctx.later(() => done(ok, pins.length, ''), wait);
     }
     ctx.onTimeout = () => check(0);
     root.addEventListener('click', e => {
@@ -829,6 +975,8 @@
     injectCss();
     const t = TEMPLATES[opts.template] || TEMPLATES.unir, key = TEMPLATES[opts.template] ? opts.template : 'unir';
     const pairs = (opts.pairs || []).filter(p => p && p.a);
+    // «Con registro» verificado: el servidor manda la vista (sin soluciones) y corrige con opts.corregir
+    const remoto = VERIFICABLES.indexOf(key) >= 0 && !!opts.vista && typeof opts.corregir === 'function';
     let ctx = null;
     function makeCtx() {
       const timers = [], named = {}, offs = [];
@@ -847,9 +995,37 @@
       el.innerHTML = `<div class="act"><div class="act-head"><b>${t.icon} ${esc(t.name)}</b><span>${esc(t.help)}${limit ? ` Tiempo: ${limit} min.` : ''}</span>${limit ? '<span class="act-timer" aria-live="off"></span>' : ''}</div><div class="act-stage"></div></div>`;
       const stage = el.querySelector('.act-stage');
       const minimo = key === 'memotest' || key === 'unir' ? 2 : 1;
-      if (pairs.length < minimo) { stage.innerHTML = '<p class="act-info">Esta actividad todavía no tiene contenido.</p>'; return; }
+      if (!remoto && pairs.length < minimo) { stage.innerHTML = '<p class="act-info">Esta actividad todavía no tiene contenido.</p>'; return; }
       const t0 = Date.now();
       let ended = false;
+      // Corrección: en práctica, acá mismo; con registro, la hace (y la guarda) el servidor
+      ctx.practica = !remoto;
+      ctx.pares = remoto ? null : pairs;
+      let guardado = '';
+      const aviso = (html, btn) => {
+        let o = stage.querySelector('.act-send');
+        if (!o) { o = document.createElement('div'); o.className = 'act-end act-send'; stage.appendChild(o); }
+        o.innerHTML = `<div>${html}${btn ? `<div class="act-bar"><button class="act-btn" data-retry>${btn}</button></div>` : ''}</div>`;
+        return o;
+      };
+      ctx.corregir = ans => {
+        if (!remoto) return Promise.resolve(nCorregir(key, pairs, ans));
+        ctx.stop('timer');     // lo entregado ya no depende del reloj
+        return new Promise(resolve => {
+          const go = () => {
+            const o = aviso('<p class="act-info">Enviando y corrigiendo…</p>');
+            Promise.resolve(opts.corregir(ans, Math.round((Date.now() - t0) / 1000))).then(r => {
+              if (r && r.ok) { o.remove(); guardado = 'Resultado guardado ✓ (corregido en el servidor)'; return resolve(r); }
+              ended = true; ctx.clear();
+              aviso(`<h3>No se guardó</h3><p class="act-info">${esc((r && r.error) || 'Error del servidor')}</p>`);
+            }).catch(() => {
+              const o2 = aviso('<p class="act-info">Sin conexión: el resultado todavía no se envió.</p>', 'Reintentar');
+              o2.querySelector('[data-retry]').addEventListener('click', go, { once: true });
+            });
+          };
+          go();
+        });
+      };
       const finish = (score, total, detail) => {
         if (ended) return; ended = true;     // una sola vez (por si coinciden el final y el tiempo)
         const secs = Math.round((Date.now() - t0) / 1000);
@@ -861,20 +1037,23 @@
           <div class="act-bar">${opts.canReplay === false ? '' : '<button class="act-btn" data-again>Jugar de nuevo</button>'}</div></div>`;
         stage.appendChild(end);
         end.addEventListener('click', e => { if (e.target.closest('[data-again]')) start(); });
-        if (opts.onResult) {
+        if (guardado) end.querySelector('[data-saved]').textContent = guardado;
+        else if (opts.onResult && !remoto) {
           Promise.resolve(opts.onResult(score, total, secs, detail)).then(msg => {
             if (msg) { const s = end.querySelector('[data-saved]'); if (s) s.textContent = msg; }
           }).catch(() => {});
         }
       };
-      IMPL[key](stage, ['ruleta', 'caja', 'ordenar'].includes(key) ? pairs : pairs.slice(0, 40), finish, ctx);
+      const datos = VERIFICABLES.indexOf(key) >= 0 ? (remoto ? opts.vista : nVista(key, pairs))
+        : ['ruleta', 'caja', 'ordenar'].includes(key) ? pairs : pairs.slice(0, 40);
+      IMPL[key](stage, datos, finish, ctx);
       if (limit) {
         const tm = el.querySelector('.act-timer'), end = t0 + limit * 60000;
         const tick = () => {
           const left = Math.max(0, Math.round((end - Date.now()) / 1000));
           tm.textContent = '⏱ ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
           tm.classList.toggle('low', left <= 30);
-          if (!left && !ended) { if (ctx.onTimeout) ctx.onTimeout(); else finish(0, pairs.length, 'se terminó el tiempo'); }
+          if (!left && !ended) { ctx.stop('timer'); if (ctx.onTimeout) ctx.onTimeout(); else finish(0, pairs.length, 'se terminó el tiempo'); }
         };
         tick(); ctx.every(tick, 1000, 'timer');
       }
@@ -883,5 +1062,5 @@
     return { restart: start, destroy() { if (ctx) ctx.clear(); el.innerHTML = ''; } };
   }
  
-  window.Actividades = { TEMPLATES, play, parse, format, imgUrl, diagramOf };
+  window.Actividades = { TEMPLATES, VERIFICABLES, play, parse, format, imgUrl, diagramOf, nVista, nCorregir };
 })();
