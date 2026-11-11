@@ -196,3 +196,7 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 - Cualquiera puede elegir de la lista el nombre de un compañero. Con un solo intento eso le «gasta» el intento, pero queda registrado con la hora y se nota enseguida.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
+
+---
+
+<sub>Prof. Elizabeth Izquierdo con asistencia de Claude</sub>
