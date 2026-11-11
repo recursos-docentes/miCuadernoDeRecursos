@@ -22,7 +22,14 @@
     ruleta:     { icon: '🎡', name: 'Ruleta', cols: ['Opción', 'Respuesta (opcional)'], scored: false,
                   help: 'Girar la ruleta. Ideal para el proyector: preguntas o estudiantes al azar.' },
     caja:       { icon: '🎁', name: 'Abrir la caja', cols: ['Pregunta o desafío', 'Respuesta (opcional)'], scored: false,
-                  help: 'Elegir una caja y abrirla para ver qué hay adentro.' }
+                  help: 'Elegir una caja y abrirla para ver qué hay adentro.' },
+    ordenar:    { icon: '🧩', name: 'Ordenar líneas', cols: ['Línea', ''], scored: true, raw: true,
+                  help: 'Ordenar las líneas arrastrándolas o con las flechas ▲▼. Al terminar, «Comprobar».',
+                  hint: 'Para «Ordenar líneas»: escribir las líneas en el orden correcto, una por renglón (se respetan las sangrías y el «|» no corta). Para varios ejercicios, separarlos con una línea que diga ---' },
+    clasificar: { icon: '📦', name: 'Clasificar en grupos', cols: ['Elemento', 'Grupo'], scored: true,
+                  help: 'Tocar un elemento y después el grupo donde va (o arrastrarlo). Al terminar, «Comprobar».' },
+    vf:         { icon: '✔️', name: 'Verdadero o falso', cols: ['Afirmación', 'V o F'], scored: true,
+                  help: 'Responder cada afirmación antes de que se acabe su tiempo (también con las teclas V y F).' }
   };
  
   /* ---------- utilidades ---------- */
@@ -34,7 +41,11 @@
     .replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'Ñ').replace(/[^A-ZÑ0-9]/g, '');
   const LETTERS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
  
-  function parse(text) {
+  function parse(text, template) {
+    // «Ordenar líneas»: cada renglón es una línea completa (se conserva la sangría y el «|» no corta)
+    if (TEMPLATES[template] && TEMPLATES[template].raw) {
+      return String(text || '').split(/\r?\n/).map(l => l.replace(/\s+$/, '')).filter(l => l.trim()).map(l => ({ a: l, b: '' }));
+    }
     return String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
       const i = l.indexOf('|');
       return i < 0 ? { a: l, b: '' } : { a: l.slice(0, i).trim(), b: l.slice(i + 1).trim() };
@@ -140,6 +151,34 @@
   .act-box.used { background: #cfd5df; box-shadow: none; } .act-box.used::before { display: none; }
   .act-reveal { margin-top: 14px; text-align: center; font-size: 1.5rem; background: #fffbe0; border: 2px dashed #e2d48a; border-radius: 10px; padding: 14px; }
   .act-reveal .ans { color: var(--ink-blue, #1d4ea0); margin-top: 8px; }
+  /* ordenar líneas */
+  .act-parsons { list-style: none; margin: 0 auto; padding: 0; max-width: 760px; display: flex; flex-direction: column; gap: 6px; }
+  .act-parsons li { display: flex; align-items: center; gap: 8px; background: #f7f9fc; border: 2px solid #d5dce8; border-radius: 8px; padding: 6px 8px; cursor: grab; }
+  .act-parsons li.drag { opacity: .4; } .act-parsons li.over { border-color: #1d4ea0; border-style: dashed; }
+  .act-parsons li.ok { border-color: #2f6f4f; background: #e3f3ea; } .act-parsons li.bad { border-color: #a3222c; background: #fdecec; }
+  .act-parsons .grip { color: #9aa5b8; font-size: 1.1rem; user-select: none; }
+  .act-parsons code { flex: 1; font: 1rem ui-monospace, Consolas, monospace; white-space: pre; overflow-x: auto; color: #1f2a44; }
+  .act-parsons .mv button { border: 0; background: #e7ecf4; border-radius: 5px; width: 30px; height: 28px; cursor: pointer; font-size: .85rem; }
+  .act-parsons .mv button:disabled { opacity: .3; cursor: default; }
+  /* clasificar */
+  .act-sort .pool { display: flex; flex-wrap: wrap; gap: 8px; min-height: 52px; padding: 10px; border: 2px dashed #c9d1de; border-radius: 10px; margin-bottom: 12px; }
+  .act-sort .bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .act-sort .bin { border: 2px solid #c9d1de; border-radius: 10px; min-height: 130px; padding: 8px; background: var(--bc, #f7f9fc); cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+  .act-sort .bin h4 { margin: 0 0 4px; font-family: var(--script, cursive); font-size: 1.5rem; text-align: center; }
+  .act-sort .bin.over, .act-sort .pool.over { border-color: #1d4ea0; border-style: dashed; }
+  .act-sort .chip2 { font-family: inherit; font-size: 1.05rem; background: #fff; border: 2px solid #c9d1de; border-radius: 999px; padding: 4px 12px; cursor: grab; color: inherit; }
+  .act-sort .chip2.sel { border-color: #1d4ea0; background: #e8f0ff; }
+  .act-sort .chip2.ok { border-color: #2f6f4f; background: #e3f3ea; } .act-sort .chip2.bad { border-color: #a3222c; background: #fdecec; }
+  .act-sort .pool:empty::before { content: "Todo clasificado"; color: #8a93a6; }
+  /* verdadero o falso */
+  .act-vf { max-width: 640px; margin: 0 auto; text-align: center; }
+  .act-vf .st { font-size: 1.6rem; min-height: 4.5em; display: grid; place-items: center; padding: 10px; border-radius: 10px; transition: background .2s; }
+  .act-vf .st.ok { background: #e3f3ea; } .act-vf .st.bad { background: #fdecec; }
+  .act-vf .bar { height: 8px; background: #e7ecf4; border-radius: 99px; overflow: hidden; margin: 8px 0 14px; }
+  .act-vf .bar i { display: block; height: 100%; background: #1d4ea0; transform-origin: left; }
+  .act-vf .btns { display: flex; gap: 14px; justify-content: center; }
+  .act-vf .btns button { font: 700 1.3rem var(--hand, cursive); border: 0; border-radius: 10px; padding: 14px 26px; cursor: pointer; color: #fff; }
+  .act-vf .btns [data-v="1"] { background: #2f6f4f; } .act-vf .btns [data-v="0"] { background: #a3222c; }
   @media (max-width: 600px) { .act-unir { gap: 10px 40px; } .act-ws .grid button { width: 24px; height: 24px; font-size: .85rem; } .act-cw td { width: 26px; height: 26px; } }
   `;
   function injectCss() {
@@ -579,7 +618,124 @@
     });
   }
  
-  const IMPL = { unir, memotest, crucigrama, sopa, ahorcado, tarjetas, ruleta, caja,
+  /* ---------- 11. Ordenar líneas (Parsons) ---------- */
+  function ordenar(root, pairs, done, ctx) {
+    const blocks = []; let cur = [];
+    pairs.forEach(p => { if (p.a.trim() === '---') { if (cur.length) blocks.push(cur); cur = []; } else cur.push(p.a); });
+    if (cur.length) blocks.push(cur);
+    const ej = blocks.filter(b => b.length > 1);
+    if (!ej.length) { root.innerHTML = '<p class="act-info">Hacen falta al menos dos líneas.</p>'; return; }
+    const total = ej.reduce((n, b) => n + b.length, 0);
+    let bi = 0, ok = 0, order = [], checking = false, from = null;
+    const right = () => order.filter((k, pos) => ej[bi][k] === ej[bi][pos]).length;   // compara texto: líneas repetidas valen igual
+    function start() {
+      const n = ej[bi].length;
+      order = ej[bi].map((_, i) => i);
+      for (let t = 0; t < 6 && order.every((k, i) => ej[bi][k] === ej[bi][i]); t++) order = shuffle(order);
+      checking = false; paint();
+    }
+    function paint() {
+      const lines = ej[bi];
+      root.innerHTML = `${ej.length > 1 ? `<div class="act-info">Ejercicio ${bi + 1} de ${ej.length}</div>` : ''}
+        <ol class="act-parsons">${order.map((k, pos) => `<li draggable="true" data-pos="${pos}"><span class="grip" aria-hidden="true">⋮⋮</span><code>${esc(lines[k])}</code>
+          <span class="mv"><button type="button" data-up="${pos}" aria-label="Subir" ${pos ? '' : 'disabled'}>▲</button><button type="button" data-down="${pos}" aria-label="Bajar" ${pos < order.length - 1 ? '' : 'disabled'}>▼</button></span></li>`).join('')}</ol>
+        <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+    }
+    function move(a, b) { if (checking || b < 0 || b >= order.length || a === b) return; const [x] = order.splice(a, 1); order.splice(b, 0, x); paint(); }
+    function check() {
+      if (checking) return; checking = true;
+      const r = right(); ok += r;
+      root.querySelectorAll('.act-parsons li').forEach((li, pos) => li.classList.add(ej[bi][order[pos]] === ej[bi][pos] ? 'ok' : 'bad'));
+      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${r} de ${ej[bi].length} líneas en su lugar</span>`;
+      ctx.later(() => { bi++; if (bi < ej.length) start(); else done(ok, total, ''); }, 1600);
+    }
+    ctx.onTimeout = () => { if (!checking) ok += right(); done(ok, total, 'se terminó el tiempo'); };
+    root.addEventListener('click', e => {
+      const u = e.target.closest('[data-up]'), d = e.target.closest('[data-down]');
+      if (u) move(+u.dataset.up, +u.dataset.up - 1);
+      if (d) move(+d.dataset.down, +d.dataset.down + 1);
+      if (e.target.closest('[data-check]')) check();
+    });
+    root.addEventListener('dragstart', e => { const li = e.target.closest('li[data-pos]'); if (!li) return; from = +li.dataset.pos; li.classList.add('drag'); try { e.dataTransfer.setData('text/plain', String(from)); } catch (err) {} });
+    root.addEventListener('dragend', () => root.querySelectorAll('.drag,.over').forEach(x => x.classList.remove('drag', 'over')));
+    root.addEventListener('dragover', e => { const li = e.target.closest('li[data-pos]'); if (!li) return; e.preventDefault(); root.querySelectorAll('.over').forEach(x => x.classList.remove('over')); li.classList.add('over'); });
+    root.addEventListener('drop', e => { const li = e.target.closest('li[data-pos]'); if (!li || from == null) return; e.preventDefault(); const to = +li.dataset.pos; const f = from; from = null; move(f, to); });
+    start();
+  }
+ 
+  /* ---------- 12. Clasificar en grupos ---------- */
+  function clasificar(root, pairs, done, ctx) {
+    const items = shuffle(pairs.filter(p => p.a && p.b)).map((p, i) => ({ t: p.a, g: p.b.trim(), i }));
+    const groups = [...new Set(items.map(x => x.g))];
+    if (groups.length < 2) { root.innerHTML = '<p class="act-info">Hacen falta al menos dos grupos (elemento | grupo).</p>'; return; }
+    const COLORS = ['#fff7d6', '#ffe4ee', '#e1f1ff', '#e6f6da', '#ffecd6', '#ece6ff'];
+    const place = {}; let sel = null, checked = false, dragI = null;
+    function paint() {
+      const chip = x => `<button type="button" class="chip2${sel === x.i ? ' sel' : ''}" draggable="true" data-i="${x.i}">${esc(x.t)}</button>`;
+      root.innerHTML = `<div class="act-sort"><div class="pool" data-bin="">${items.filter(x => place[x.i] == null).map(chip).join('')}</div>
+        <div class="bins">${groups.map((g, k) => `<div class="bin" data-bin="${esc(g)}" style="--bc:${COLORS[k % COLORS.length]}"><h4>${esc(g)}</h4>${items.filter(x => place[x.i] === g).map(chip).join('')}</div>`).join('')}</div></div>
+        <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+    }
+    function put(i, g) { if (checked) return; if (g === '' || g == null) delete place[i]; else place[i] = g; sel = null; paint(); }
+    function check(wait) {
+      if (checked) return; checked = true; let ok = 0;
+      items.forEach(x => { const good = place[x.i] === x.g; if (good) ok++; const el = root.querySelector(`[data-i="${x.i}"]`); if (el) el.classList.add(good ? 'ok' : 'bad'); });
+      root.querySelector('.act-bar').innerHTML = `<span class="act-info">${ok} de ${items.length} bien clasificados</span>`;
+      ctx.later(() => done(ok, items.length, ''), wait);
+    }
+    ctx.onTimeout = () => check(0);
+    root.addEventListener('click', e => {
+      if (e.target.closest('[data-check]')) {
+        const faltan = items.filter(x => place[x.i] == null).length;
+        if (faltan && !confirm(`Faltan clasificar ${faltan}. ¿Comprobar igual?`)) return;
+        return check(1500);
+      }
+      if (checked) return;
+      const c = e.target.closest('[data-i]');
+      if (c) { sel = sel === +c.dataset.i ? null : +c.dataset.i; paint(); return; }
+      const b = e.target.closest('[data-bin]');
+      if (b && sel != null) put(sel, b.dataset.bin);
+    });
+    root.addEventListener('dragstart', e => { const c = e.target.closest('[data-i]'); if (!c) return; dragI = +c.dataset.i; try { e.dataTransfer.setData('text/plain', String(dragI)); } catch (err) {} });
+    root.addEventListener('dragover', e => { const b = e.target.closest('[data-bin]'); if (!b) return; e.preventDefault(); root.querySelectorAll('.over').forEach(x => x.classList.remove('over')); b.classList.add('over'); });
+    root.addEventListener('drop', e => { const b = e.target.closest('[data-bin]'); if (!b || dragI == null) return; e.preventDefault(); const i = dragI; dragI = null; put(i, b.dataset.bin); });
+    root.addEventListener('dragend', () => root.querySelectorAll('.over').forEach(x => x.classList.remove('over')));
+    paint();
+  }
+ 
+  /* ---------- 13. Verdadero o falso rápido ---------- */
+  function vf(root, pairs, done, ctx) {
+    const val = v => { v = String(v || '').trim().toLowerCase(); return /^(v|verdadero|true|t|si|sí|1)$/.test(v) ? true : /^(f|falso|false|no|0)$/.test(v) ? false : null; };
+    const list = shuffle(pairs.map(p => ({ t: p.a, v: val(p.b) })).filter(x => x.v !== null));
+    if (!list.length) { root.innerHTML = '<p class="act-info">Cada afirmación necesita «| V» o «| F».</p>'; return; }
+    const SEG = 10;
+    let idx = -1, ok = 0, busy = false, timer = null;
+    root.innerHTML = `<div class="act-vf"><div class="act-info" data-n></div><div class="st" data-st></div><div class="bar"><i data-bar></i></div>
+      <div class="btns"><button type="button" data-v="1">Verdadero</button><button type="button" data-v="0">Falso</button></div></div>`;
+    const st = root.querySelector('[data-st]'), bar = root.querySelector('[data-bar]');
+    function next() {
+      clearTimeout(timer); idx++; busy = false; st.className = 'st';
+      if (idx >= list.length) return done(ok, list.length, '');
+      root.querySelector('[data-n]').textContent = `${idx + 1} de ${list.length} · aciertos: ${ok}`;
+      st.textContent = list[idx].t;
+      bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth;
+      bar.style.transition = `transform ${SEG}s linear`; bar.style.transform = 'scaleX(0)';
+      timer = ctx.later(() => answer(null), SEG * 1000);
+    }
+    function answer(v) {
+      if (busy || idx >= list.length) return; busy = true; clearTimeout(timer);
+      const good = v === list[idx].v; if (good) ok++;
+      st.classList.add(good ? 'ok' : 'bad');
+      if (!good) st.textContent = list[idx].t + (v === null ? '  (se acabó el tiempo)' : '') + '  →  ' + (list[idx].v ? 'Verdadero' : 'Falso');
+      ctx.later(next, good ? 600 : 1500);
+    }
+    ctx.onTimeout = () => done(ok, list.length, 'se terminó el tiempo');
+    root.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) answer(b.dataset.v === '1'); });
+    ctx.on(document, 'keydown', e => { if (!root.isConnected) return; const k = (e.key || '').toLowerCase(); if (k === 'v') answer(true); if (k === 'f') answer(false); });
+    next();
+  }
+ 
+  const IMPL = { unir, memotest, crucigrama, sopa, ahorcado, tarjetas, ruleta, caja, ordenar, clasificar, vf,
                  topo: (r, p, d, c) => arcade(r, p, d, c, 'topo'), globos: (r, p, d, c) => arcade(r, p, d, c, 'globos') };
  
   /* ---------- reproductor común ---------- */
@@ -625,7 +781,7 @@
           }).catch(() => {});
         }
       };
-      IMPL[key](stage, key === 'ruleta' || key === 'caja' ? pairs : pairs.slice(0, 40), finish, ctx);
+      IMPL[key](stage, ['ruleta', 'caja', 'ordenar'].includes(key) ? pairs : pairs.slice(0, 40), finish, ctx);
       if (limit) {
         const tm = el.querySelector('.act-timer'), end = t0 + limit * 60000;
         const tick = () => {
@@ -643,3 +799,4 @@
  
   window.Actividades = { TEMPLATES, play, parse, format };
 })();
+ 
