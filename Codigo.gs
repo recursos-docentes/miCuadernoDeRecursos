@@ -25,7 +25,7 @@ const COLS_P = ['id', 'titulo', 'slug', 'visibilidad', 'descripcion', 'color', '
 const COLS_R = ['id', 'pagina', 'estudiante', 'texto', 'creado', 'editado', 'nota', 'comentario', 'token'];
 const COLS_I = ['id', 'pagina', 'estudiante', 'tipo', 'detalle', 'fecha'];
 const COLS_S = ['id', 'nombre', 'color', 'lista'];
-const COLS_A = ['id', 'pagina', 'estudiante', 'plantilla', 'puntaje', 'total', 'segundos', 'detalle', 'fecha'];
+const COLS_A = ['id', 'pagina', 'estudiante', 'plantilla', 'puntaje', 'total', 'segundos', 'detalle', 'fecha', 'verificado'];
  
 const MAX_TEXTO = 3000;
  
@@ -51,6 +51,7 @@ function manejar(d) {
       case 'desbloquear': return desbloquear(d);
       case 'estadoBloqueo': return estadoBloqueo(d);
       case 'resultado':   return guardarResultado(d);
+      case 'corregir':    return corregirActividad(d);
       // con clave
       case 'verificar':   verificar(d.clave); return { ok: true };
       case 'cargar':      verificar(d.clave); return Object.assign({ ok: true }, leerTodo());
@@ -218,7 +219,13 @@ function publico(slug) {
     pagina.prompt = pag.prompt;
     // una ruleta sin contenido gira con los nombres del grupo
     const pares = pag.template === 'ruleta' && !pag.pairs.length ? lista.map(n => ({ a: n, b: '' })) : pag.pairs;
-    pagina.activity = { template: pag.template, pairs: pares, mode: pag.actMode, single: pag.single, timeLimit: pag.timeLimit };
+    pagina.activity = { template: pag.template, mode: pag.actMode, single: pag.single, timeLimit: pag.timeLimit };
+    if (pag.actMode === 'registro' && VERIFICABLES.indexOf(pag.template) >= 0) {
+      // con registro, las soluciones no salen del servidor: se manda la vista mezclada y se corrige acá
+      pagina.activity.vista = nVista(pag.template, pag.pairs);
+    } else {
+      pagina.activity.pairs = pares;
+    }
     if (pag.actMode === 'registro') pagina.roster = lista;
   }
   const salida = { ok: true, pagina: pagina, marcadores: marcadores };
@@ -387,6 +394,7 @@ function guardarResultado(d) {
   try {
     const pag = paginaPublica(d.p);
     if (pag.type !== 'actividad' || pag.actMode !== 'registro') return { ok: true, sinRegistro: true };
+    if (VERIFICABLES.indexOf(pag.template) >= 0) throw new Error('Esta actividad se corrige en el servidor: recargar la página.');
     if (!limpiarNombre(d.estudiante)) throw new Error('Falta el nombre');
     const estudiante = nombreEnLista(listaEfectiva(pag), d.estudiante);
     if (!estudiante) throw new Error('Ese nombre no está en la lista');
@@ -396,8 +404,36 @@ function guardarResultado(d) {
     const num = v => Math.max(0, Math.min(10000, Number(v) || 0));
     hoja(HOJA_RESULTADOS, COLS_A).appendRow([Utilities.getUuid().slice(0, 8), pag.id, seguro(estudiante),
       seguro(String(d.plantilla || pag.template).slice(0, 20)), num(d.puntaje), num(d.total), num(d.segundos),
-      seguro(String(d.detalle || '').slice(0, 120)), Date.now()]);
+      seguro(String(d.detalle || '').slice(0, 120)), Date.now(), 'no']);
     return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+ 
+/* Actividades con registro verificables: el servidor corrige y guarda (el navegador no manda el puntaje) */
+function corregirActividad(d) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const pag = paginaPublica(d.p);
+    if (pag.type !== 'actividad' || pag.actMode !== 'registro' || VERIFICABLES.indexOf(pag.template) < 0) {
+      throw new Error('Esta actividad no se corrige en el servidor: recargar la página.');
+    }
+    if (!limpiarNombre(d.estudiante)) throw new Error('Falta el nombre');
+    const estudiante = nombreEnLista(listaEfectiva(pag), d.estudiante);
+    if (!estudiante) throw new Error('Ese nombre no está en la lista');
+    if (pag.single && leerFilas(HOJA_RESULTADOS, COLS_A).some(r => String(r.pagina) === pag.id && canon(r.estudiante) === canon(estudiante))) {
+      throw new Error('Ya hay un resultado registrado con ese nombre (un solo intento).');
+    }
+    if (JSON.stringify(d.respuestas || null).length > 50000) throw new Error('Respuesta demasiado grande');
+    const r = nCorregir(pag.template, pag.pairs, d.respuestas);
+    if (r.error) throw new Error(r.error);
+    const seg = Math.max(0, Math.min(100000, Math.round(Number(d.segundos) || 0)));
+    hoja(HOJA_RESULTADOS, COLS_A).appendRow([Utilities.getUuid().slice(0, 8), pag.id, seguro(estudiante),
+      seguro(pag.template), r.puntaje, r.total, seg, '', Date.now(), 'sí']);
+    // la solución solo se devuelve si no hay otro intento (si no, serviría para el siguiente)
+    return { ok: true, puntaje: r.puntaje, total: r.total, items: r.items, sol: pag.single ? r.sol : null };
   } finally {
     lock.releaseLock();
   }
@@ -408,7 +444,7 @@ function resultadosDe(paginaId) {
     .filter(f => String(f.pagina) === String(paginaId))
     .map(f => ({ id: String(f.id), estudiante: String(f.estudiante), plantilla: String(f.plantilla),
                  puntaje: Number(f.puntaje) || 0, total: Number(f.total) || 0, segundos: Number(f.segundos) || 0,
-                 detalle: String(f.detalle), fecha: Number(f.fecha) || 0 }))
+                 detalle: String(f.detalle), fecha: Number(f.fecha) || 0, verificado: String(f.verificado) === 'sí' }))
     .sort((a, b) => a.fecha - b.fecha);
 }
  
@@ -480,4 +516,180 @@ function guardar(d) {
     lock.releaseLock();
   }
 }
+ 
+  /* ===== NÚCLEO DE CORRECCIÓN — idéntico en actividades.js y en Codigo.gs (no editar uno sin el otro) =====
+     nVista(plantilla, pares)  → lo que ve el estudiante (sin soluciones).
+     nCorregir(plantilla, pares, respuestas) → { puntaje, total, items, sol } o { error }.
+     En «Con registro» la vista y la corrección las hace el servidor; en «Práctica», el navegador. */
+  const VERIFICABLES = ['unir', 'clasificar', 'vf', 'ordenar', 'diagrama', 'crucigrama'];
+  function nMezclar(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  // Palabra para crucigrama: mayúsculas, sin tildes ni espacios (la Ñ se respeta)
+  function nPalabra(s) {
+    return String(s || '').toUpperCase().replace(/Ñ/g, '\u0001').normalize('NFD')
+      .replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'Ñ').replace(/[^A-ZÑ0-9]/g, '');
+  }
+  function nImgUrl(raw) {
+    const u = String(raw || '').trim(); if (!u) return '';
+    const id = (u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/) || [])[1];
+    return id ? 'https://lh3.googleusercontent.com/d/' + id : u;
+  }
+  function nDiagrama(pairs) {
+    const img = nImgUrl(((pairs || []).find(p => String(p.a).trim().toLowerCase() === '#imagen') || {}).b);
+    const labels = (pairs || []).filter(p => p.a && String(p.a).trim()[0] !== '#').map(p => {
+      const m = String(p.b || '').match(/(-?\d+(?:[.,]\d+)?)\s*[;, ]\s*(-?\d+(?:[.,]\d+)?)/);
+      return { t: String(p.a).trim(), x: m ? +m[1].replace(',', '.') : null, y: m ? +m[2].replace(',', '.') : null };
+    });
+    return { img: img, labels: labels };
+  }
+  function nValorVF(v) {
+    v = String(v || '').trim().toLowerCase();
+    return /^(v|verdadero|true|t|si|sí|1)$/.test(v) ? true : /^(f|falso|false|no|0)$/.test(v) ? false : null;
+  }
+  // Pares limpios, con el mismo recorte que usa el juego (40, salvo «ordenar»)
+  function nBase(t, pairs) {
+    const ps = (pairs || []).filter(p => p && p.a).map(p => ({ a: String(p.a), b: String(p.b == null ? '' : p.b) }));
+    return t === 'ordenar' ? ps : ps.slice(0, 40);
+  }
+  function nBloques(ps) {
+    const blocks = []; let cur = [];
+    ps.forEach(p => { if (p.a.trim() === '---') { if (cur.length) blocks.push(cur); cur = []; } else cur.push(p.a); });
+    if (cur.length) blocks.push(cur);
+    return blocks.filter(b => b.length > 1);
+  }
+  function nCrucigrama(list) {
+    const words = list.map((p, k) => ({ w: nPalabra(p.a), clue: p.b || p.a, k: k })).filter(x => x.w.length > 1)
+      .sort((a, b) => b.w.length - a.w.length || a.k - b.k);
+    const grid = {}, placed = [];
+    const key = (r, c) => r + ',' + c, get = (r, c) => grid[key(r, c)];
+    function fits(w, r, c, dir) {
+      const dr = dir === 'v' ? 1 : 0, dc = dir === 'h' ? 1 : 0;
+      if (get(r - dr, c - dc) || get(r + dr * w.length, c + dc * w.length)) return -1;
+      let inter = 0;
+      for (let i = 0; i < w.length; i++) {
+        const rr = r + dr * i, cc = c + dc * i, cur = get(rr, cc);
+        if (cur) { if (cur !== w[i]) return -1; inter++; }
+        else if (get(rr + dc, cc + dr) || get(rr - dc, cc - dr)) return -1; // vecinos paralelos
+      }
+      return inter;
+    }
+    function put(x, r, c, dir) {
+      for (let i = 0; i < x.w.length; i++) grid[key(r + (dir === 'v' ? i : 0), c + (dir === 'h' ? i : 0))] = x.w[i];
+      placed.push({ w: x.w, clue: x.clue, k: x.k, r: r, c: c, dir: dir });
+    }
+    words.forEach((x, idx) => {
+      if (!idx) return put(x, 0, 0, 'h');
+      let best = null;
+      placed.forEach(p => { for (let i = 0; i < p.w.length; i++) for (let j = 0; j < x.w.length; j++) {
+        if (p.w[i] !== x.w[j]) continue;
+        const dir = p.dir === 'h' ? 'v' : 'h';
+        const r = p.dir === 'h' ? p.r - j : p.r + i, c = p.dir === 'h' ? p.c + i : p.c - j;
+        const s = fits(x.w, r, c, dir);
+        if (s > 0 && (!best || s > best.s)) best = { r: r, c: c, dir: dir, s: s };
+      } });
+      if (best) put(x, best.r, best.c, best.dir);
+      else { // sin cruce posible: se ubica suelta debajo
+        const ks = Object.keys(grid).map(k => k.split(',').map(Number));
+        put(x, Math.max.apply(null, ks.map(k => k[0])) + 2, Math.min.apply(null, ks.map(k => k[1])), 'h');
+      }
+    });
+    if (!placed.length) return { placed: placed, rows: 0, cols: 0 };
+    const ks = Object.keys(grid).map(k => k.split(',').map(Number));
+    const rs = ks.map(k => k[0]), cs = ks.map(k => k[1]);
+    const r0 = Math.min.apply(null, rs), c0 = Math.min.apply(null, cs);
+    placed.forEach(p => { p.r -= r0; p.c -= c0; });
+    const starts = placed.map(p => p.r * 1000 + p.c).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
+    placed.forEach(p => { p.num = starts.indexOf(p.r * 1000 + p.c) + 1; });
+    return { placed: placed, rows: Math.max.apply(null, rs) - r0 + 1, cols: Math.max.apply(null, cs) - c0 + 1 };
+  }
+  const nCeldas = p => Array.from({ length: p.w.length }, (_, i) => (p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0)));
+ 
+  function nVista(t, pairs) {
+    const ps = nBase(t, pairs);
+    if (t === 'unir') return { izq: ps.map(p => p.a), der: nMezclar(ps.map(p => p.b)) };
+    if (t === 'clasificar') {
+      const it = ps.filter(p => p.b.trim());
+      return { items: nMezclar(it.map(p => p.a)), grupos: nMezclar(it.map(p => p.b.trim()).filter((g, i, a) => a.indexOf(g) === i)) };
+    }
+    if (t === 'vf') return { items: nMezclar(ps.filter(p => nValorVF(p.b) !== null).map(p => p.a)) };
+    if (t === 'ordenar') return { bloques: nBloques(ps).map(b => {
+      let o = b.slice();
+      for (let k = 0; k < 8 && o.every((x, i) => x === b[i]); k++) o = nMezclar(o);
+      return o;
+    }) };
+    if (t === 'diagrama') {
+      const d = nDiagrama(ps), pins = d.labels.filter(l => l.x != null && l.y != null);
+      return { img: d.img, pins: nMezclar(pins.map(p => ({ x: p.x, y: p.y }))), etiquetas: nMezclar(pins.map(p => p.t)) };
+    }
+    if (t === 'crucigrama') {
+      const L = nCrucigrama(ps), celdas = [];
+      L.placed.forEach(p => nCeldas(p).forEach(k => { if (celdas.indexOf(k) < 0) celdas.push(k); }));
+      return { filas: L.rows, cols: L.cols, celdas: celdas,
+               pistas: L.placed.map(p => ({ k: p.k, num: p.num, dir: p.dir, pista: p.clue, largo: p.w.length, r: p.r, c: p.c })) };
+    }
+    return null;
+  }
+ 
+  function nCorregir(t, pairs, ans) {
+    const ps = nBase(t, pairs), CAMBIO = { error: 'La actividad cambió o la respuesta no corresponde: recargar la página.' };
+    const fin = (items, sol) => {
+      const plano = [].concat.apply([], items.map(x => Array.isArray(x) ? x : [x]));
+      return { puntaje: plano.filter(Boolean).length, total: plano.length, items: items, sol: sol };
+    };
+    const cuenta = arr => { const c = {}; arr.forEach(x => { c[x] = (c[x] || 0) + 1; }); return c; };
+    if (t === 'crucigrama') {
+      if (!ans || typeof ans !== 'object' || Array.isArray(ans)) return CAMBIO;
+      const L = nCrucigrama(ps);
+      return fin(L.placed.map(p => nCeldas(p).every((k, i) => nPalabra(ans[k]).slice(-1) === p.w[i])), L.placed.map(p => p.w));
+    }
+    const A = Array.isArray(ans) ? ans : null;
+    if (!A) return CAMBIO;
+    if (t === 'unir') {
+      if (A.length !== ps.length) return CAMBIO;
+      const c = cuenta(ps.map(p => p.b));      // cada texto de la derecha se usa a lo sumo las veces que aparece
+      for (let i = 0; i < A.length; i++) if (A[i] != null) { const s = String(A[i]); if (!c[s]) return CAMBIO; c[s]--; }
+      return fin(ps.map((p, i) => A[i] != null && String(A[i]) === p.b), ps.map(p => p.b));
+    }
+    if (t === 'clasificar' || t === 'vf') {
+      const base = t === 'vf'
+        ? ps.map(p => ({ t: p.a, s: nValorVF(p.b) })).filter(x => x.s !== null)
+        : ps.filter(p => p.b.trim()).map(p => ({ t: p.a, s: p.b.trim() }));
+      if (A.length !== base.length) return CAMBIO;
+      const usado = base.map(() => false), asig = A.map(() => -1);
+      const rta = x => (x && x.r != null) ? (t === 'vf' ? x.r === true || x.r === 'true' : String(x.r)) : null;
+      // primero las coincidencias exactas (así los textos repetidos no se perjudican), después el resto
+      A.forEach((x, i) => { const j = base.findIndex((b, k) => !usado[k] && b.t === String(x && x.t) && b.s === rta(x)); if (j >= 0) { usado[j] = true; asig[i] = j; } });
+      for (let i = 0; i < A.length; i++) if (asig[i] < 0) {
+        const j = base.findIndex((b, k) => !usado[k] && b.t === String(A[i] && A[i].t));
+        if (j < 0) return CAMBIO;
+        usado[j] = true; asig[i] = j;
+      }
+      return fin(A.map((x, i) => rta(x) !== null && base[asig[i]].s === rta(x)), asig.map(j => base[j].s));
+    }
+    if (t === 'ordenar') {
+      const bl = nBloques(ps);
+      if (A.length !== bl.length) return CAMBIO;
+      const items = [];
+      for (let k = 0; k < bl.length; k++) {
+        const a = Array.isArray(A[k]) ? A[k].map(String) : null, b = bl[k];
+        if (!a || a.length !== b.length || a.slice().sort().join('\n') !== b.slice().sort().join('\n')) return CAMBIO;
+        items.push(a.map((x, i) => x === b[i]));
+      }
+      return fin(items, bl);
+    }
+    if (t === 'diagrama') {
+      const pins = nDiagrama(ps).labels.filter(l => l.x != null && l.y != null);
+      if (A.length !== pins.length) return CAMBIO;
+      const c = cuenta(pins.map(p => p.t)), usado = pins.map(() => false), items = [], sol = [];
+      for (let i = 0; i < A.length; i++) {
+        const x = A[i] || {};
+        if (x.t != null) { const s = String(x.t); if (!c[s]) return CAMBIO; c[s]--; }
+        const j = pins.findIndex((p, k) => !usado[k] && p.x === Number(x.x) && p.y === Number(x.y));
+        if (j < 0) return CAMBIO;
+        usado[j] = true; items.push(x.t != null && String(x.t) === pins[j].t); sol.push(pins[j].t);
+      }
+      return fin(items, sol);
+    }
+    return { error: 'Esta plantilla no se corrige en el servidor.' };
+  }
+  /* ===== FIN DEL NÚCLEO ===== */
  
