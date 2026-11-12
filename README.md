@@ -1,6 +1,6 @@
 # Cuaderno de recursos
 
-Cuaderno digital para docentes: marcadores con etiquetas y anotaciones, páginas privadas o compartidas, pizarrones donde responden los estudiantes, actividades estilo Wordwall, modo bloqueado para trabajar en clase y paso de notas a la libreta (Portafolio de Clase).
+Cuaderno digital para docentes: marcadores con etiquetas y anotaciones, páginas privadas o compartidas, pizarrones donde responden los estudiantes, actividades estilo Wordwall, modo bloqueado para trabajar en clase y paso de notas al Portafolio Docente de ANEP.
 
 **Dirección del cuaderno:** https://recursos-docentes.github.io/miCuadernoDeRecursos/
 
@@ -158,20 +158,6 @@ En «editar página», **🔒 Modo bloqueado** (para cualquier tipo de página),
 - Vista docente: **Registro del modo bloqueado** (quién salió, cuándo, cuántas veces); en pizarrones, columna «Salidas» en el CSV.
 - Al desmarcar el modo bloqueado, se libera en todas las computadoras en menos de medio minuto.
 
-## Pasar notas al Portafolio de Clase
-
-En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar al Portafolio** ([Portafolio de Clase](https://recursos-docentes.github.io/portafolio/)).
-
-1. Elegir el **grupo del Portafolio** (se propone el más parecido y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase, que cuenta como horas dictadas para las faltas.
-2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el Portafolio las promedia juntas.
-3. Revisar la tabla: nota de cada estudiante y con quién se empareja en el Portafolio (se emparejan solos por nombre, sin importar mayúsculas, tildes ni el orden nombre/apellido). Las notas se pueden corregir.
-4. **Pasar notas**: se guardan como columna de nota de ese día, sin tocar asistencia ni lo demás.
-
-- Actividades: el puntaje llevado a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6) (el mejor intento, el primero o el último). Si el puntaje no fue corregido en el servidor, la tabla lo marca «⚠ no verificado». Pizarrones: la nota puesta en cada respuesta.
-- En la página queda escrito **cuándo se pasó a la libreta**, a qué grupo, clase y columna, y cuántas notas.
-- Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
-- La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
-
 ## Pasar notas al Portafolio Docente de ANEP
 
 1. **Instalar el marcador** (una sola vez): abrir [anep.html](https://recursos-docentes.github.io/miCuadernoDeRecursos/anep.html) y arrastrar el botón **📋 Pegar notas** a la barra de marcadores.
@@ -182,14 +168,14 @@ En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar 
 
 - Actividades: el puntaje se lleva a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6); con varios intentos se copia el mejor. Los puntajes ⚠ no verificados piden confirmación antes de copiarse. Pizarrones: la nota puesta en cada respuesta.
 - Los nombres se emparejan sin importar mayúsculas, tildes ni el orden nombre/apellido; conviene que la lista del grupo tenga los nombres como en el Portafolio.
-- El marcador también sirve con lo copiado desde la Libreta de clase o desde dos columnas de cualquier planilla. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
+- El marcador también sirve con lo copiado desde dos columnas de cualquier planilla. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
 
 ## Hojas de la planilla
 
 | Hoja | Qué guarda |
 |---|---|
 | Marcadores | Las notas |
-| Paginas | Las páginas (incluye cuándo se pasaron notas a la libreta) |
+| Paginas | Las páginas |
 | Secciones | Los grupos y sus listas de estudiantes |
 | Respuestas | Las respuestas de los pizarrones, con nota y devolución |
 | Resultados | Los resultados de las actividades con registro |
@@ -204,6 +190,22 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 - Cualquiera puede elegir de la lista el nombre de un compañero. Con un solo intento eso le «gasta» el intento, pero queda registrado con la hora y se nota enseguida.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
+
+## Extensiones a futuro
+
+### Pasar notas al Portafolio de Clase
+
+Ya está programado en el cuaderno, pero queda para más adelante, cuando se use la libreta de clase de la docente (Portafolio de Clase). En los resultados de un pizarrón o de una actividad con registro, el botón **📒 Pasar al Portafolio** pasa las notas a esa libreta:
+
+1. Elegir el **grupo del Portafolio** (se propone el más parecido y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase, que cuenta como horas dictadas para las faltas.
+2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el Portafolio las promedia juntas.
+3. Revisar la tabla: nota de cada estudiante y con quién se empareja en el Portafolio (se emparejan solos por nombre, sin importar mayúsculas, tildes ni el orden nombre/apellido). Las notas se pueden corregir.
+4. **Pasar notas**: se guardan como columna de nota de ese día, sin tocar asistencia ni lo demás.
+
+- Actividades: el puntaje llevado a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6) (el mejor intento, el primero o el último). Si el puntaje no fue corregido en el servidor, la tabla lo marca «⚠ no verificado». Pizarrones: la nota puesta en cada respuesta.
+- En la página queda escrito **cuándo se pasó a la libreta**, a qué grupo, clase y columna, y cuántas notas.
+- Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
+- La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
 
 ---
 
