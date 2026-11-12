@@ -191,21 +191,6 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
 
-## Extensiones a futuro
-
-### Pasar notas al Portafolio de Clase
-
-Ya está programado en el cuaderno, pero está **apagado**: no se ve ningún botón ni texto de la libreta. Para encenderlo, cuando se use la libreta de clase de la docente (Portafolio de Clase), agregar `LIBRETA: true` en `config.js`. En los resultados de un pizarrón o de una actividad con registro, el botón **📒 Pasar al Portafolio** pasa las notas a esa libreta:
-
-1. Elegir el **grupo del Portafolio** (se propone el más parecido y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase, que cuenta como horas dictadas para las faltas.
-2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el Portafolio las promedia juntas.
-3. Revisar la tabla: nota de cada estudiante y con quién se empareja en el Portafolio (se emparejan solos por nombre, sin importar mayúsculas, tildes ni el orden nombre/apellido). Las notas se pueden corregir.
-4. **Pasar notas**: se guardan como columna de nota de ese día, sin tocar asistencia ni lo demás.
-
-- Actividades: el puntaje llevado a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6) (el mejor intento, el primero o el último). Si el puntaje no fue corregido en el servidor, la tabla lo marca «⚠ no verificado». Pizarrones: la nota puesta en cada respuesta.
-- En la página queda escrito **cuándo se pasó a la libreta**, a qué grupo, clase y columna, y cuántas notas.
-- Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
-- La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
 
 ---
 
