@@ -624,6 +624,8 @@
 <script>
 (() => {
   const CFG = window.CUADERNO_CONFIG || {};
+  // Conexión con la libreta de clase (Portafolio de Clase): extensión a futuro, apagada salvo LIBRETA: true en config.js
+  const LIBRETA = CFG.LIBRETA === true;
   const API_URL = String(CFG.API_URL || '').trim();
   const AUTORA = String(CFG.AUTORA || '').trim();
 
@@ -1222,7 +1224,7 @@
       if (tp) { pga.template = tp.dataset.tpl; persist(); render(); return; }
       if (t.closest('#editPage2')) return openPageDialog(pga);
       if (t.closest('#resCsv')) return downloadResultsCsv(pga);
-      if (t.closest('#resPorta')) return openPorta(pga);
+      if (LIBRETA && t.closest('#resPorta')) return openPorta(pga);
       if (t.closest('#resAnep')) return copiarAnep(pga);
       if (t.closest('#resRefresh')) { loadResults(pga.id); return; }
       const rr = t.closest('[data-resreset]');
@@ -1250,7 +1252,7 @@
       if (t.closest('#pzAnon')) return flip('anonymous', 'Los compañeros las ven sin nombre', 'Los compañeros ven los nombres');
       if (t.closest('#pzFeed')) return flip('feedback', 'Cada estudiante ve su nota y devolución', 'Devoluciones ocultas');
       if (t.closest('#pzCsv')) return downloadCsv(pgz);
-      if (t.closest('#pzPorta')) return openPorta(pgz);
+      if (LIBRETA && t.closest('#pzPorta')) return openPorta(pgz);
       if (t.closest('#pzAnep')) return copiarAnep(pgz);
       if (t.closest('#pzRefresh')) { loadResponses(pgz.id); return; }
       if (t.closest('#copyLink2')) return copy(`${baseUrl()}?p=${encodeURIComponent(pgz.slug)}`);
@@ -1309,7 +1311,7 @@
         <button class="pill" id="pzAnon" title="Cómo ven los compañeros las respuestas">${pg.anonymous ? '👤 Compañeros: sin nombre' : '👤 Compañeros: con nombre'}</button>
         <button class="pill ${pg.feedback ? 'on' : ''}" id="pzFeed" title="Cada estudiante ve su nota y devolución">${pg.feedback ? '📝 Devoluciones visibles' : '📝 Devoluciones ocultas'}</button>
         <button class="btn small" id="pzCsv">Descargar CSV</button>
-        <button class="btn small" id="pzPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button><button class="btn small" id="pzAnep" title="Copia nombre y nota para pegarlos en el Portafolio Docente de ANEP con el marcador «Pegar notas» (ver anep.html)">📋 Copiar para ANEP</button>
+        ${LIBRETA ? '<button class="btn small" id="pzPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button>' : ''}<button class="btn small" id="pzAnep" title="Copia nombre y nota para pegarlos en el Portafolio Docente de ANEP con el marcador «Pegar notas» (ver anep.html)">📋 Copiar para ANEP</button>
         <button class="linkbtn" id="pzRefresh">actualizar</button>
       </div>
       <p class="pz-count"><b>${list.length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} respondieron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
@@ -1457,7 +1459,7 @@
           <td>${rs.length ? `<button class="linkbtn" data-resreset="${esc(n)}">reiniciar</button>` : ''}</td></tr>`; }).join('')}
       </tbody></table></div>
       ${list.some(r => !r.verificado) ? `<p class="hint">⚠ = puntaje calculado en el navegador del estudiante, que se puede falsificar${(window.Actividades && Actividades.VERIFICABLES.includes(pg.template)) ? ' (resultados guardados antes de la corrección en el servidor)' : '. Esta plantilla no se puede corregir en el servidor: usarla para practicar, no para notas'}.</p>` : ''}
-      <div class="act-switch"><button class="btn small" id="resCsv">Descargar CSV</button><button class="btn small" id="resPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button><button class="btn small" id="resAnep" title="Copia nombre y nota para pegarlos en el Portafolio Docente de ANEP con el marcador «Pegar notas» (ver anep.html)">📋 Copiar para ANEP</button><button class="linkbtn" id="resRefresh">actualizar</button></div></div>`;
+      <div class="act-switch"><button class="btn small" id="resCsv">Descargar CSV</button>${LIBRETA ? '<button class="btn small" id="resPorta" title="Pasar las notas a la libreta del Portafolio">📒 Pasar al Portafolio</button>' : ''}<button class="btn small" id="resAnep" title="Copia nombre y nota para pegarlos en el Portafolio Docente de ANEP con el marcador «Pegar notas» (ver anep.html)">📋 Copiar para ANEP</button><button class="linkbtn" id="resRefresh">actualizar</button></div></div>`;
   }
   function downloadResultsCsv(pg) {
     const T = window.Actividades ? Actividades.TEMPLATES : {};
@@ -1913,6 +1915,7 @@
 
   /* Texto con la última vez que las notas de esta página se pasaron a la libreta (Portafolio) */
   function portaInfo(pg) {
+    if (!LIBRETA) return '';
     const h = (pg.porta || [])[0];
     if (!h) return '<p class="pz-count porta-info">📒 Todavía no se pasaron notas a la libreta.</p>';
     const f = s => { const [y, m, d] = String(s).split('-'); return `${d}/${m}/${y}`; };

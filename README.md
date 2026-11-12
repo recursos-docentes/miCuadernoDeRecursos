@@ -84,7 +84,7 @@ El cuaderno abre en el **Índice**: todos los grupos con sus páginas, como el �
 1. Tipo **🧑‍🏫 Pizarrón**, con una consigna. Los videos y contenidos incrustados de la página aparecen abiertos debajo de la consigna.
 2. Cada estudiante elige su nombre de la lista, escribe y envía. Puede corregir su respuesta hasta que se muestren todas, desde el mismo dispositivo.
 3. Las respuestas empiezan **ocultas**: el servidor no le manda a nadie las de los demás; solo se ve cuántos respondieron.
-4. Vista docente: quién falta, **nota y devolución** por respuesta (se guardan solas), «Descargar CSV», «📒 Pasar al Portafolio» y «borrar respuesta» (para que alguien vuelva a responder).
+4. Vista docente: quién falta, **nota y devolución** por respuesta (se guardan solas), «Descargar CSV», «📋 Copiar para ANEP» y «borrar respuesta» (para que alguien vuelva a responder).
 5. Botones de estado: recibiendo / no recibe respuestas · respuestas ocultas / visibles para todos · compañeros con nombre / sin nombre · devoluciones ocultas / visibles (cada estudiante ve solo la suya, en el dispositivo desde el que respondió).
 
 ## Actividades (estilo Wordwall)
@@ -141,10 +141,10 @@ Una **ruleta sin contenido** gira con los nombres de la lista del grupo.
 **Corrección en el servidor (🔒)**: con registro, **Unir, Clasificar, Verdadero o falso, Ordenar líneas, Diagrama etiquetado y Crucigrama** se corrigen en el Apps Script. La página del estudiante recibe los elementos mezclados, sin las soluciones (con F12 no se ven), y el puntaje lo calcula el servidor (no se puede falsificar).
 - Con registro no hay pistas durante el juego: en Verdadero o falso no se ve el acierto al momento, en Ordenar líneas se entregan todos los ejercicios juntos, y el crucigrama se entrega una vez. En práctica libre todo sigue igual que antes.
 - La respuesta correcta (por ejemplo, la etiqueta que iba en el diagrama) solo se muestra si la actividad es de **un solo intento**; si se permiten varios, solo se marca qué estuvo bien y qué no. **Para una nota, usar un solo intento.**
-- Las otras plantillas (memotest, sopa, ahorcado, topo, globos, tarjetas) necesitan las respuestas en la página para funcionar: con registro se pueden usar, pero su puntaje se marca con ⚠ («no verificado») en los resultados y al pasar al Portafolio. Sirven para practicar, no para notas. El editor lo avisa al elegir la plantilla.
+- Las otras plantillas (memotest, sopa, ahorcado, topo, globos, tarjetas) necesitan las respuestas en la página para funcionar: con registro se pueden usar, pero su puntaje se marca con ⚠ («no verificado») en los resultados y al copiar para ANEP. Sirven para practicar, no para notas. El editor lo avisa al elegir la plantilla.
 - Los resultados guardados antes de esta versión también aparecen con ⚠.
 
-**Tiempo límite** (opcional, en minutos): se ve un reloj; al terminarse, el juego se cierra y se guarda lo hecho hasta ese momento. En el memotest y la sopa de letras también hay un botón **Terminar** que guarda lo hecho (en el memotest, el puntaje descuenta los intentos de más: 10 parejas en 10 intentos = 10; en 20 intentos = 5). Vista docente: mejor resultado, último, intentos, quién falta, «reiniciar», «Descargar CSV» y «📒 Pasar al Portafolio». Lo que juega la docente en su vista es una vista previa y no se registra.
+**Tiempo límite** (opcional, en minutos): se ve un reloj; al terminarse, el juego se cierra y se guarda lo hecho hasta ese momento. En el memotest y la sopa de letras también hay un botón **Terminar** que guarda lo hecho (en el memotest, el puntaje descuenta los intentos de más: 10 parejas en 10 intentos = 10; en 20 intentos = 5). Vista docente: mejor resultado, último, intentos, quién falta, «reiniciar», «Descargar CSV» y «📋 Copiar para ANEP». Lo que juega la docente en su vista es una vista previa y no se registra.
 
 ## Modo bloqueado
 
@@ -191,7 +191,21 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
 
+## Extensiones a futuro
 
+### Pasar notas al Portafolio de Clase
+
+Ya está programado en el cuaderno, pero está **apagado**: no se ve ningún botón ni texto de la libreta. Para encenderlo, cuando se use la libreta de clase de la docente (Portafolio de Clase), agregar `LIBRETA: true` en `config.js`. En los resultados de un pizarrón o de una actividad con registro, el botón **📒 Pasar al Portafolio** pasa las notas a esa libreta:
+
+1. Elegir el **grupo del Portafolio** (se propone el más parecido y después se recuerda) y la **clase** (por defecto, la última dictada). «+ Clase nueva…» crea una clase, que cuenta como horas dictadas para las faltas.
+2. **Nombre de la columna**: si coincide con una ya usada (por ejemplo «Escrito»), el Portafolio las promedia juntas.
+3. Revisar la tabla: nota de cada estudiante y con quién se empareja en el Portafolio (se emparejan solos por nombre, sin importar mayúsculas, tildes ni el orden nombre/apellido). Las notas se pueden corregir.
+4. **Pasar notas**: se guardan como columna de nota de ese día, sin tocar asistencia ni lo demás.
+
+- Actividades: el puntaje llevado a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6) (el mejor intento, el primero o el último). Si el puntaje no fue corregido en el servidor, la tabla lo marca «⚠ no verificado». Pizarrones: la nota puesta en cada respuesta.
+- En la página queda escrito **cuándo se pasó a la libreta**, a qué grupo, clase y columna, y cuántas notas.
+- Es una **copia**: borrar o cambiar una nota en el cuaderno no la cambia en la libreta. Para actualizarla, volver a pasarla a la misma clase y columna (pregunta antes de reemplazar), o corregirla en el Portafolio.
+- La conexión usa la misma URL y clave del Portafolio; si el Portafolio ya está conectado en ese navegador, se toma sola.
 
 ---
 
