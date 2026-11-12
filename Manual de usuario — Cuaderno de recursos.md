@@ -207,3 +207,14 @@ Las notas de actividades y pizarrones se copian del cuaderno y se pegan en una e
 - Los datos (notas, páginas, respuestas, resultados) viven en la planilla de Google; el repositorio solo tiene el código. No subir respaldos ni listas de estudiantes a un repositorio público.
 - Para notas que cuentan, usar actividades 🔒 con un solo intento, o un pizarrón calificado a mano.
 - El cuaderno no es una herramienta oficial de ANEP: lo que se pega en el Portafolio se revisa antes de guardar.
+
+---
+
+<div align="center">
+
+***
+
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licencia Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a> 
+
+####  **Prof. Elizabeth Izquierdo con asistencia de Claude**
+</div>
