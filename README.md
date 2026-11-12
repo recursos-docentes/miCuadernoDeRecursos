@@ -14,6 +14,8 @@ Las páginas compartidas usan esa misma dirección con `?p=` y el nombre de la p
 | `actividades.js` | repo de GitHub, junto a `index.html` | Los juegos de las páginas de actividad |
 | `config.js` | repo de GitHub, junto a `index.html` | La URL de Apps Script y el nombre de la autora |
 | `Codigo.gs` | Apps Script, dentro de una planilla de Google | El servidor |
+| `anep.html` | repo de GitHub, junto a `index.html` | Instala el marcador «📋 Pegar notas» para el Portafolio de ANEP |
+| `imagen/` | repo de GitHub | Imágenes para las actividades (por ejemplo, los diagramas etiquetados) |
 
 Sin conectar la planilla, el cuaderno funciona igual, pero todo queda guardado **solo en ese navegador** y no se pueden compartir páginas.
 
@@ -172,9 +174,15 @@ En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar 
 
 ## Pasar notas al Portafolio Docente de ANEP
 
-En los resultados de una actividad o de un pizarrón: **📋 Copiar para ANEP** copia nombre, nota y un comentario. Después, en el Portafolio de ANEP, se abre la evaluación grupal (o el cierre del período) y se toca el marcador **📋 Pegar notas**, que completa los casilleros emparejando los nombres. **No guarda**: se revisa y se aprieta «Guardar» en el Portafolio.
+1. **Instalar el marcador** (una sola vez): abrir [anep.html](https://recursos-docentes.github.io/miCuadernoDeRecursos/anep.html) y arrastrar el botón **📋 Pegar notas** a la barra de marcadores.
+2. **Copiar las notas**: en los resultados de una actividad con registro o en el panel de un pizarrón, **📋 Copiar para ANEP** (copia nombre, nota y un comentario).
+3. **Crear la evaluación en el Portafolio**: Calificaciones → Evaluar a todo el grupo → Nueva evaluación grupal, con «Calificaciones del 1 al 10».
+4. **Pegar**: con la evaluación abierta, tocar el marcador **📋 Pegar notas** → **Completar**. Si se quiere el comentario (por ejemplo «Unir con flechas: 3/4» o la devolución del pizarrón), marcar «Escribir también el comentario».
+5. **Revisar y guardar**: las notas puestas quedan en verde y los casilleros sin nota en amarillo; el cuadro avisa nombres dudosos o que no están. **El marcador no guarda**: se aprieta «Guardar» en el Portafolio.
 
-El marcador se instala una sola vez desde [anep.html](https://recursos-docentes.github.io/miCuadernoDeRecursos/anep.html) (arrastrándolo a la barra de marcadores). También sirve con lo copiado desde la Libreta de clase (pestaña Resumen) o desde dos columnas de cualquier planilla. En la misma página está el marcador **📥 Copiar faltas**, que copia las faltas fictas de «Evaluación individual» para los juicios de la Libreta. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
+- Actividades: el puntaje se lleva a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6); con varios intentos se copia el mejor. Los puntajes ⚠ no verificados piden confirmación antes de copiarse. Pizarrones: la nota puesta en cada respuesta.
+- Los nombres se emparejan sin importar mayúsculas, tildes ni el orden nombre/apellido; conviene que la lista del grupo tenga los nombres como en el Portafolio.
+- El marcador también sirve con lo copiado desde la Libreta de clase o desde dos columnas de cualquier planilla. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
 
 ## Hojas de la planilla
 
