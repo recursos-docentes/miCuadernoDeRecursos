@@ -1,6 +1,6 @@
 # Manual de usuario — Cuaderno de recursos
 
-Nov 12, 2026 · @Someone
+Nov 12, 2026
 
 El Cuaderno de recursos es una sola página web: el docente entra con su clave y ve todo; cada estudiante ve solo la página cuyo link recibe. Este manual parte de un cuaderno ya instalado y conectado a la planilla de Google.
 
