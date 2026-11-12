@@ -174,7 +174,7 @@ En los resultados de un pizarrón o de una actividad con registro: **📒 Pasar 
 
 En los resultados de una actividad o de un pizarrón: **📋 Copiar para ANEP** copia nombre, nota y un comentario. Después, en el Portafolio de ANEP, se abre la evaluación grupal (o el cierre del período) y se toca el marcador **📋 Pegar notas**, que completa los casilleros emparejando los nombres. **No guarda**: se revisa y se aprieta «Guardar» en el Portafolio.
 
-El marcador se instala una sola vez desde [anep.html](https://recursos-docentes.github.io/miCuadernoDeRecursos/anep.html) (arrastrándolo a la barra de marcadores). También sirve con lo copiado desde la Libreta de clase (pestaña Resumen) o desde dos columnas de cualquier planilla. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
+El marcador se instala una sola vez desde [anep.html](https://recursos-docentes.github.io/miCuadernoDeRecursos/anep.html) (arrastrándolo a la barra de marcadores). También sirve con lo copiado desde la Libreta de clase (pestaña Resumen) o desde dos columnas de cualquier planilla. En la misma página está el marcador **📥 Copiar faltas**, que copia las faltas fictas de «Evaluación individual» para los juicios de la Libreta. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
 
 ## Hojas de la planilla
 
@@ -207,4 +207,3 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 
 ####  **Prof. Elizabeth Izquierdo con asistencia de Claude**
 </div>
-
