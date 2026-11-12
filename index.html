@@ -1050,7 +1050,7 @@
       const pub = pg.visibility === 'publica';
       head = `<div class="page-head">
         <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : pg.type === 'actividad' ? '🎮 ' : ''}${esc(pg.title)}</h2>
-        ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span><button class="linkbtn" id="newCode" title="Si el código se usó delante de los estudiantes, conviene cambiarlo">nuevo código</button>` : ''}
+        ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span><button class="linkbtn" id="newCode" title="Si el código se usó delante de los estudiantes, conviene cambiarlo">nuevo código</button><button class="btn small" id="endLock" title="Desbloquea a todos y deja salir de la pantalla completa sin que quede registrado">🔓 Liberar a todos</button>` : pg.code && mode === 'owner' ? `<button class="linkbtn" id="reLock" title="Vuelve a pedir pantalla completa a quien abra la página">🔒 volver a bloquear</button>` : ''}
         ${pg.type !== 'recursos' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
         ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}&prueba=1" target="_blank" rel="noopener" title="Abre la página como la ve un estudiante, empezando de cero">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
@@ -1139,7 +1139,8 @@
       '';
     refresh();
     if (isPz) renderPzPublic();
-    if (isPz || pubPage.locked) pzTimer = setInterval(pollPublic, 20000);
+    if (pubPage.locked) pubFueBloqueada = true;
+    if (isPz || pubPage.locked || pubFueBloqueada) pzTimer = setInterval(pollPublic, 20000);
   }
 
   /* ---------------- eventos ---------------- */
@@ -1210,6 +1211,14 @@
       return;
     }
     if (t.closest('#incRefresh')) { const pg = pages.find(p => p.id === view); if (pg) loadIncidents(pg.id); return; }
+    if (t.closest('#endLock') || t.closest('#reLock')) {
+      const pg = pages.find(p => p.id === view); if (!pg) return;
+      const fin = !!t.closest('#endLock');
+      if (fin && !confirm('¿Liberar a todos?\nSe desbloquean los que están bloqueados y todos pueden salir de la pantalla completa sin que quede registrado. En sus pantallas pasa en menos de medio minuto.\nPara volver a usar el modo bloqueado: «🔒 volver a bloquear».')) return;
+      pg.locked = !fin; persist(); render();
+      toast(fin ? 'Modo bloqueado terminado: en menos de medio minuto quedan todos libres.' : 'Modo bloqueado activado: quien abra la página (o la tenga abierta) tiene que tocar «Comenzar».');
+      return;
+    }
     if (t.closest('#newCode')) {
       const pg = pages.find(p => p.id === view); if (!pg) return;
       if (!confirm('¿Generar un código de desbloqueo nuevo? El anterior deja de servir.')) return;
@@ -1398,12 +1407,14 @@
       else { ls.del(pzKey()); mine = null; myFeedback = null; } // la respuesta fue borrada
     } catch (e) {}
   }
+  var pubFueBloqueada = false;
   async function pollPublic() {
     try {
       const r = await api({ accion: 'publico', p: pubPage.slug });
       if (!r.ok) return;
       Object.assign(pubPage, r.pagina); pubResp = r.respuestas || [];
       if (guardsOn && !pubPage.locked) { releaseLock(); render(); return; } // la docente desactivó el modo bloqueado
+      if (!guardsOn && pubPage.locked) { render(); return; }                // la docente lo volvió a activar: pide «Comenzar»
       if (pubPage.type !== 'pizarron') return;
       await loadMine();
       renderPzPublic();
@@ -1676,6 +1687,8 @@
     guardsOn = false; lockedNow = false;
     const o = $('#lockOverlay'); if (o) o.remove();
     const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+    toast('La docente terminó el modo bloqueado: ya se puede salir de la página.');
   }
   document.addEventListener('click', e => { if (e.target.closest('#lkUnlock')) tryUnlock(); if (e.target.closest('#lkResume')) unlockDone(); });
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'lkCode') tryUnlock(); });

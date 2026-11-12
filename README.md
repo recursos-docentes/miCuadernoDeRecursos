@@ -157,7 +157,7 @@ En «editar página», **🔒 Modo bloqueado** (para cualquier tipo de página),
 - También se puede escribir el código en esa computadora. Si se usó delante de los estudiantes, «nuevo código» (al lado del código) genera otro.
 - No marcar «Recordar en este dispositivo» al entrar desde una computadora de estudiantes: la clave quedaría guardada en ese navegador.
 - Vista docente: **Registro del modo bloqueado** (quién salió, cuándo, cuántas veces); en pizarrones, columna «Salidas» en el CSV.
-- Al desmarcar el modo bloqueado, se libera en todas las computadoras en menos de medio minuto.
+- **🔓 Liberar a todos** (arriba de la página, al lado del código): termina el modo bloqueado para todo el grupo, por ejemplo cuando ya respondieron todos. Los bloqueados se desbloquean y todos pueden salir de la pantalla completa sin que quede registrado; en sus pantallas pasa en menos de medio minuto. **🔒 volver a bloquear** lo activa otra vez, con el mismo código: quien tenga la página abierta vuelve a tocar «Comenzar».
 
 ## Pasar notas al Portafolio Docente de ANEP
 
