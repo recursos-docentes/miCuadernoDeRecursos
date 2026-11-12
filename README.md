@@ -59,6 +59,7 @@ El cuaderno abre en el **Índice**: todos los grupos con sus páginas, como el �
 
 - La primera vez, el Índice ofrece crear los grupos escribiendo uno por línea. Después: pestaña **+** para uno nuevo y «editar grupo» para renombrarlo, cambiarle el color o borrarlo (sus páginas pasan a «Sin grupo», no se borran).
 - **Lista de estudiantes del grupo**: en «editar grupo», un nombre por línea (se puede pegar una columna de Google Sheets). La usan todas las páginas del grupo: pizarrones, actividades con registro, modo bloqueado y ruletas sin contenido. Una página puede tener su propia lista (por ejemplo, un subgrupo); si se deja vacía, usa la del grupo.
+- **✂️ Acortar nombres de ANEP** (debajo de la lista): convierte los nombres pegados del Portafolio («PÉREZ GÓMEZ, ANA MARÍA») en «Ana Pérez». Si dos quedan iguales, les agrega el segundo apellido (y, si hace falta, el segundo nombre). Quita el número de lista y la cédula; los renglones sin coma quedan como están; «deshacer» vuelve a la lista pegada. El paso de notas al Portafolio los sigue reconociendo.
 - Al tocar la pestaña de un grupo, arriba aparecen solo sus páginas. «📚 Todo» muestra todas las notas.
 - **Copiar una página a otro grupo**: en la página, «copiar a otro grupo». Se crea una copia con su propio link y sus propios resultados, con la misma consigna, contenido y materiales.
 
@@ -167,7 +168,7 @@ En «editar página», **🔒 Modo bloqueado** (para cualquier tipo de página),
 5. **Revisar y guardar**: las notas puestas quedan en verde y los casilleros sin nota en amarillo; el cuadro avisa nombres dudosos o que no están. **El marcador no guarda**: se aprieta «Guardar» en el Portafolio.
 
 - Actividades: el puntaje se lleva a 10, con mínimo 1 (4 de 10 → 4; 7 de 12 → 6); con varios intentos se copia el mejor. Los puntajes ⚠ no verificados piden confirmación antes de copiarse. Pizarrones: la nota puesta en cada respuesta.
-- Los nombres se emparejan sin importar mayúsculas, tildes ni el orden nombre/apellido; conviene que la lista del grupo tenga los nombres como en el Portafolio.
+- Los nombres se emparejan sin importar mayúsculas, tildes ni el orden nombre/apellido; conviene que la lista del grupo salga del Portafolio (completa o acortada con «✂️ Acortar nombres de ANEP»).
 - El marcador también sirve con lo copiado desde dos columnas de cualquier planilla. Todo pasa dentro del navegador; no es una herramienta oficial de ANEP.
 
 ## Hojas de la planilla
@@ -190,7 +191,6 @@ No conviene editar estas hojas a mano: el cuaderno las reescribe al guardar.
 - Cualquiera puede elegir de la lista el nombre de un compañero. Con un solo intento eso le «gasta» el intento, pero queda registrado con la hora y se nota enseguida.
 - El modo bloqueado no puede bloquear la computadora: no detecta un celular al lado ni otra pantalla, y con las herramientas del navegador ya abiertas alguien con conocimientos podría quitar la pantalla de bloqueo (lo que sí queda es el registro de la salida). En iPhone/iPad no hay pantalla completa para páginas web.
 - Algunos sitios no permiten mostrarse dentro de otra página; esos no se ven incrustados.
-
 
 ---
 

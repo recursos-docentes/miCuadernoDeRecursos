@@ -1,6 +1,6 @@
 # Manual de usuario — Cuaderno de recursos
 
-Nov 12, 2026
+Nov 12, 2026 · @Someone
 
 El Cuaderno de recursos es una sola página web: el docente entra con su clave y ve todo; cada estudiante ve solo la página cuyo link recibe. Este manual parte de un cuaderno ya instalado y conectado a la planilla de Google.
 
@@ -32,10 +32,11 @@ Cada grupo (por ejemplo «Lógica, La Paz») es una pestaña a la derecha y junt
 - **Índice:** la primera pestaña. Muestra cada grupo con sus páginas, cuántos estudiantes tiene y los enlaces **+ página** y **editar grupo**. Tocar el nombre de una página la abre. Los íconos indican si es pública (🌐), privada (🔒) o bloqueada (🔐).
 - **Crear un grupo:** la pestaña **+** al pie de las pestañas. En el nombre, la materia va en el primer renglón y el lugar en el segundo («Prog1» / «La Paz»).
 - **Editar un grupo:** **editar grupo** en el índice. Ahí se cambia el nombre, el color, se borra el grupo, y se carga la **lista de estudiantes**: un nombre por renglón (se puede pegar una columna de una planilla).
+- **Lista copiada del Portafolio de ANEP:** pegar la columna de nombres y tocar **✂️ Acortar nombres de ANEP**, debajo de la lista. «PÉREZ GÓMEZ, ANA MARÍA» queda «Ana Pérez»; si dos quedan iguales, se les agrega el segundo apellido (y, si hace falta, el segundo nombre). Quita el número de lista y la cédula. **deshacer** vuelve a la lista pegada. Revisar y **Guardar**.
 - **Para qué sirve la lista:** la usan todas las páginas del grupo: pizarrones, actividades con registro, modo bloqueado y ruletas sin contenido. Una página puede tener su propia lista (por ejemplo, un subgrupo); si se deja vacía, usa la del grupo.
 - **Sin grupo:** las páginas que no pertenecen a ningún grupo.
 
-Conviene escribir los nombres como figuran en el Portafolio de ANEP: así el paso de notas los empareja solo.
+Conviene que la lista salga del Portafolio de ANEP, completa o acortada: así el paso de notas empareja los nombres solo.
 
 ## Notas
 
@@ -207,14 +208,3 @@ Las notas de actividades y pizarrones se copian del cuaderno y se pegan en una e
 - Los datos (notas, páginas, respuestas, resultados) viven en la planilla de Google; el repositorio solo tiene el código. No subir respaldos ni listas de estudiantes a un repositorio público.
 - Para notas que cuentan, usar actividades 🔒 con un solo intento, o un pizarrón calificado a mano.
 - El cuaderno no es una herramienta oficial de ANEP: lo que se pega en el Portafolio se revisa antes de guardar.
-
----
-
-<div align="center">
-
-***
-
-<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licencia Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a> 
-
-####  **Prof. Elizabeth Izquierdo con asistencia de Claude**
-</div>
