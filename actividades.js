@@ -1,4 +1,3 @@
-
 /* Actividades interactivas del Cuaderno de recursos (estilo Wordwall).
    Todas las plantillas usan el mismo contenido: una lista de pares { a, b }.
    Uso: Actividades.play(elemento, { template, pairs, onResult(puntaje, total, segundos, detalle), canReplay }) */
@@ -992,7 +991,7 @@
       if (ctx) ctx.clear();
       ctx = makeCtx();
       const limit = t.scored ? Math.max(0, Number(opts.timeLimit) || 0) : 0;
-      el.innerHTML = `<div class="act"><div class="act-head"><b>${t.icon} ${esc(t.name)}</b><span>${esc(t.help)}${limit ? ` Tiempo: ${limit} min.` : ''}</span>${limit ? '<span class="act-timer" aria-live="off"></span>' : ''}</div><div class="act-stage"></div></div>`;
+      el.innerHTML = `<div class="act"><div class="act-head"><b>${t.icon} ${esc(t.name)}</b><span>${esc(remoto ? t.help.replace('«Comprobar»', '«Entregar»') : t.help)}${limit ? ` Tiempo: ${limit} min.` : ''}</span>${limit ? '<span class="act-timer" aria-live="off"></span>' : ''}</div><div class="act-stage"></div></div>`;
       const stage = el.querySelector('.act-stage');
       const minimo = key === 'memotest' || key === 'unir' ? 2 : 1;
       if (!remoto && pairs.length < minimo) { stage.innerHTML = '<p class="act-info">Esta actividad todavía no tiene contenido.</p>'; return; }
@@ -1064,3 +1063,4 @@
  
   window.Actividades = { TEMPLATES, VERIFICABLES, play, parse, format, imgUrl, diagramOf, nVista, nCorregir };
 })();
+ 
