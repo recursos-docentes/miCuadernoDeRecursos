@@ -1479,10 +1479,11 @@
     w.innerHTML = `<div class="res-wrap"><h3>Resultados</h3>
       ${portaInfo(pg)}
       <p class="pz-count"><b>${Object.keys(by).length}</b>${roster.length ? ` de <b>${roster.length}</b>` : ''} jugaron${missing.length ? ` · <span class="missing">Faltan: ${missing.map(esc).join(', ')}</span>` : ''}</p>
-      <div style="overflow:auto"><table class="res-table"><thead><tr><th>Estudiante</th><th>Mejor</th><th>Último</th><th>Intentos</th><th>Tiempo (último)</th><th></th></tr></thead><tbody>
+      <div style="overflow:auto"><table class="res-table"><thead><tr><th>Estudiante</th><th>Nota</th><th>Mejor</th><th>Último</th><th>Intentos</th><th>Tiempo (último)</th><th></th></tr></thead><tbody>
       ${names.map(n => { const rs = by[n] || [], best = rs.slice().sort((a, b) => pct(b) - pct(a))[0], last = rs[rs.length - 1];
         const nv = r => r && !r.verificado ? ' <span class="noverif" title="Puntaje calculado en el navegador del estudiante: se puede falsificar">⚠</span>' : '';
-        return `<tr><td>${esc(n)}</td><td>${best ? `${best.puntaje}/${best.total} (${pct(best)}%)${nv(best)}` : '—'}</td><td>${last ? `${last.puntaje}/${last.total}${nv(last)}` : '—'}</td>
+        const nota = best && best.total ? Math.max(1, Math.min(10, Math.round(10 * best.puntaje / best.total))) : '';
+        return `<tr><td>${esc(n)}</td><td class="res-nota" title="Mejor puntaje llevado a 10 (mínimo 1): la que se copia para ANEP">${nota === '' ? '—' : `<b>${nota}</b>${nv(best)}`}</td><td>${best ? `${best.puntaje}/${best.total} (${pct(best)}%)${nv(best)}` : '—'}</td><td>${last ? `${last.puntaje}/${last.total}${nv(last)}` : '—'}</td>
           <td>${rs.length || ''}</td><td>${last ? mmss(last.segundos) + (last.detalle ? ' · ' + esc(last.detalle) : '') : ''}</td>
           <td>${rs.length ? `<button class="linkbtn" data-resreset="${esc(n)}">reiniciar</button>` : ''}</td></tr>`; }).join('')}
       </tbody></table></div>
