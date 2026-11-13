@@ -386,7 +386,7 @@
     root.innerHTML = `<div class="act-unir"><svg class="act-lines"></svg>
       <div class="col">${V.izq.map((t, i) => `<button class="act-chip" data-l="${i}">${esc(t)}</button>`).join('')}</div>
       <div class="col">${V.der.map((t, j) => `<button class="act-chip" data-r="${j}">${esc(t)}</button>`).join('')}</div></div>
-      <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+      <div class="act-bar"><button class="act-btn" data-check>${ctx.practica ? 'Comprobar' : 'Entregar'}</button></div>`;
     const box = root.querySelector('.act-unir'), svg = root.querySelector('svg');
     const links = {}; let selL = null, selR = null, checked = false, res = null;
     function draw() {
@@ -837,7 +837,7 @@
       const chip = x => `<button type="button" class="chip2${sel === x.i ? ' sel' : ''}" draggable="true" data-i="${x.i}">${esc(x.t)}</button>`;
       root.innerHTML = `<div class="act-sort"><div class="pool" data-bin="">${items.filter(x => place[x.i] == null).map(chip).join('')}</div>
         <div class="bins">${groups.map((g, k) => `<div class="bin" data-bin="${esc(g)}" style="--bc:${COLORS[k % COLORS.length]}"><h4>${esc(g)}</h4>${items.filter(x => place[x.i] === g).map(chip).join('')}</div>`).join('')}</div></div>
-        <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+        <div class="act-bar"><button class="act-btn" data-check>${ctx.practica ? 'Comprobar' : 'Entregar'}</button></div>`;
     }
     function put(i, g) { if (checked) return; if (g === '' || g == null) delete place[i]; else place[i] = g; sel = null; paint(); }
     function check(wait) {
@@ -922,7 +922,7 @@
         ${pins.map((p, k) => `<button type="button" class="pin${at[k] != null ? ' filled' : ''}" data-pin="${k}" style="left:${p.x}%;top:${p.y}%"
           aria-label="Punto ${k + 1}${at[k] != null ? ': ' + esc(labs[at[k]]) : ''}">${at[k] != null ? esc(labs[at[k]]) : k + 1}</button>`).join('')}</div>
         <div class="bank">${labs.map((t, i) => i).filter(i => where(i) == null).map(i => `<button type="button" class="lab${sel === i ? ' sel' : ''}" draggable="true" data-lab="${i}">${esc(labs[i])}</button>`).join('')}</div></div>
-        <div class="act-bar"><button class="act-btn" data-check>Comprobar</button></div>`;
+        <div class="act-bar"><button class="act-btn" data-check>${ctx.practica ? 'Comprobar' : 'Entregar'}</button></div>`;
     }
     function put(i, k) {
       if (checked) return;
