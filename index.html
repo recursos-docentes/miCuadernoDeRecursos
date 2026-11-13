@@ -1299,11 +1299,21 @@
   /* ---------------- pizarrón: vista docente ---------------- */
   let pzTimer = null, pzList = [], pzFor = null;
   function stopPz() { clearInterval(pzTimer); pzTimer = null; }
+  /* Notas y devoluciones escritas que el servidor todavía no confirmó: una actualización automática
+     que llega mientras se guardan no debe borrarlas (pasaba con la última nota escrita antes de copiar). */
+  const pzPend = {};
+  const conPendientes = list => list.map(r => pzPend[r.id] ? Object.assign({}, r, pzPend[r.id]) : r);
+  // lo que está escrito en los casilleros de la pantalla manda, aunque todavía no se haya guardado
+  function syncNotasPantalla() {
+    document.querySelectorAll('#pzWrap [data-grade]').forEach(g => {
+      const r = pzList.find(x => x.id === g.dataset.id); if (r) r[g.dataset.grade] = g.value;
+    });
+  }
   async function loadResponses(pageId, quiet) {
     if (mode !== 'owner') return;
     try {
       const r = await api({ accion: 'respuestas', clave, pagina: pageId });
-      if (r.ok) { pzList = r.respuestas || []; pzFor = pageId; const pg = pages.find(p => p.id === pageId); if (pg && view === pageId) renderPzOwner(pg); }
+      if (r.ok) { pzList = conPendientes(r.respuestas || []); pzFor = pageId; const pg = pages.find(p => p.id === pageId); if (pg && view === pageId) renderPzOwner(pg); }
       else if (!quiet) toast(r.error || 'No se pudieron traer las respuestas');
     } catch (e) { if (!quiet) toast('No se pudieron traer las respuestas'); }
   }
@@ -1341,6 +1351,7 @@
     </section>`;
   }
   function downloadCsv(pg) {
+    syncNotasPantalla();
     const roster = rosterOf(pg), by = {};
     pzList.forEach(r => by[r.estudiante] = r);
     const names = [...roster, ...pzList.map(r => r.estudiante).filter(n => !roster.includes(n))];
@@ -1358,9 +1369,12 @@
   app.addEventListener('change', async e => {
     const g = e.target.closest('[data-grade]'); if (!g || mode !== 'owner') return;
     const r = pzList.find(x => x.id === g.dataset.id); if (r) r[g.dataset.grade] = g.value;
+    const id = g.dataset.id, campo = g.dataset.grade, valor = g.value;
+    (pzPend[id] ||= {})[campo] = valor;
     setStatus('Guardando nota…', 'wait');
     try {
-      const res = await api({ accion: 'calificar', clave, id: g.dataset.id, [g.dataset.grade]: g.value });
+      const res = await api({ accion: 'calificar', clave, id, [campo]: valor });
+      if (res.ok && pzPend[id] && pzPend[id][campo] === valor) { delete pzPend[id][campo]; if (!Object.keys(pzPend[id]).length) delete pzPend[id]; }
       setStatus(res.ok ? 'Nota guardada ✓' : (res.error || 'No se pudo guardar'), res.ok ? 'ok' : 'err');
     } catch (err) { setStatus('Sin conexión: la nota no se guardó', 'err'); }
   });
@@ -1632,8 +1646,13 @@
       }
     }, true);
   }
+  // al tocar «Seguir», volver a pantalla completa tarda un instante y algunos equipos (Windows, dos pantallas)
+  // disparan en ese momento un «salió» o «cambió de ventana» que no es real: se ignoran durante unos segundos
+  let graciaHasta = 0;
   function showLock(detalle, doReport = true) {
     if (lockedNow) return;
+    if (detalle && Date.now() < graciaHasta) return;
+    { const f = document.getElementById('fsAsk'); if (f) f.remove(); }
     lockedNow = true;
     const st = ls.json(lkKey(), {}); st.locked = true; ls.set(lkKey(), JSON.stringify(st));
     // mientras está bloqueada, pregunta cada pocos segundos si la docente la desbloqueó desde su cuaderno
@@ -1668,11 +1687,28 @@
   }
   function unlockDone() {
     clearInterval(lockPoll);
-    goFs();
+    graciaHasta = Date.now() + 2500;
     lockedNow = false;
     const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
     const o = $('#lockOverlay'); if (o) o.remove();
+    goFs();
+    // si el navegador no volvió a pantalla completa, se pide con un botón (no es una salida: no se bloquea ni se registra)
+    setTimeout(revisarTrasGracia, 2600);
   }
+  function revisarTrasGracia() {
+    if (!guardsOn || lockedNow) return;
+    if (document.hidden || !document.hasFocus()) {   // se fue a otra ventana durante esos segundos
+      const ae = document.activeElement; if (!(ae && ae.tagName === 'IFRAME')) return showLock('cambió de ventana');
+    }
+    if (fsSupported() && !inFs()) pedirPantallaCompleta();
+  }
+  function pedirPantallaCompleta() {
+    if ($('#fsAsk')) return;
+    const o = document.createElement('div'); o.className = 'lock-overlay'; o.id = 'fsAsk';
+    o.innerHTML = '<div class="lock-box"><h2>Volver a pantalla completa</h2><p>Para seguir trabajando, tocar el botón.</p><div><button class="btn" id="fsGo">Pantalla completa</button></div></div>';
+    document.body.appendChild(o);
+  }
+  document.addEventListener('click', e => { if (e.target.closest('#fsGo')) { graciaHasta = Date.now() + 2500; const o = $('#fsAsk'); if (o) o.remove(); goFs(); setTimeout(revisarTrasGracia, 2600); } });
   async function tryUnlock() {
     const code = $('#lkCode').value.trim(); if (!code) return;
     $('#lkErr').textContent = 'Verificando…';
@@ -1686,6 +1722,7 @@
     clearInterval(lockPoll);
     guardsOn = false; lockedNow = false;
     const o = $('#lockOverlay'); if (o) o.remove();
+    const f = $('#fsAsk'); if (f) f.remove();
     const st = ls.json(lkKey(), {}); st.locked = false; ls.set(lkKey(), JSON.stringify(st));
     try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
     toast('La docente terminó el modo bloqueado: ya se puede salir de la página.');
@@ -1976,6 +2013,7 @@
   }
   /* Copiar para el Portafolio Docente de ANEP: «nombre <TAB> nota <TAB> comentario», para pegar con el marcador (anep.html) */
   async function copiarAnep(pg) {
+    if (pg.type === 'pizarron') syncNotasPantalla();
     const T = window.Actividades ? Actividades.TEMPLATES : {};
     const filas = portaSource(pg).filter(x => x.nota !== '' && x.nota != null && x.nota !== 'undefined');
     if (!filas.length) return toast('Todavía no hay notas para copiar.');
