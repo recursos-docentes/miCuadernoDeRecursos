@@ -623,19 +623,36 @@
 
 <!-- La configuración (URL de Apps Script y nombre) está en config.js -->
 <script src="config.js"></script>
+<script>
+/* Varios docentes en un mismo sitio: «?c=codigo» carga profes/codigo.js en lugar de config.js.
+   Sin «?c=», el cuaderno usa config.js como siempre. */
+(function () {
+  var c = (new URLSearchParams(location.search).get('c') || '').toLowerCase();
+  if (!c) return;
+  window.CUADERNO_PROFE = /^[a-z0-9][a-z0-9-]{1,39}$/.test(c) ? c : '?';
+  window.CUADERNO_CONFIG = null;                      // si profes/codigo.js no existe, el cuaderno no está activo
+  if (window.CUADERNO_PROFE !== '?') document.write('<script src="profes/' + c + '.js"><\/script>');
+})();
+</script>
 <script src="actividades.js"></script>
 <script>
 (() => {
+  const PROFE = window.CUADERNO_PROFE || '';          // código del docente («?c=codigo»), vacío si usa config.js
+  const INACTIVO = !!PROFE && !window.CUADERNO_CONFIG; // el código no existe o fue dado de baja
   const CFG = window.CUADERNO_CONFIG || {};
+  const API_MIN = 12;                                  // versión mínima de Codigo.gs que necesita esta página
+  const NS = PROFE ? PROFE + ':' : '';                 // lo guardado en el navegador se separa por docente
+  const HOME = location.pathname + (PROFE ? '?c=' + PROFE : '');
+  const Q = PROFE ? '?c=' + PROFE + '&' : '?';         // comienzo de los parámetros de un link
   // Conexión con la libreta de clase (Portafolio de Clase): extensión a futuro, apagada salvo LIBRETA: true en config.js
   const LIBRETA = CFG.LIBRETA === true;
   const API_URL = String(CFG.API_URL || '').trim();
   const AUTORA = String(CFG.AUTORA || '').trim();
 
-  const KEY = 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
-  const KEY_PAGES = 'cuaderno-paginas-v1';
-  const KEY_CLAVE = 'cuaderno-clave';
-  const KEY_OPEN = 'cuaderno-abiertas';
+  const KEY = NS + 'pizarra-recursos-v1';          // notas guardadas en el navegador (modo local)
+  const KEY_PAGES = NS + 'cuaderno-paginas-v1';
+  const KEY_CLAVE = NS + 'cuaderno-clave';
+  const KEY_OPEN = NS + 'cuaderno-abiertas';
   const KEY_SORT = KEY + '-sort';
   const COLORS = ['yellow', 'pink', 'blue', 'green', 'orange', 'lilac'];
   const SEED_VERSION = 2;
@@ -659,7 +676,7 @@
   let view = 'index';        // 'index' (índice), 'sec' (un grupo), 'all' (todas las notas) o id de página
   let sections = [];         // grupos: pestañas del índice
   let curSec = ls.get('cuaderno-sec') || '';
-  const KEY_SECS = 'cuaderno-secciones-v1';
+  const KEY_SECS = NS + 'cuaderno-secciones-v1';
   const normSec = x => ({ id: String(x.id || uid()), name: String(x.name || 'Grupo'), color: x.color || 'yellow', roster: String(x.roster || '') });
   // tabulaciones, espacios dobles o «duros» (pegados desde una planilla) se convierten en un espacio
   const cleanName = v => String(v == null ? '' : v).replace(/[\s\u00a0]+/g, ' ').trim();
@@ -756,9 +773,11 @@
     return ok;
   }
 
+  let apiViejo = false;   // el Apps Script de la planilla es anterior a esta página
   async function loadOwner() {
     const r = await api({ accion: 'cargar', clave });
     if (!r.ok) throw new Error(r.error || 'Error');
+    apiViejo = (Number(r.v) || 0) < API_MIN;
     rev = r.rev; items = (r.marcadores || []).map(normItem); pages = (r.paginas || []).map(normPage);
     sections = (r.secciones || []).map(normSec);
     if (curSec && !sections.some(s => s.id === curSec)) curSec = '';
@@ -772,7 +791,7 @@
   }
   function logout() {
     ls.del(KEY_CLAVE); clave = ''; items = []; pages = [];
-    location.href = location.pathname;
+    location.href = HOME;
   }
 
   /* ---------------- utilidades ---------------- */
@@ -1017,6 +1036,10 @@
   }
 
   function render() {
+    renderVista();
+    if (mode === 'owner' && apiViejo && !$('#apiViejo')) app.insertAdjacentHTML('afterbegin', `<div class="notice" id="apiViejo"><b>Hay que actualizar el Apps Script de la planilla.</b> Esta página es más nueva que el <code>Codigo.gs</code> instalado y algunas funciones pueden fallar. En la planilla: Extensiones → Apps Script, reemplazar <code>Codigo.gs</code> por la versión nueva y hacer Implementar → Gestionar implementaciones → ✏️ → Nueva versión.</div>`);
+  }
+  function renderVista() {
     stopPz();
     if (mode === 'index') return renderIndex();
     if (mode === 'public') return renderPublic();
@@ -1052,7 +1075,7 @@
         <h2>${pg.type === 'pizarron' ? '🧑‍🏫 ' : pg.type === 'actividad' ? '🎮 ' : ''}${esc(pg.title)}</h2>
         ${pg.locked ? `<span class="badge-lock" title="Código de desbloqueo">🔒 Bloqueada · código ${esc(pg.code)}</span><button class="linkbtn" id="newCode" title="Si el código se usó delante de los estudiantes, conviene cambiarlo">nuevo código</button><button class="btn small" id="endLock" title="Desbloquea a todos y deja salir de la pantalla completa sin que quede registrado">🔓 Liberar a todos</button>` : pg.code && mode === 'owner' ? `<button class="linkbtn" id="reLock" title="Vuelve a pedir pantalla completa a quien abra la página">🔒 volver a bloquear</button>` : ''}
         ${pg.type !== 'recursos' || pg.locked ? '' : `<button class="pill ${pub ? 'pub' : 'priv'}" id="toggleVis" title="Cambiar quién la puede ver">${pub ? '🌐 Compartida' : '🔒 Privada'}</button>`}
-        ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="?p=${encodeURIComponent(pg.slug)}&prueba=1" target="_blank" rel="noopener" title="Abre la página como la ve un estudiante, empezando de cero">ver como visitante</a>` : ''}
+        ${pub && mode === 'owner' ? `<button class="btn small" id="copyLink">Copiar link</button><a class="linkbtn" href="${Q}p=${encodeURIComponent(pg.slug)}&prueba=1" target="_blank" rel="noopener" title="Abre la página como la ve un estudiante, empezando de cero">ver como visitante</a>` : ''}
         <button class="linkbtn" id="editPage">editar página</button>
         <button class="linkbtn" id="dupPage">copiar a otro grupo</button>
         ${pg.desc ? `<p>${esc(pg.desc)}</p>` : ''}
@@ -1198,7 +1221,7 @@
       pg.visibility = pg.visibility === 'publica' ? 'privada' : 'publica';
       persist(); render(); toast(pg.visibility === 'publica' ? 'Página compartida' : 'Página privada'); return;
     }
-    if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}?p=${encodeURIComponent(pg.slug)}`); return; }
+    if (t.closest('#copyLink')) { const pg = pages.find(p => p.id === view); if (pg) copy(`${baseUrl()}${Q}p=${encodeURIComponent(pg.slug)}`); return; }
     if (t.closest('#loginBtn')) return openLogin();
     if (t.closest('#lkStart')) return lockStart();
     const ul = t.closest('[data-unlock]');
@@ -1267,7 +1290,7 @@
       if (LIBRETA && t.closest('#pzPorta')) return openPorta(pgz);
       if (t.closest('#pzAnep')) return copiarAnep(pgz);
       if (t.closest('#pzRefresh')) { loadResponses(pgz.id); return; }
-      if (t.closest('#copyLink2')) return copy(`${baseUrl()}?p=${encodeURIComponent(pgz.slug)}`);
+      if (t.closest('#copyLink2')) return copy(`${baseUrl()}${Q}p=${encodeURIComponent(pgz.slug)}`);
       const dr = t.closest('[data-delresp]');
       if (dr) {
         const r = pzList.find(x => x.id === dr.dataset.delresp);
@@ -2299,14 +2322,14 @@
       await loadOwner();
       try { ($('#lRemember').checked ? localStorage : sessionStorage).setItem(KEY_CLAVE, clave); } catch (err) {}
       $('#dlgLogin').close();
-      if (params.get('p')) history.replaceState(null, '', location.pathname + (addReq ? location.search : ''));
+      if (params.get('p')) history.replaceState(null, '', addReq ? location.pathname + location.search : HOME);
       afterLogin && afterLogin();
     } catch (err) { $('#lErr').textContent = err.message === 'Clave incorrecta' ? 'Clave incorrecta' : 'No se pudo conectar: ' + err.message; }
   });
 
   /* ---------------- bookmarklet ---------------- */
   function openBookmarklet() {
-    const code = `javascript:(function(){var w=window,d=document,s='';try{s=String(w.getSelection()).trim().slice(0,1500)}catch(e){}w.open('${baseUrl()}?add='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(d.title)+'&s='+encodeURIComponent(s),'cuaderno','width=620,height=780,scrollbars=yes')})();`;
+    const code = `javascript:(function(){var w=window,d=document,s='';try{s=String(w.getSelection()).trim().slice(0,1500)}catch(e){}w.open('${baseUrl()}${Q}add='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(d.title)+'&s='+encodeURIComponent(s),'cuaderno','width=620,height=780,scrollbars=yes')})();`;
     $('#bmLink').setAttribute('href', code);
     $('#bmHint').textContent = mode === 'local'
       ? 'Ojo: sin la planilla conectada, lo que se guarde así queda en este navegador.'
@@ -2343,10 +2366,15 @@
     const existing = items.find(i => urlKey(i.url) === urlKey(addReq.url));
     if (existing) { openNoteDialog(existing); toast('Ya estaba en el cuaderno'); }
     else openNoteDialog(null, { url: addReq.url, name: addReq.title.slice(0, 90), note: addReq.sel ? `«${addReq.sel}»` : '' });
-    if (!isPopup) history.replaceState(null, '', location.pathname);
+    if (!isPopup) history.replaceState(null, '', HOME);
   }
 
   async function start() {
+    if (INACTIVO) {
+      $('#title').firstChild.textContent = 'Cuaderno de recursos';
+      app.innerHTML = '<div class="notice"><b>Este cuaderno no está activo.</b> Revisar que el link esté completo o consultar a quien lo entregó.</div>';
+      return;
+    }
     $('#today').textContent = new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' });
     if (!API_URL) {
       const l = loadLocal(); items = l.items; pages = l.pages; sections = l.sections; mode = 'local';
@@ -2367,7 +2395,7 @@
         // «ver como visitante» desde la vista docente: empezar de cero (sin nombre ni bloqueo guardados de pruebas anteriores)
         if (params.get('prueba')) {
           ['cuaderno-lock-', 'cuaderno-pz-', 'cuaderno-act-'].forEach(k => ls.del(k + slug));
-          history.replaceState(null, '', location.pathname + '?p=' + encodeURIComponent(slug));
+          history.replaceState(null, '', location.pathname + Q + 'p=' + encodeURIComponent(slug));
         }
         // un nombre guardado que ya no está en la lista (porque la lista cambió) se olvida
         const lista = pubPage.roster || [];

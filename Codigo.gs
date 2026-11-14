@@ -6,17 +6,20 @@
  * - En los pizarrones, los estudiantes responden sin clave; ver todas las
  *   respuestas, calificar y cambiar el estado exige la CLAVE.
  *
- * Configuración: Configuración del proyecto ⚙ → Propiedades de la secuencia
- * de comandos → agregar la propiedad  CLAVE  con la clave que se quiera usar.
+ * Instalación: abrir la planilla → menú «📒 Cuaderno» → seguir los pasos 1 a 3
+ * (la clave también se puede cargar a mano en Configuración del proyecto ⚙ →
+ * Propiedades de la secuencia de comandos → propiedad CLAVE).
  */
- 
+
+const VERSION = 12;   // la página avisa si este número es menor al que necesita
+
 const HOJA_MARCADORES = 'Marcadores';
 const HOJA_PAGINAS = 'Paginas';
 const HOJA_RESPUESTAS = 'Respuestas';
 const HOJA_INCIDENTES = 'Incidentes';
 const HOJA_RESULTADOS = 'Resultados';
 const HOJA_SECCIONES = 'Secciones';
- 
+
 const COLS_M = ['id', 'url', 'nombre', 'icono', 'categoria', 'descripcion', 'nota', 'notaPrivada',
                 'etiquetas', 'color', 'favorita', 'paginas', 'agregado', 'incrustar'];
 const COLS_P = ['id', 'titulo', 'slug', 'visibilidad', 'descripcion', 'color', 'orden',
@@ -26,9 +29,54 @@ const COLS_R = ['id', 'pagina', 'estudiante', 'texto', 'creado', 'editado', 'not
 const COLS_I = ['id', 'pagina', 'estudiante', 'tipo', 'detalle', 'fecha'];
 const COLS_S = ['id', 'nombre', 'color', 'lista'];
 const COLS_A = ['id', 'pagina', 'estudiante', 'plantilla', 'puntaje', 'total', 'segundos', 'detalle', 'fecha', 'verificado'];
- 
+
 const MAX_TEXTO = 3000;
- 
+
+/* ---------- instalación desde la planilla: menú «📒 Cuaderno» ---------- */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('📒 Cuaderno')
+    .addItem('1. Elegir o cambiar la clave', 'menuClave')
+    .addItem('2. Preparar las hojas', 'menuHojas')
+    .addItem('3. Ver la dirección de conexión', 'menuDireccion')
+    .addSeparator()
+    .addItem('Comprobar la instalación', 'menuComprobar')
+    .addToUi();
+}
+function menuClave() {
+  const ui = SpreadsheetApp.getUi();
+  const r = ui.prompt('Clave del cuaderno', 'Escribir la clave con la que se va a entrar al cuaderno (6 caracteres o más). No compartirla con estudiantes.', ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  const c = String(r.getResponseText() || '').trim();
+  if (c.length < 6) { ui.alert('La clave tiene que tener 6 caracteres o más. No se cambió nada.'); return; }
+  PropertiesService.getScriptProperties().setProperty('CLAVE', c);
+  ui.alert('Clave guardada. Seguir con el paso 2.');
+}
+function prepararHojas() {
+  [[HOJA_MARCADORES, COLS_M], [HOJA_PAGINAS, COLS_P], [HOJA_RESPUESTAS, COLS_R], [HOJA_INCIDENTES, COLS_I],
+   [HOJA_RESULTADOS, COLS_A], [HOJA_SECCIONES, COLS_S]].forEach(function (x) { hoja(x[0], x[1]); });
+}
+function menuHojas() {
+  prepararHojas();
+  SpreadsheetApp.getUi().alert('Hojas listas. Ahora, en Extensiones → Apps Script: Implementar → Nueva implementación → tipo «Aplicación web» → Ejecutar como: Yo → Quién tiene acceso: Cualquier usuario → Implementar. Después, volver a la planilla y seguir con el paso 3.');
+}
+function direccionConexion() {
+  try { const u = ScriptApp.getService().getUrl(); return u ? String(u).replace(/\/dev$/, '/exec') : ''; } catch (e) { return ''; }
+}
+function menuDireccion() {
+  const ui = SpreadsheetApp.getUi(), u = direccionConexion();
+  if (!u) { ui.alert('Todavía no hay una implementación. En Extensiones → Apps Script: Implementar → Nueva implementación → «Aplicación web» → Ejecutar como: Yo → Acceso: Cualquier usuario.'); return; }
+  ui.alert('Dirección de conexión', 'Copiar esta dirección y enviarla a quien instala el cuaderno (no enviar la clave):\n\n' + u +
+    '\n\nSi no coincide con la de Implementar → Gestionar implementaciones, usar la de ahí (termina en /exec).', ui.ButtonSet.OK);
+}
+function menuComprobar() {
+  const p = PropertiesService.getScriptProperties(), falta = [];
+  if (!p.getProperty('CLAVE')) falta.push('• Falta la clave (paso 1).');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss.getSheetByName(HOJA_PAGINAS)) falta.push('• Faltan las hojas (paso 2).');
+  if (!direccionConexion()) falta.push('• Falta implementar la aplicación web (indicaciones en el paso 2).');
+  SpreadsheetApp.getUi().alert(falta.length ? 'Falta completar:\n' + falta.join('\n') : 'Instalación completa (versión ' + VERSION + '). Enviar la dirección del paso 3 a quien instala el cuaderno.');
+}
+
 /* ---------- entrada ---------- */
 function doGet(e) { return responder(manejar((e && e.parameter) || {})); }
 function doPost(e) {
@@ -39,7 +87,7 @@ function doPost(e) {
 function responder(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
- 
+
 function manejar(d) {
   try {
     switch (d.accion) {
@@ -53,8 +101,8 @@ function manejar(d) {
       case 'resultado':   return guardarResultado(d);
       case 'corregir':    return corregirActividad(d);
       // con clave
-      case 'verificar':   verificar(d.clave); return { ok: true };
-      case 'cargar':      verificar(d.clave); return Object.assign({ ok: true }, leerTodo());
+      case 'verificar':   verificar(d.clave); return { ok: true, v: VERSION };
+      case 'cargar':      verificar(d.clave); return Object.assign({ ok: true, v: VERSION }, leerTodo());
       case 'guardar':     verificar(d.clave); return guardar(d);
       case 'respuestas':  verificar(d.clave); return { ok: true, respuestas: respuestasDe(d.pagina) };
       case 'calificar':   verificar(d.clave); return calificar(d);
@@ -69,7 +117,7 @@ function manejar(d) {
     return { ok: false, error: String(err && err.message || err) };
   }
 }
- 
+
 function verificar(clave) {
   const real = PropertiesService.getScriptProperties().getProperty('CLAVE');
   if (!real) throw new Error('Falta configurar la propiedad CLAVE en Apps Script');
@@ -78,7 +126,7 @@ function verificar(clave) {
     throw new Error('Clave incorrecta');
   }
 }
- 
+
 /* ---------- hojas ---------- */
 function hoja(nombre, cols) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -95,7 +143,7 @@ function hoja(nombre, cols) {
   }
   return h;
 }
- 
+
 function leerFilas(nombre, cols) {
   const valores = hoja(nombre, cols).getDataRange().getValues();
   const cab = valores.shift() || [];
@@ -107,14 +155,14 @@ function leerFilas(nombre, cols) {
     })
     .filter(o => String(o.id) !== '');
 }
- 
+
 function escribirFila(nombre, cols, fila, obj) {
   const h = hoja(nombre, cols);
   const cab = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
   const valores = cab.map(c => (c in obj ? obj[c] : ''));
   h.getRange(fila, 1, 1, valores.length).setValues([valores]);
 }
- 
+
 const lista = v => String(v || '').split(',').map(x => x.trim()).filter(String);
 // nombres: tabulaciones, espacios dobles o espacios «duros» (pegados desde una planilla) cuentan como un espacio
 const limpiarNombre = v => String(v == null ? '' : v).replace(/[\s\u00a0]+/g, ' ').trim();
@@ -129,7 +177,7 @@ function nombreEnLista(roster, nombre) {
 }
 const bool = v => v === true || String(v).toUpperCase() === 'TRUE' || v === 1 || v === '1';
 const boolDef = (v, def) => (v === '' || v == null ? def : bool(v));
- 
+
 function aMarcador(f) {
   return {
     id: String(f.id), url: String(f.url), name: String(f.nombre), icon: String(f.icono),
@@ -156,7 +204,7 @@ function aPagina(f) {
   };
 }
 function jsonLista(v) { try { const a = JSON.parse(String(v || '[]')); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
- 
+
 /* Grupos del índice, con su lista de estudiantes */
 function leerSecciones() {
   const filas = leerFilas(HOJA_SECCIONES, COLS_S);
@@ -178,7 +226,7 @@ function aRespuesta(f) {
     nota: String(f.nota), comentario: String(f.comentario)
   };
 }
- 
+
 function leerTodo() {
   const rev = Number(PropertiesService.getScriptProperties().getProperty('REV') || 0);
   return {
@@ -188,7 +236,7 @@ function leerTodo() {
     secciones: leerSecciones()
   };
 }
- 
+
 function paginaPublica(slug) {
   if (!slug) throw new Error('Falta el link de la página');
   const pag = leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina)
@@ -196,12 +244,12 @@ function paginaPublica(slug) {
   if (!pag) throw new Error('Esta página no existe o no es pública');
   return pag;
 }
- 
+
 /* ---------- vista pública (sin clave) ---------- */
 function publico(slug) {
   // Nunca se entrega la lista de páginas: cada una se ve solo con su link.
   const pag = paginaPublica(slug);
- 
+
   const marcadores = leerFilas(HOJA_MARCADORES, COLS_M).map(aMarcador)
     .filter(m => m.pages.indexOf(pag.id) >= 0)
     .map(m => ({
@@ -209,7 +257,7 @@ function publico(slug) {
       note: m.notePrivate ? '' : m.note, tags: m.tags, color: m.color, fav: m.fav,
       added: m.added, embed: m.embed
     }));
- 
+
   const pagina = { title: pag.title, slug: pag.slug, desc: pag.desc, color: pag.color, type: pag.type,
                    locked: pag.locked };
   // el código de desbloqueo nunca sale del servidor
@@ -228,8 +276,8 @@ function publico(slug) {
     }
     if (pag.actMode === 'registro') pagina.roster = lista;
   }
-  const salida = { ok: true, pagina: pagina, marcadores: marcadores };
- 
+  const salida = { ok: true, v: VERSION, pagina: pagina, marcadores: marcadores };
+
   if (pag.type === 'pizarron') {
     const resp = leerFilas(HOJA_RESPUESTAS, COLS_R).map(aRespuesta).filter(r => r.pagina === pag.id);
     Object.assign(pagina, {
@@ -246,7 +294,7 @@ function publico(slug) {
   }
   return salida;
 }
- 
+
 /* ---------- pizarrón: estudiantes (sin clave) ---------- */
 function responderPizarron(d) {
   const lock = LockService.getScriptLock();
@@ -256,18 +304,18 @@ function responderPizarron(d) {
     if (pag.type !== 'pizarron') throw new Error('Esta página no es un pizarrón');
     if (pag.revealed) throw new Error('Las respuestas ya se mostraron: no se pueden enviar ni cambiar');
     if (!pag.open) throw new Error('El pizarrón no está recibiendo respuestas');
- 
+
     if (!limpiarNombre(d.estudiante)) throw new Error('Falta elegir el nombre');
     const estudiante = nombreEnLista(listaEfectiva(pag), d.estudiante);
     if (!estudiante) throw new Error('Ese nombre no está en la lista');
     const texto = String(d.texto || '').trim();
     if (!texto) throw new Error('La respuesta está vacía');
     if (texto.length > MAX_TEXTO) throw new Error('La respuesta es demasiado larga (máximo ' + MAX_TEXTO + ' caracteres)');
- 
+
     const filas = leerFilas(HOJA_RESPUESTAS, COLS_R);
     const previa = filas.find(f => String(f.pagina) === pag.id && canon(f.estudiante) === canon(estudiante));
     const ahora = Date.now();
- 
+
     if (previa) {
       if (!d.token || String(d.token) !== String(previa.token)) {
         throw new Error('Ya hay una respuesta con ese nombre enviada desde otro dispositivo. Avisale a la docente.');
@@ -287,7 +335,7 @@ function responderPizarron(d) {
     lock.releaseLock();
   }
 }
- 
+
 function miRespuesta(d) {
   const pag = paginaPublica(d.p);
   const f = leerFilas(HOJA_RESPUESTAS, COLS_R)
@@ -297,14 +345,14 @@ function miRespuesta(d) {
   return { ok: true, id: r.id, texto: r.texto,
            nota: pag.feedback ? r.nota : '', comentario: pag.feedback ? r.comentario : '' };
 }
- 
+
 /* ---------- pizarrón: docente (con clave) ---------- */
 function respuestasDe(paginaId) {
   return leerFilas(HOJA_RESPUESTAS, COLS_R).map(aRespuesta)
     .filter(r => r.pagina === String(paginaId))
     .sort((a, b) => a.creado - b.creado);
 }
- 
+
 function calificar(d) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -319,7 +367,7 @@ function calificar(d) {
     lock.releaseLock();
   }
 }
- 
+
 function borrarRespuesta(d) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -332,7 +380,7 @@ function borrarRespuesta(d) {
     lock.releaseLock();
   }
 }
- 
+
 /* ---------- modo bloqueado ---------- */
 function registrarIncidente(d) {
   const pag = paginaPublica(d.p);
@@ -344,7 +392,7 @@ function registrarIncidente(d) {
     seguro(String(d.detalle || '').slice(0, 120)), Date.now()]);
   return { ok: true };
 }
- 
+
 function desbloquear(d) {
   const pag = paginaPublica(d.p);
   if (!pag.locked) return { ok: true };
@@ -358,7 +406,7 @@ function desbloquear(d) {
     seguro(String(d.estudiante || '').slice(0, 80)), 'desbloqueo', 'con código', Date.now()]);
   return { ok: true };
 }
- 
+
 /* La docente desbloquea a un estudiante desde su propia vista: no hace falta escribir nada en la computadora del estudiante */
 function desbloquearDesde(d) {
   const pag = leerFilas(HOJA_PAGINAS, COLS_P).map(aPagina).find(p => p.id === String(d.pagina));
@@ -367,7 +415,7 @@ function desbloquearDesde(d) {
     seguro(limpiarNombre(d.estudiante).slice(0, 80)), 'desbloqueo', 'desde la vista docente', Date.now()]);
   return { ok: true };
 }
- 
+
 /* La página bloqueada del estudiante pregunta si ya la desbloquearon (el último evento posterior a su última salida) */
 function estadoBloqueo(d) {
   const pag = paginaPublica(d.p);
@@ -378,7 +426,7 @@ function estadoBloqueo(d) {
   const ult = evs[evs.length - 1];
   return { ok: true, desbloqueado: !!ult && ult.tipo === 'desbloqueo' };
 }
- 
+
 function incidentesDe(paginaId) {
   return leerFilas(HOJA_INCIDENTES, COLS_I)
     .filter(f => String(f.pagina) === String(paginaId))
@@ -386,7 +434,7 @@ function incidentesDe(paginaId) {
                  detalle: String(f.detalle), fecha: Number(f.fecha) || 0 }))
     .sort((a, b) => a.fecha - b.fecha);
 }
- 
+
 /* ---------- actividades ---------- */
 function guardarResultado(d) {
   const lock = LockService.getScriptLock();
@@ -410,7 +458,7 @@ function guardarResultado(d) {
     lock.releaseLock();
   }
 }
- 
+
 /* Actividades con registro verificables: el servidor corrige y guarda (el navegador no manda el puntaje) */
 function corregirActividad(d) {
   const lock = LockService.getScriptLock();
@@ -438,7 +486,7 @@ function corregirActividad(d) {
     lock.releaseLock();
   }
 }
- 
+
 function resultadosDe(paginaId) {
   return leerFilas(HOJA_RESULTADOS, COLS_A)
     .filter(f => String(f.pagina) === String(paginaId))
@@ -447,7 +495,7 @@ function resultadosDe(paginaId) {
                  detalle: String(f.detalle), fecha: Number(f.fecha) || 0, verificado: String(f.verificado) === 'sí' }))
     .sort((a, b) => a.fecha - b.fecha);
 }
- 
+
 function borrarFila(nombre, cols, id) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -460,13 +508,13 @@ function borrarFila(nombre, cols, id) {
     lock.releaseLock();
   }
 }
- 
+
 /* ---------- guardado del cuaderno (con clave) ---------- */
 function seguro(v) { // evita que un texto se interprete como fórmula
   const s = String(v == null ? '' : v);
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
- 
+
 function escribir(nombre, cols, filas) {
   const h = hoja(nombre, cols);
   h.getRange(1, 1, 1, cols.length).setValues([cols]);
@@ -474,7 +522,7 @@ function escribir(nombre, cols, filas) {
   if (ultima > 1) h.getRange(2, 1, ultima - 1, Math.max(h.getLastColumn(), cols.length)).clearContent();
   if (filas.length) h.getRange(2, 1, filas.length, cols.length).setValues(filas);
 }
- 
+
 function guardar(d) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -482,10 +530,10 @@ function guardar(d) {
     const props = PropertiesService.getScriptProperties();
     const rev = Number(props.getProperty('REV') || 0);
     if (!d.forzar && Number(d.rev) !== rev) return { ok: false, conflicto: true, rev: rev };
- 
+
     const marcadores = Array.isArray(d.marcadores) ? d.marcadores : [];
     const paginas = Array.isArray(d.paginas) ? d.paginas : [];
- 
+
     escribir(HOJA_MARCADORES, COLS_M, marcadores.map(m => [
       seguro(m.id), seguro(m.url), seguro(m.name), seguro(m.icon), seguro(m.cat), seguro(m.desc),
       seguro(m.note), !!m.notePrivate, seguro((m.tags || []).join(', ')), seguro(m.color),
@@ -509,14 +557,14 @@ function guardar(d) {
         seguro(String(x.roster || '').slice(0, 5000))
       ]));
     }
- 
+
     props.setProperty('REV', String(rev + 1));
     return { ok: true, rev: rev + 1 };
   } finally {
     lock.releaseLock();
   }
 }
- 
+
   /* ===== NÚCLEO DE CORRECCIÓN — idéntico en actividades.js y en Codigo.gs (no editar uno sin el otro) =====
      nVista(plantilla, pares)  → lo que ve el estudiante (sin soluciones).
      nCorregir(plantilla, pares, respuestas) → { puntaje, total, items, sol } o { error }.
@@ -602,7 +650,7 @@ function guardar(d) {
     return { placed: placed, rows: Math.max.apply(null, rs) - r0 + 1, cols: Math.max.apply(null, cs) - c0 + 1 };
   }
   const nCeldas = p => Array.from({ length: p.w.length }, (_, i) => (p.r + (p.dir === 'v' ? i : 0)) + ',' + (p.c + (p.dir === 'h' ? i : 0)));
- 
+
   function nVista(t, pairs) {
     const ps = nBase(t, pairs);
     if (t === 'unir') return { izq: ps.map(p => p.a), der: nMezclar(ps.map(p => p.b)) };
@@ -628,7 +676,7 @@ function guardar(d) {
     }
     return null;
   }
- 
+
   function nCorregir(t, pairs, ans) {
     const ps = nBase(t, pairs), CAMBIO = { error: 'La actividad cambió o la respuesta no corresponde: recargar la página.' };
     const fin = (items, sol) => {
@@ -692,4 +740,3 @@ function guardar(d) {
     return { error: 'Esta plantilla no se corrige en el servidor.' };
   }
   /* ===== FIN DEL NÚCLEO ===== */
- 

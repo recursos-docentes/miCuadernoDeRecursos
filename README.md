@@ -15,6 +15,7 @@ Las páginas compartidas usan esa misma dirección con `?p=` y el nombre de la p
 | `config.js` | repo de GitHub, junto a `index.html` | La URL de Apps Script y el nombre de la autora |
 | `Codigo.gs` | Apps Script, dentro de una planilla de Google | El servidor |
 | `anep.html` | repo de GitHub, junto a `index.html` | Instala el marcador «📋 Pegar notas» para el Portafolio de ANEP |
+| `profes/` | repo de GitHub, junto a `index.html` | Un archivo por docente cuando el sitio se comparte (`?c=CODIGO`). Ver `INSTALAR-PROFES.md` |
 | `imagen/` | repo de GitHub | Imágenes para las actividades (por ejemplo, los diagramas etiquetados) |
 
 Sin conectar la planilla, el cuaderno funciona igual, pero todo queda guardado **solo en ese navegador** y no se pueden compartir páginas.
